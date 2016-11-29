@@ -103,8 +103,9 @@ def average_twists(paths,src_db_name='twists.json',tar_db_name='scalars.json',ma
         if manual_twists is not None:
             sel = df_all['twistnum'].apply(lambda x:x in manual_twists)
             df  = df_all[sel]
-            if len(manual_twists) != len(df):
-                raise NotImplementedError('missing twists')
+            if len(manual_twists) != len(df[df['iqmc']==0]):
+                raise NotImplementedError('wanted %d twists, found %d'%(
+                    len(manual_twists),len(df[df['iqmc']==0])) )
             # end if
         # end if
         
