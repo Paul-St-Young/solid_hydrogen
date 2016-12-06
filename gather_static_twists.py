@@ -176,9 +176,6 @@ if __name__ == '__main__':
     if only_real:
         sfile_name = 'new_real_' + sfile_name
     # end if
-    if only_real:
-        final_target_json = 'real_' + final_target_json
-    # end if
 
     # get twist run locations
     proc = sp.Popen(['find',src_dir,'-name',rundir_id]
