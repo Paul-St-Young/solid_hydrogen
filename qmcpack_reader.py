@@ -145,3 +145,24 @@ def epl_val_err(epl_out):
     df = pd.concat( [tab.drop('text',axis=1),tab['text'].apply(text2val)],axis=1 )
     return df
 # end def epl_val_err
+
+def sk_from_fs_out(fs_out):
+    """ extract fluctuating S(k) from qmcfinitesize output
+      returns: kmag,sk,vk,spk,spsk
+       kmag: magnitude of kvectors, sk: raw fluc. S(k), vk: long-range potential after break-up
+       spk: kmags for splined S(k), spsk: splined S(k) """
+
+    import reader
+    bint = reader.BlockInterpreter()
+    sfile = reader.SearchableFile(fs_out)
+
+    # read raw data
+    block_text = sfile.block_text('#SK_RAW_START#','#SK_RAW_STOP#')
+    kmag,sk,vk = bint.matrix(block_text[block_text.find('\n')+1:]).T
+
+    # read splined S(k)
+    block_text = sfile.block_text('#SK_SPLINE_START#','#SK_SPLINE_STOP#')
+    spk,spsk = bint.matrix(block_text[block_text.find('\n')+1:]).T
+
+    return kmag,sk,vk,spk,spsk
+# end def
