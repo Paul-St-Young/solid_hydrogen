@@ -37,6 +37,7 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
       3. scatter legend 4. line legend """
     
     scatter_plots = []
+    line_plots = []
     lines = []
     istruct = 0
     for sname in candidates:
@@ -69,6 +70,7 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
                 if not line.get_label().startswith('_'):
                     lines.append(line)
                 # end if
+                line_plots.append(line)
             # end if draw_line
             
             ifunc += 1
@@ -77,12 +79,21 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
         istruct += 1
     # end for sname
 
-    scatter_leg = ax.legend(handles=scatter_plots,numpoints=1,loc='best')
-    ax.add_artist(scatter_leg)
-    line_leg = ax.legend(handles=lines,loc='upper center')
-    for handle in line_leg.legendHandles:
-        handle.set_color('black')
-    # end for handle
-    ax.add_artist(line_leg)
-    return scatter_plots,lines,scatter_leg,line_leg
+    if draw_scatter:
+        scatter_leg = ax.legend(handles=scatter_plots,numpoints=1,loc='best')
+        ax.add_artist(scatter_leg)
+    else:
+        scatter_leg = None
+    # end if
+
+    if draw_line:
+        line_leg = ax.legend(handles=lines,loc='upper center')
+        for handle in line_leg.legendHandles:
+            handle.set_color('black')
+        # end for handle
+        ax.add_artist(line_leg)
+    else:
+        line_leg = None
+    # end if
+    return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids

@@ -200,7 +200,7 @@ if __name__ == '__main__':
     # end if
 
     # analyze data
-    import dmc_databse_analyzer as dda
+    import dmc_database_analyzer as dda
     data = []
     for path in paths:
         print "analyzing %s" % path

@@ -55,6 +55,9 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
 # end def
 
 def plot_sofk(ax,legal_kvecs,sk_arr):
+    ax.set_xlabel('k (1/bohr)')
+    ax.set_ylabel('S(k)')
+
     kmags  = [np.linalg.norm(kvec) for kvec in legal_kvecs]
      
     # average S(k) if multiple k-vectors have the same magnitude
