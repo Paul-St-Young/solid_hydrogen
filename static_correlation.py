@@ -54,10 +54,7 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     return legal_kvecs, sk_arr
 # end def
 
-def plot_sofk(ax,legal_kvecs,sk_arr):
-    ax.set_xlabel('k (1/bohr)')
-    ax.set_ylabel('S(k)')
-
+def shell_avg_sofk(legal_kvecs,sk_arr):
     kmags  = [np.linalg.norm(kvec) for kvec in legal_kvecs]
      
     # average S(k) if multiple k-vectors have the same magnitude
@@ -68,6 +65,15 @@ def plot_sofk(ax,legal_kvecs,sk_arr):
 	idx2avg = np.where(kmags==kmag)
 	unique_sk[iukmag] = np.mean(sk_arr[idx2avg])
     # end for iukmag
+    return unique_kmags,unique_sk
+# end def 
+
+def plot_sofk(ax,legal_kvecs,sk_arr):
+    ax.set_xlabel('k (1/bohr)')
+    ax.set_ylabel('S(k)')
+
+    # shell average
+    unique_kmags,unique_sk = shell_avg_sofk(legal_kvecs,sk_arr)
      
     # visualize
     line, = ax.plot(unique_kmags[1:],unique_sk[1:])
