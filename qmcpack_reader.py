@@ -27,28 +27,6 @@ def get_value(qmcout,keyword='Madelung',delimiter='=',val_type=float,val_loc=-1)
     return val
 # end def get_madelung
 
-from copy import deepcopy
-def read_two_body_jastrows(jastrows):
-    """ 'jastrows' should be an xml node containing a two-body jastrow """
-    
-    if (jastrows.attrib["type"] != "Two-Body"):
-        raise TypeError("input is not a two-body Jastrow xml node")
-    elif (jastrows.attrib["function"].lower() != "bspline"):
-        raise NotImplementedError("can only handle bspline Jastrows for now")
-    # end if
-    
-    data = []
-    for corr in jastrows.xpath('./correlation'):
-        coeff = corr.xpath('./coefficients')[0]
-        entry = deepcopy( corr.attrib )
-        entry.update(coeff.attrib)
-        entry['coeff'] = np.array(coeff.text.split(),dtype=float)
-        data.append(entry)
-    # end for corr
-    
-    return data
-# end def read_two_body_jastrows
-
 import os
 import h5py
 def retrieve_psig(h5_file,only_occupied=False,occupations=None):
@@ -166,3 +144,97 @@ def sk_from_fs_out(fs_out):
 
     return kmag,sk,vk,spk,spsk
 # end def
+
+import numpy as np
+from copy import deepcopy
+def read_jastrows(jas_node):
+    """ 'jas_node' should be an xml node containing bspline jastrows
+     put coefficients and attributes into a list of dictionaries """
+    
+    if (jas_node.attrib["type"] != "Two-Body"): # works for one-body! miracle!
+        pass#raise TypeError("input is not a two-body Jastrow xml node")
+    elif (jas_node.attrib["function"].lower() != "bspline"):
+        raise NotImplementedError("can only handle bspline Jastrows for now")
+    # end if
+    
+    data = []
+    for corr in jas_node.xpath('./correlation'):
+        coeff = corr.xpath('./coefficients')[0]
+        entry = deepcopy( corr.attrib )
+        entry.update(coeff.attrib)
+        entry['coeff'] = np.array(coeff.text.split(),dtype=float)
+        entry['type']  = jas_node.attrib['type']
+        data.append(entry)
+    # end for corr
+    
+    return data
+# end def read_jastrows
+
+from lxml import etree
+def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=False):
+    """ given a QMCPACK input that contains linear optimization, extract all printed Jastrows and store in a local database
+     1. parse 'qmcpack_input' for the qmc[@metho="linear"] section
+     2. for each *.opt.xml, parse if it exists
+     3. parse each opt.xml and make local database """
+
+    subdir = os.path.dirname(qmcpack_input)
+    target_json = os.path.join(subdir,json_name)
+    if os.path.isfile(target_json) and (not force_refresh):
+        if warn:
+            print "skipping %s" % subdir
+        # end if
+        return 0 # skip ths file
+    # end if
+
+    parser = etree.XMLParser(remove_blank_text=True)
+
+    # get prefix
+    xml = etree.parse(qmcpack_input,parser)
+    proj = xml.xpath("//project")[0]
+    prefix = proj.attrib['id']
+
+    # determine number of optimization loops
+    all_qmc_sections = xml.xpath('.//qmc[@method="linear"]')
+    all_iopt = 0 # track multiple 'linear' sections
+    data = []
+    for qmc_section in all_qmc_sections:
+        # for each linear optimization:
+
+        # find the number of loops
+        nopt = 1
+        loop = qmc_section.getparent()
+        if loop.tag == 'loop':
+            nopt = int(loop.attrib['max'])
+        # end if
+
+        # collect all jastrow coefficients
+        for iopt in range(nopt):
+            # get optimization file
+            opt_file = prefix + ".s%s.opt.xml" % str(iopt).zfill(3)
+            opt_xml  = os.path.join(subdir + opt_file)
+            if not os.path.isfile(opt_xml):
+                if warn:
+                    print "skipping %d in %s" % (iopt,subdir)
+                # end if
+                continue
+            # end if
+
+            # parse optimization file
+            opt = etree.parse(opt_xml,parser)
+            jnodes = opt.xpath('//jastrow')
+            for jas_node in jnodes:
+                entries = read_jastrows(jas_node)
+                for entry in entries:
+                    entry['iopt'] = all_iopt
+                # end for entry
+                data.append(entry)
+            # end for
+            all_iopt += 1
+        # end for iopt
+    # end for qmc_section
+    df = pd.DataFrame( data )
+
+    df.to_json(target_json)
+
+    return 0
+# end def extract_jastrows
