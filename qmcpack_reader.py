@@ -177,6 +177,8 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
      2. for each *.opt.xml, parse if it exists
      3. parse each opt.xml and make local database """
 
+    failed = False
+
     subdir = os.path.dirname(qmcpack_input)
     target_json = os.path.join(subdir,json_name)
     if os.path.isfile(target_json) and (not force_refresh):
@@ -211,10 +213,10 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
         for iopt in range(nopt):
             # get optimization file
             opt_file = prefix + ".s%s.opt.xml" % str(iopt).zfill(3)
-            opt_xml  = os.path.join(subdir + opt_file)
+            opt_xml  = os.path.join(subdir,opt_file)
             if not os.path.isfile(opt_xml):
                 if warn:
-                    print "skipping %d in %s" % (iopt,subdir)
+                    print "skipping %d in %s" % (all_iopt,subdir)
                 # end if
                 continue
             # end if
@@ -232,9 +234,54 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
             all_iopt += 1
         # end for iopt
     # end for qmc_section
-    df = pd.DataFrame( data )
+    if len(data) == 0:
+        failed = True
+    else:
+        df = pd.DataFrame( data )
+        df.to_json(target_json)
+    # end if
 
-    df.to_json(target_json)
-
-    return 0
+    return failed
 # end def extract_jastrows
+
+from dmc_database_analyzer import div_columns
+def collect_best_jastrow_set(subdir,jas_json='jas.json',opt_json='opt_scalar.json'
+        ,rval_weight=0.75,rerr_weight=0.25):
+    """ find best set of jastrows in 'subdir', assume files:
+     1. jas.json: a database of QMCPACK bspline jastrows with 'iopt' column 
+     2. opt_scalar.json: a database of QMCPACK scalars including 'LocalEnergy_mean', 'LocalEnergy_error', 'Variance_mean', and 'Variance_error' """
+    
+    jfile = os.path.join(subdir,jas_json)
+    if not os.path.isfile(jfile):
+        raise RuntimeError('%s not found in %s' % (jfile,subdir))
+    # end if
+    
+    ofile = os.path.join(subdir,opt_json)
+    if not os.path.isfile(ofile):
+        raise RuntimeError('%s not found in %s' % (ofile,subdir))
+    # end if
+    
+    jdf = pd.read_json(jfile) # jastrows
+    sdf = pd.read_json(ofile) # scalars
+    
+    # same units for stddev and LocalEnergy
+    sdf['stddev_mean'] = sdf['Variance_mean'].apply(np.sqrt)
+    sdf['stddev_error'] = sdf['Variance_error'].apply(np.sqrt)
+    
+    # make ratios
+    ratio_mean, ratio_error = div_columns(['stddev','LocalEnergy'],sdf)
+    
+    # take both value and error into account
+    rv_cost = ratio_mean/ratio_mean.mean()
+    re_cost = ratio_error/ratio_error.mean()
+    
+    # make a cost function
+    cost = rv_cost*rval_weight + re_cost*rerr_weight
+    
+    # minimize cost function
+    idx  = np.argmin(cost)
+    
+    # grab winner jastrows
+    best_jas = jdf[jdf['iopt']==idx].copy()
+    return best_jas
+# end def collect_best_jastrow_set
