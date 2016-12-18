@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-from mmap import mmap
+import os
+import pandas as pd
+
 def get_value(qmcout,keyword='Madelung',delimiter='=',val_type=float,val_loc=-1):
     """ find the value of the line 'keyword = value' in qmcout """
+    from mmap import mmap
     
     # open file
     fhandle = open(qmcout,'r+')
@@ -27,10 +30,9 @@ def get_value(qmcout,keyword='Madelung',delimiter='=',val_type=float,val_loc=-1)
     return val
 # end def get_madelung
 
-import os
-import h5py
 def retrieve_psig(h5_file,only_occupied=False,occupations=None):
     """ return a list dictionaries of DFT orbital coefficients in PW basis by reading an hdf5 file written by pw2qmcpack. If only_occupied=True and a database of occupied orbitals are given, then only read orbitals that are occupied. """
+    import h5py
     if only_occupied and (occupations is None):
         raise NotImplementedError("no occupation database is given")
     # end if
@@ -94,6 +96,7 @@ def retrieve_psig(h5_file,only_occupied=False,occupations=None):
 # end def retrieve_psig
 
 def retrieve_system(h5_file):
+    import h5py
     h5handle = h5py.File(h5_file)
     lattice  = h5handle['supercell/primitive_vectors'].value
     #elem     = h5handle['atoms/species_ids'].value # why so complicated?
@@ -103,7 +106,6 @@ def retrieve_system(h5_file):
     return {'axes':lattice,'pos':pos,'gvecs':gvecs}
 # end def
 
-import pandas as pd
 def epl_val_err(epl_out):
     """ epl_out is expected to be an output of energy.pl from QMCPACK
      It simply has to have the format {name:22c}={val:17.3f} +/- {err:26.4f}.
@@ -244,13 +246,37 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
     return failed
 # end def extract_jastrows
 
-from dmc_database_analyzer import div_columns
+def extract_best_jastrow_set(opt_input,opt_json='opt_scalar.json',nequil='auto',force_refresh=False):
+    import nexus_addon as na
+    subdir = os.path.dirname(opt_input)
+
+    # locally create jas.json 
+    extract_jastrows(opt_input,force_refresh=force_refresh)
+
+    # locally create opt_scalar.json
+    scalar_json = os.path.join(subdir,opt_json)
+    if (not os.path.isfile(scalar_json)) or force_refresh:
+        # initialize analyzer
+        from qmca import QBase
+        options = {"equilibration":nequil}
+        QBase.options.transfer_from(options)
+
+        entry = na.scalars_from_input(opt_input)
+        pd.DataFrame(entry).to_json(scalar_json)
+    # end if
+
+    # get best jastrow set
+    best_jas = collect_best_jastrow_set(subdir)
+    return best_jas
+# end def extract_best_jastrow_set
+
 def collect_best_jastrow_set(subdir,jas_json='jas.json',opt_json='opt_scalar.json'
         ,rval_weight=0.75,rerr_weight=0.25):
     """ find best set of jastrows in 'subdir', assume files:
      1. jas.json: a database of QMCPACK bspline jastrows with 'iopt' column 
      2. opt_scalar.json: a database of QMCPACK scalars including 'LocalEnergy_mean', 'LocalEnergy_error', 'Variance_mean', and 'Variance_error' """
-    
+    from dmc_database_analyzer import div_columns
+
     jfile = os.path.join(subdir,jas_json)
     if not os.path.isfile(jfile):
         raise RuntimeError('%s not found in %s' % (jfile,subdir))
