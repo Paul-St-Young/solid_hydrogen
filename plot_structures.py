@@ -97,3 +97,18 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     # end if
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
+
+def interpret_subdir(subdir):
+    """ find (struct,func,press) from subdir of form cmca4-pbe-2000 """
+    tokens = subdir.split('-')
+    if len(tokens) == 3:
+        struct,func,press = tokens
+    elif len(tokens) == 4:
+        struct,func1,func2,press = tokens
+        func = '-'.join([func1,func2])
+    else:
+        raise RuntimeError('cannot interpret %s'%path)
+    # end if
+    press = int(press)
+    return struct,func,press
+# end def
