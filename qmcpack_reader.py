@@ -214,7 +214,7 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
         # collect all jastrow coefficients
         for iopt in range(nopt):
             # get optimization file
-            opt_file = prefix + ".s%s.opt.xml" % str(iopt).zfill(3)
+            opt_file = prefix + ".s%s.opt.xml" % str(all_iopt).zfill(3)
             opt_xml  = os.path.join(subdir,opt_file)
             if not os.path.isfile(opt_xml):
                 if warn:
