@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pymatgen as mg
 
-def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=10,gofr_norm=None):
+def gofr_snapshot(axes,pos,rmax,rmin=1,nbin=40,gofr_norm=None):
     """ calculate the pair correlation function of a snapshot of a crystal structure given the 'axes' of the simulation cell and the positions ('pos') of atoms inside the cell.
     'rmax' is the maximum pair distance to histogram. 'rmin','rmax', and 'nbin' are passed to numpy.histogram to generate the results.
     return 3 lists: r, g(r), and g(r) normalization.
@@ -80,31 +80,48 @@ def plot_sofk(ax,legal_kvecs,sk_arr):
     return line
 # end def
 
+def cubic_rws(entry):
+    axes = entry['axes']
+    alat = axes[0][0]
+    if not np.allclose( axes, alat*np.eye(3) ):
+        raise RuntimeError('non-cubic cell, please provide -rws')
+    # end if
+    return alat/2
+# end def
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='calculate g(r) and S(k) from a database of crystal structures')
     parser.add_argument('config_json', type=str, help='json file containing axes and pos of atomic configurations')
-    parser.add_argument('-rws','--r_wigner_seizs', type=float, required=True, help='Wigner-Seitz radius, used to cutoff g(r)')
+    parser.add_argument('-rws','--r_wigner_seizs', type=float, default=None, required=False, help='Wigner-Seitz radius, used to cutoff g(r)')
     parser.add_argument('-p','--plot', action='store_true', help='plot data')
+    parser.add_argument('-f','--force', action='store_true', help='force analysis, ignore gofr.dat and sofk.dat in local directory')
     args = parser.parse_args()
 
     # read a list of configurations (axes and pos)
     #cdf = pd.read_json('i4-pbe-4800-48-solid_configs.json')
     cdf = pd.read_json(args.config_json)
-    # how to calculate Wigner-Seitz radius?
-    rws = args.r_wigner_seizs
     # plot final results
     plot = args.plot
 
-    # initialize gofr_norm with the first sample
+    # get the first sample
     istart = 0
     entry = cdf[istart]
     axes = entry['axes']
     pos  = entry['pos']
+
+    # calculate Wigner-Seitz radius (only for cubic cell)
+    if args.r_wigner_seizs is not None:
+        rws = args.r_wigner_seizs
+    else:
+        rws = cubic_rws(entry)
+    # end if
+
+    # initialize gofr_norm with the first sample
     myx,myy,gofr_norm = gofr_snapshot(axes,pos,rmax=rws)
     legal_kvecs,sk_arr = sofk_snapshot(axes,pos)
 
-    if not (os.path.isfile('gofr.dat') and os.path.isfile('sofk.dat')):
+    if (not (os.path.isfile('gofr.dat') and os.path.isfile('sofk.dat'))) or (args.force):
         # analyze the rest of the samples
         nsample  = len(cdf.columns)
         all_gofr = np.zeros([nsample,len(myy)])
