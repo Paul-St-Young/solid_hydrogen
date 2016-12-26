@@ -63,7 +63,7 @@ def collect_raw_data(paths,skip_failed=False,db_name='twists.json',verbose=True)
         data = []
         for qmc_input in igroup_dict.keys():
             entry = na.scalars_from_input(os.path.join(path,qmc_input)
-                    ,skip_failed=skip_failed,igroup=igroup_dict[qmc_input]) 
+                ,skip_failed=skip_failed,igroup=igroup_dict[qmc_input]) 
             data.append(entry)
         # end for
         df = pd.DataFrame([entry for sublist in data for entry in sublist])
@@ -161,6 +161,7 @@ if __name__ == '__main__':
     parser.add_argument('-rid','--rundir_id', type=str,default='dmc_444',help='run directory identifier, default dmc_444')
     parser.add_argument('-r','--only_real', action='store_true', help='only use real twists out of 64 twists')
     parser.add_argument('-v','--verbose', action='store_true', help='report progress')
+    parser.add_argument('-skipf','--skip_failed', action='store_true', help='skip failed runs')
     args = parser.parse_args()
 
     # parsed inputs
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     paths = out.split('\n')[:-1]
 
     # collect raw data in local directories
-    failed = collect_raw_data(paths)
+    failed = collect_raw_data(paths,skip_failed=args.skip_failed)
     if failed:
         raise NotImplementedError('raw data collection failed')
     # end if
