@@ -210,7 +210,7 @@ def all_lines_with_tag(mm,tag,nline_max):
 # end def all_lines_with_tag
 
 import struct
-def available_structures(pw_out,nstruct_max=2000,natom_max=1000,ndim=3
+def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
         ,variable_cell=False):
     """ find all available structures in a pwscf output """
     fhandle = open(pw_out,'r+')

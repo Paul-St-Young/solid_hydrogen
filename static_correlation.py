@@ -95,14 +95,14 @@ if __name__ == '__main__':
     parser.add_argument('config_json', type=str, help='json file containing axes and pos of atomic configurations')
     parser.add_argument('-rws','--r_wigner_seizs', type=float, default=None, required=False, help='Wigner-Seitz radius, used to cutoff g(r)')
     parser.add_argument('-p','--plot', action='store_true', help='plot data')
+    parser.add_argument('-s','--save', action='store_true', help='save plot')
     parser.add_argument('-f','--force', action='store_true', help='force analysis, ignore gofr.dat and sofk.dat in local directory')
     args = parser.parse_args()
 
     # read a list of configurations (axes and pos)
     #cdf = pd.read_json('i4-pbe-4800-48-solid_configs.json')
     cdf = pd.read_json(args.config_json)
-    # plot final results
-    plot = args.plot
+    prefix = args.config_json.replace('.json','')
 
     # get the first sample
     istart = 0
@@ -153,7 +153,7 @@ if __name__ == '__main__':
         sofk = np.loadtxt('sofk.dat')
     # end if
 
-    if plot:
+    if args.plot:
         import matplotlib.pyplot as plt
         fig,ax = plt.subplots(1,2)
 
@@ -168,6 +168,9 @@ if __name__ == '__main__':
         ax[1].get_yaxis().tick_right()
         ax[1].get_yaxis().set_label_position('right')
         plot_sofk(ax[1],legal_kvecs,sofk)
+        if args.save:
+            fig.savefig(prefix + '.png',dpi=200)
+        # end if
         plt.show()
     # end if
 
