@@ -79,7 +79,7 @@ def collect_raw_data(paths,skip_failed=False,db_name='twists.json',verbose=True)
     return failed
 # end def collect_raw_data
 
-def average_twists(paths,src_db_name='twists.json',tar_db_name='scalars.json',manual_twists=None,verbose=True):
+def average_twists(paths,src_db_name='twists.json',tar_db_name='scalars.json',manual_twists=None,verbose=True,skip_failed=False):
     failed = False
 
     for path in paths:
@@ -95,7 +95,13 @@ def average_twists(paths,src_db_name='twists.json',tar_db_name='scalars.json',ma
         source_json = os.path.join(path,src_db_name)
         # load local data
         if not os.path.exists(source_json):
-            raise IOError('cannot locate %s, is it collected?' % source_json)
+            msg = 'cannot locate %s, is it collected?' % source_json
+            if skip_failed:
+                print msg
+                continue
+            else:
+                raise IOError(msg)
+            # end if
         # end if
         df_all = pd.read_json(source_json)
 
@@ -186,15 +192,15 @@ if __name__ == '__main__':
 
     # collect raw data in local directories
     failed = collect_raw_data(paths,skip_failed=args.skip_failed)
-    if failed:
+    if failed and not args.skip_failed:
         raise NotImplementedError('raw data collection failed')
     # end if
 
     # store twist-averaged data in local directories
     if only_real:
-        failed = average_twists(paths,tar_db_name=sfile_name,manual_twists=[0,2,8,10,32,34,40,42])
+        failed = average_twists(paths,tar_db_name=sfile_name,manual_twists=[0,2,8,10,32,34,40,42],skip_failed=args.skip_failed)
     else: # average over all twists
-        failed = average_twists(paths,tar_db_name=sfile_name)
+        failed = average_twists(paths,tar_db_name=sfile_name,skip_failed=args.skip_failed)
     # end if
     if failed:
         raise NotImplementedError('twist average failed')
@@ -207,7 +213,13 @@ if __name__ == '__main__':
         print "analyzing %s" % path
         jfile = os.path.join(path,sfile_name)
         if not os.path.exists(jfile):
-            raise IOError('failed to find %s' % jfile)
+            msg = 'failed to find %s' % jfile
+            if args.skip_failed:
+                print msg
+                continue
+            else:
+                raise IOError(msg)
+            # end if
         # end if
         local_scalars = pd.read_json(jfile)
         extrap_scalars= dda.process_dmc_data_frame(local_scalars)
