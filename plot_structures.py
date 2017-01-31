@@ -98,6 +98,58 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
 
+def plot_against_structs(ax,df,xcol,ycol,func):
+    """df must have columns ["struct","func","press"] + [xcol,ycol]. 
+    only one functional 'func' will be selected, then plot ycol vs. xcol """
+    
+    xmean = xcol + '_mean'
+    xerror= xcol + '_error'
+    ymean = ycol + '_mean'
+    yerror= ycol + '_error'
+    
+    for sname in df['struct'].unique():
+        sel = (df['struct'] == sname) & (df['func']==func)
+
+        mydf = df.loc[sel,['press',xmean,xerror,ymean,yerror]]
+        mydf = mydf.sort_values(['press'])
+
+        lines = ax.errorbar(mydf[xmean]*gpa,mydf[ymean]
+            ,xerr=mydf[xerror],yerr=mydf[yerror]
+            ,marker=struct_markers[sname],c=struct_colors[sname]
+            ,ls='-',label=sname)
+    # end for sname
+
+    ax.legend(loc='lower right')
+    
+    return lines
+# end def plot_against_structs
+
+def plot_against_funcs(ax,df,xcol,ycol,sname):
+    """df must have columns ["struct","func","press"] + [xcol,ycol]. 
+    only one structure 'sname' will be selected, then plot ycol vs. xcol """
+    
+    xmean = xcol + '_mean'
+    xerror= xcol + '_error'
+    ymean = ycol + '_mean'
+    yerror= ycol + '_error'
+    
+    for func in df['func'].unique():
+        sel = (df['struct'] == sname) & (df['func']==func)
+
+        mydf = df.loc[sel,['press',xmean,xerror,ymean,yerror]]
+        mydf = mydf.sort_values(['press'])
+
+        lines = ax.errorbar(mydf[xmean]*gpa,mydf[ymean]
+            ,xerr=mydf[xerror],yerr=mydf[yerror]
+            ,marker=struct_markers[sname],c='black'
+            ,ls=func_lines[func],label=sname)
+    # end for sname
+
+    ax.legend(loc='lower right')
+    
+    return lines
+# end def plot_against_funcs
+
 def interpret_subdir(subdir):
     """ find (struct,func,press) from subdir of form cmca4-pbe-2000 """
     tokens = subdir.split('-')
