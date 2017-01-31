@@ -119,9 +119,9 @@ def plot_against_structs(ax,df,xcol,ycol,func):
             ,ls='-',label=sname)
     # end for sname
 
-    ax.legend(loc='lower right')
+    line_leg = ax.legend(loc='lower right')
     
-    return lines
+    return lines,line_leg
 # end def plot_against_structs
 
 def plot_against_funcs(ax,df,xcol,ycol,sname):
@@ -142,12 +142,12 @@ def plot_against_funcs(ax,df,xcol,ycol,sname):
         lines = ax.errorbar(mydf[xmean]*gpa,mydf[ymean]
             ,xerr=mydf[xerror],yerr=mydf[yerror]
             ,marker=struct_markers[sname],c='black'
-            ,ls=func_lines[func],label=sname)
+            ,ls=func_lines[func],label=func)
     # end for sname
 
-    ax.legend(loc='lower right')
+    line_leg = ax.legend(loc='lower right')
     
-    return lines
+    return lines,line_leg
 # end def plot_against_funcs
 
 def interpret_subdir(subdir):

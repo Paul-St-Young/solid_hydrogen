@@ -108,18 +108,18 @@ def retrieve_system(h5_file):
 
 def epl_val_err(epl_out):
     """ epl_out is expected to be an output of energy.pl from QMCPACK
-     It simply has to have the format {name:22c}={val:17.3f} +/- {err:26.4f}.
-     rows with forces will be recognized with 'force_prefix' """
+    It simply has to have the format {name:22c}={val:17.3f} +/- {err:26.4f}.
+    rows with forces will be recognized with 'force_prefix' """
     tab = pd.read_table(epl_out,delimiter='=',names=['name','text'])
     tab = tab.dropna()
 
     def text2val(text):
-	tokens = text.split('+/-')
-	if len(tokens) != 2:
-	    raise NotImplementedError('unrecognized value '+text)
-	# end if
-	val,err = map(float,tokens)
-	return pd.Series({'val':val,'err':err})
+        tokens = text.split('+/-')
+        if len(tokens) != 2:
+            raise NotImplementedError('unrecognized value '+text)
+        # end if
+        val,err = map(float,tokens)
+        return pd.Series({'val':val,'err':err})
     # end def text2val
 
     df = pd.concat( [tab.drop('text',axis=1),tab['text'].apply(text2val)],axis=1 )
