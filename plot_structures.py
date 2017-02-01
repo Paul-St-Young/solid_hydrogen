@@ -107,16 +107,18 @@ def plot_against_structs(ax,df,xcol,ycol,func):
     ymean = ycol + '_mean'
     yerror= ycol + '_error'
     
+    lines = []
     for sname in df['struct'].unique():
         sel = (df['struct'] == sname) & (df['func']==func)
 
         mydf = df.loc[sel,['press',xmean,xerror,ymean,yerror]]
         mydf = mydf.sort_values(['press'])
 
-        lines = ax.errorbar(mydf[xmean]*gpa,mydf[ymean]
+        line = ax.errorbar(mydf[xmean],mydf[ymean]
             ,xerr=mydf[xerror],yerr=mydf[yerror]
             ,marker=struct_markers[sname],c=struct_colors[sname]
             ,ls='-',label=sname)
+        lines.append(line)
     # end for sname
 
     line_leg = ax.legend(loc='lower right')
@@ -133,16 +135,18 @@ def plot_against_funcs(ax,df,xcol,ycol,sname):
     ymean = ycol + '_mean'
     yerror= ycol + '_error'
     
+    lines = []
     for func in df['func'].unique():
         sel = (df['struct'] == sname) & (df['func']==func)
 
         mydf = df.loc[sel,['press',xmean,xerror,ymean,yerror]]
         mydf = mydf.sort_values(['press'])
 
-        lines = ax.errorbar(mydf[xmean]*gpa,mydf[ymean]
+        line = ax.errorbar(mydf[xmean],mydf[ymean]
             ,xerr=mydf[xerror],yerr=mydf[yerror]
             ,marker=struct_markers[sname],c='black'
             ,ls=func_lines[func],label=func)
+        lines.append(line)
     # end for sname
 
     line_leg = ax.legend(loc='lower right')
@@ -164,3 +168,8 @@ def interpret_subdir(subdir):
     press = int(press)
     return struct,func,press
 # end def
+
+import numpy as np
+def vol2rs(vol):
+    return (3.*vol/(4*np.pi))**(1./3)
+# end def vol2rs
