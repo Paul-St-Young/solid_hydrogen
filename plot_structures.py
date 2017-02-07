@@ -5,7 +5,9 @@ struct_markers = {
     'c2c':'d',
     'p6122':'h',
     'i41amd':'*',
-    'pc':'.'
+    'pc':'.',
+    'c2c-12':'+',
+    'p63m':'x'
 }
 
 func_lines = {
@@ -20,7 +22,9 @@ struct_colors = {
     'c2c':'b',
     'p6122':'black',
     'i41amd':'gray',
-    'pc':'y'
+    'pc':'y',
+    'c2c-12':'g',
+    'p63m':'violet'
 }
 
 bohr = 0.52917721067e-10 # m
@@ -100,7 +104,8 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
 
 def plot_against_structs(ax,df,xcol,ycol,func):
     """df must have columns ["struct","func","press"] + [xcol,ycol]. 
-    only one functional 'func' will be selected, then plot ycol vs. xcol """
+    only one functional 'func' will be selected, then plot ycol vs. xcol
+    return: lines, line_leg """
     
     xmean = xcol + '_mean'
     xerror= xcol + '_error'
@@ -173,3 +178,6 @@ import numpy as np
 def vol2rs(vol):
     return (3.*vol/(4*np.pi))**(1./3)
 # end def vol2rs
+def rs2vol(rs):
+    return 4*np.pi/3*rs**3.
+# end def
