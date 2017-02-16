@@ -54,16 +54,26 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     return legal_kvecs, sk_arr
 # end def
 
-def shell_avg_sofk(legal_kvecs,sk_arr):
-    kmags  = [np.linalg.norm(kvec) for kvec in legal_kvecs]
-     
-    # average S(k) if multiple k-vectors have the same magnitude
-    unique_kmags = np.unique(kmags)
-    unique_sk    = np.zeros(len(unique_kmags))
-    for iukmag in range(len(unique_kmags)):
-	kmag    = unique_kmags[iukmag]
-	idx2avg = np.where(kmags==kmag)
-	unique_sk[iukmag] = np.mean(sk_arr[idx2avg])
+def shell_avg_sofk(legal_kvecs,sk_arr,smear_fac=100):
+    """ average S(k) if multiple k-vectors have the same magnitude,
+     legal_kvecs.shape should be (Nk,Ndim)
+     sk_arr.shape should be (Nk) """
+
+    # determine similarity of k-vectors by converting magnitude to int
+    kmags = np.linalg.norm(legal_kvecs,axis=1)
+    kids  = map(int,map(round,kmags*smear_fac))
+
+    # pick unique kshells according to index
+    unique_kid   = np.unique(kids)
+
+    # loop over each shell and average
+    unique_kmags = np.zeros(len(unique_kid))
+    unique_sk    = np.zeros(len(unique_kid))
+    for iukmag in range(len(unique_kid)):
+        kid = unique_kid[iukmag] # shell ID
+        sel = kids == kid # select this shell
+        unique_sk[iukmag] = np.mean(sk_arr[sel])
+        unique_kmags[iukmag] = float(kid)/smear_fac
     # end for iukmag
     return unique_kmags,unique_sk
 # end def 
