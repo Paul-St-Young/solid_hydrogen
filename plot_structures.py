@@ -102,7 +102,7 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
 
-def plot_against_structs(ax,df,xcol,ycol,func):
+def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[]):
     """df must have columns ["struct","func","press"] + [xcol,ycol]. 
     only one functional 'func' will be selected, then plot ycol vs. xcol
     return: lines, line_leg """
@@ -111,18 +111,31 @@ def plot_against_structs(ax,df,xcol,ycol,func):
     xerror= xcol + '_error'
     ymean = ycol + '_mean'
     yerror= ycol + '_error'
+
+    pdf = df
     
     lines = []
-    for sname in df['struct'].unique():
-        sel = (df['struct'] == sname) & (df['func']==func)
 
-        mydf = df.loc[sel,['press',xmean,xerror,ymean,yerror]]
+    if len(slist) == 0:
+        slist = pdf['struct'].unique()
+    # end if
+
+    for sname in slist:
+        sel = (pdf['struct'] == sname) & (pdf['func']==func)
+
+        mydf = pdf.loc[sel,['press',xcol,ycol,xmean,xerror,ymean,yerror]]
         mydf = mydf.sort_values(['press'])
 
-        line = ax.errorbar(mydf[xmean],mydf[ymean]
-            ,xerr=mydf[xerror],yerr=mydf[yerror]
-            ,marker=struct_markers[sname],c=struct_colors[sname]
-            ,ls='-',label=sname)
+        if no_error:
+            line = ax.plot(mydf[xcol],mydf[ycol]
+                ,marker=struct_markers[sname],c=struct_colors[sname]
+                ,ls='-',label=sname)
+        else:
+            line = ax.errorbar(mydf[xmean],mydf[ymean]
+                ,xerr=mydf[xerror],yerr=mydf[yerror]
+                ,marker=struct_markers[sname],c=struct_colors[sname]
+                ,ls='-',label=sname)
+        # end if
         lines.append(line)
     # end for sname
 
@@ -168,7 +181,7 @@ def interpret_subdir(subdir):
         struct,func1,func2,press = tokens
         func = '-'.join([func1,func2])
     else:
-        raise RuntimeError('cannot interpret %s'%path)
+        raise RuntimeError('cannot interpret %s'%subdir)
     # end if
     press = int(press)
     return struct,func,press
