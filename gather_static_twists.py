@@ -197,8 +197,10 @@ if __name__ == '__main__':
     # end if
 
     # store twist-averaged data in local directories
+    mol_manual_twists = [0,2,8,10,32,34,40,42] # for 64 twists
+    i4_manual_twists  = [0,4,32,36,256,260,288,292] # for 512 twists
     if only_real:
-        failed = average_twists(paths,tar_db_name=sfile_name,manual_twists=[0,2,8,10,32,34,40,42],skip_failed=args.skip_failed)
+        failed = average_twists(paths,tar_db_name=sfile_name,manual_twists=mol_manual_twists,skip_failed=args.skip_failed)
     else: # average over all twists
         failed = average_twists(paths,tar_db_name=sfile_name,skip_failed=args.skip_failed)
     # end if
