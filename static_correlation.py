@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pymatgen as mg
 
-def gofr_snapshot(axes,pos,rmax,rmin=1,nbin=40,gofr_norm=None):
+def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     """ calculate the pair correlation function of a snapshot of a crystal structure given the 'axes' of the simulation cell and the positions ('pos') of atoms inside the cell.
     'rmax' is the maximum pair distance to histogram. 'rmin','rmax', and 'nbin' are passed to numpy.histogram to generate the results.
     return 3 lists: r, g(r), and g(r) normalization.
@@ -18,7 +18,7 @@ def gofr_snapshot(axes,pos,rmax,rmin=1,nbin=40,gofr_norm=None):
     i_triu = np.triu_indices(nptcl,m=nptcl,k=1)
     pair_dists = dtable[i_triu]
 
-    counts,ticks = np.histogram(pair_dists,range=(rmin,rws),bins=nbin)
+    counts,ticks = np.histogram(pair_dists,range=(rmin,rmax),bins=nbin)
     myx = (ticks[:-1] + ticks[1:])/2.
     dx  = myx[1] - myx[0]
     
@@ -78,6 +78,14 @@ def shell_avg_sofk(legal_kvecs,sk_arr,smear_fac=100):
     return unique_kmags,unique_sk
 # end def 
 
+def gr2sk(k,grx,gry,rho):
+    """ return spherical S(k) at given 'k' value, assuming spherical g(r)=(grx,gry)
+      'rho' is density N/Vol. """ 
+    integrand = grx**2. * (gry-1.0) * np.sin(k*grx)/(k*grx)
+    val = 4*np.pi*rho*sum(integrand*(grx[1]-grx[0]))
+    return 1.+val
+# end def
+
 def plot_sofk(ax,legal_kvecs,sk_arr):
     ax.set_xlabel('k (1/bohr)')
     ax.set_ylabel('S(k)')
@@ -104,6 +112,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='calculate g(r) and S(k) from a database of crystal structures')
     parser.add_argument('config_json', type=str, help='json file containing axes and pos of atomic configurations')
     parser.add_argument('-rws','--r_wigner_seizs', type=float, default=None, required=False, help='Wigner-Seitz radius, used to cutoff g(r)')
+    parser.add_argument('-is','--istart', type=int, default=0, help='index of first sample')
     parser.add_argument('-p','--plot', action='store_true', help='plot data')
     parser.add_argument('-s','--save', action='store_true', help='save plot')
     parser.add_argument('-f','--force', action='store_true', help='force analysis, ignore gofr.dat and sofk.dat in local directory')
@@ -115,7 +124,7 @@ if __name__ == '__main__':
     prefix = args.config_json.replace('.json','')
 
     # get the first sample
-    istart = 0
+    istart = args.istart
     entry = cdf[istart]
     axes = entry['axes']
     pos  = entry['pos']
