@@ -30,7 +30,7 @@ def value_by_label_sep_pos(mm,label,sep=b'=',pos=-1,dtype=float,from_start=False
 
 # end def value_by_label_sep_pos
 
-def read_forces(scf_out,ndim=3,which='local'):
+def read_forces(scf_out,ndim=3,which='total'):
     """ read the forces in a pwscf output, assume only one force block
      'which' decides which block of forces to read, choices are:
          ['total', 'non-local', 'local', 'ionic', 'core', 'Hubbard', 'scf']
@@ -69,7 +69,11 @@ def read_forces(scf_out,ndim=3,which='local'):
     if begin_idx == -1:
         raise RuntimeError('cannot locate %s'%begin_tag)
     elif end_idx == -1:
-        raise RuntimeError('cannot locate %s'%end_tag)
+        # maybe verbosity='low'
+        end_idx = mm.find('Total force =')
+        if end_idx == -1:
+            raise RuntimeError('cannot locate %s'%end_tag)
+        # end if
     # end if
     force_block = mm[begin_idx:end_idx]
     
