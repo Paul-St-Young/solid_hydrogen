@@ -30,6 +30,17 @@ def value_by_label_sep_pos(mm,label,sep=b'=',pos=-1,dtype=float,from_start=False
 
 # end def value_by_label_sep_pos
 
+def read_first_energy(scf_out):
+    with open(scf_out,'r+') as f:
+        mm = mmap(f.fileno(),0)
+    # end with
+    idx = mm.find('!')
+    mm.seek(idx)
+    eline = mm.readline()
+    energy = float( eline.split()[-2] )
+    return energy
+# end def
+
 def read_forces(scf_out,ndim=3,which='total'):
     """ read the forces in a pwscf output, assume only one force block
      'which' decides which block of forces to read, choices are:
@@ -393,3 +404,84 @@ def md_traces(md_out,nstep=2000):
     fhandle.close()
     return data
 # end def md_traces
+
+def pos_in_box(pos,axes):
+    """ return atomic positions 'pos' in simulation box specified by 'axes' """
+    # convert positions to fractional coordinates
+    inv_axes = np.linalg.inv(axes)
+    upos = np.dot(pos,inv_axes)
+    upos -= np.floor(upos)
+
+    # convert back
+    newpos = np.dot(upos,axes)
+    return newpos
+# end def
+
+def input_structure(scf_in,put_in_box=True):
+    ndim = 3 # assume 3 dimensions
+    with open(scf_in,'r+') as f:
+        mm = mmap(f.fileno(),0)
+    # end with
+
+    ntyp = value_by_label_sep_pos(mm,'ntyp',dtype=int)
+    if ntyp != 1:
+        raise NotImplementedError('only support 1 type of atom for now')
+    # end if
+
+    # read lattice
+    mm.seek(0)
+    idx = mm.find('ibrav')
+    mm.seek(idx)
+    ibrav_line = mm.readline()
+    ibrav = int(ibrav_line.split('=')[-1])
+    if ibrav != 0:
+        raise NotImplementedError('only ibrav = 0 is supported')
+    # end if
+    idx = mm.find('CELL_PARAMETERS')
+    mm.seek(idx)
+    header = mm.readline()
+    unit = header.split()[-1]
+    axes = np.zeros([ndim,ndim])
+    for idim in range(ndim):
+        line = mm.readline()
+        axes[idim,:] = map(float,line.split())
+    # end for
+    cell = {'unit':unit,'axes':axes}
+
+    # read atomic positions
+    mm.seek(0) # rewind
+    idx = mm.find('nat')
+    mm.seek(idx)
+    nat_line = mm.readline()
+    nat = int(nat_line.split('=')[-1])
+
+    idx = mm.find('ATOMIC_POSITIONS')
+    mm.seek(idx)
+    header = mm.readline()
+    unit = header.split()[-1]
+
+    pos = np.zeros([nat,ndim])
+    for iat in range(nat):
+        line = mm.readline()
+        pos[iat,:] = map(float,line.split()[-3:])
+    # end for iat
+
+    try:
+        line = mm.readline()
+        float(line.split()[-3:])
+        raise RuntimeError('next lines looks like positions too!\n%s'%line)
+    except:
+        pass # expect to see an empty line
+    # end try
+    if put_in_box:
+	atpos = {'pos_unit':unit,'pos':pos_in_box(np.array(pos),np.array(axes)).tolist()}
+    else:
+	atpos = {'pos_unit':unit,'pos':pos}
+    # end if
+
+    entry = {'infile':scf_in}
+    entry.update(cell)
+    entry.update(atpos)
+
+    return entry
+# end def
