@@ -485,3 +485,42 @@ def input_structure(scf_in,put_in_box=True):
 
     return entry
 # end def
+
+def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4096):
+  """ read all stress tensors from a quantum espresso output
+  Args:
+    pw_out (str): output filename
+    stress_tag (str): tag at the beginning of each text block containing the stress tensor
+    nstruct_max (int): maximum number of blocks to look for 
+  Returns:
+    (list[np.array],list[np.array]): (au_mat_list,kbar_mat_list), lists of stress tensors read 
+  """
+  with open(pw_out,'r+') as f:
+    mm = mmap(f.fileno(),0)
+  # end with
+  au_mat_list   = []
+  kbar_mat_list = []
+  stress_starts = all_lines_with_tag(mm,stress_tag.encode(),nstruct_max)
+  for idx in stress_starts:
+    mm.seek(idx)
+    header = mm.readline()
+    tokens = header.split()
+    # make sure we are about to read the correct block of text
+    assert tokens[2].strip('()') == 'Ry/bohr**3'
+    assert tokens[3].strip('()') == 'kbar'
+    press = float(tokens[5].strip('P=')) # average pressure in kbar, used for checking only
+    au_mat   = [] # pressure in Ry/bohr**3
+    kbar_mat = [] # pressure in kbar
+    for idim in range(3): # assume 3 dimensions
+      line = mm.readline()
+      tokens = line.split()
+      assert len(tokens) == 6
+      au_mat.append(tokens[:3])
+      kbar_mat.append(tokens[3:])
+    # end for idim
+    kbar_mat = np.array(kbar_mat,dtype=float)
+    assert np.isclose(np.diagonal(kbar_mat).mean(),press)
+    au_mat_list.append(np.array(au_mat,dtype=float))
+  # end for idx
+  return au_mat_list,kbar_mat_list
+# end def read_stress
