@@ -296,12 +296,18 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
         if variable_cell: # read cell parameters
             cell_idx = axes_starts[istruct]
             mm.seek(cell_idx)
-            mm.readline() # skip tag line
+            tag_line = mm.readline() # get unit from tag line
+            axes_unit = tag_line.split('(')[-1].replace(')','')
+            if not axes_unit.startswith('alat'):
+              raise RuntimeError('unknown CELL_PARAMETERS unit %s'%axes_unit)
+            # end if
+            alat = float(axes_unit.split('=')[-1])
             
             axes_text = ''
             for idim in range(ndim):
-                axes[idim,:] = mm.readline().split()
+              axes[idim,:] = mm.readline().split()
             # end for idim
+            axes *= alat
         # end if variable_cell
         
         all_axes[istruct,:,:] = axes
