@@ -70,7 +70,7 @@ def read_forces(scf_out,ndim=3,which='total'):
     mm = mmap(fhandle.fileno(),0)
     
     natom = value_by_label_sep_pos(mm,'number of atoms',dtype=int)
-    
+
     # locate force block
     begin_tag = begin_tag_dict[which]
     end_tag   = end_tag_dict[which]
@@ -285,7 +285,6 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
     # end if
     
     bohr = 0.52917721067 # angstrom (CODATA 2014)
-    angstrom = False # assume bohr
     nstructs = max(naxes,npos)
     all_axes = np.zeros([nstructs,ndim,ndim])
     all_pos  = np.zeros([nstructs,natom,ndim])
@@ -309,9 +308,11 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
         tag_line = mm.readline()
         unit_text= tag_line.split()[-1]
         if 'angstrom' in unit_text:
-            angstrom = True
+            au2unit = 1./bohr
         elif 'bohr' in unit_text:
-            angstrom = False
+            au2unit = 1.
+        elif 'alat' in unit_text:
+            au2unit = alat
         elif 'crystal' in unit_text:
             raise NotImplementedError('crsytal units')
         else:
@@ -325,9 +326,7 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
             try:
                 name,xpos,ypos,zpos = struct.unpack('4sx14sx14sx13s',pos_text)
                 all_pos[istruct,iatom,:] = [xpos,ypos,zpos]
-                if angstrom:
-                    all_pos[istruct,iatom,:] /= bohr
-                # end if
+                all_pos[istruct,iatom,:] *= au2unit
             except:
                 print 'failed to read (istruct,iatom)=(%d,%d)' % (istruct,iatom)
             # end try
@@ -484,7 +483,7 @@ def input_structure(scf_in,put_in_box=True):
     entry.update(atpos)
 
     return entry
-# end def
+# end def input_structure
 
 def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4096):
   """ read all stress tensors from a quantum espresso output
@@ -508,7 +507,8 @@ def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4
     # make sure we are about to read the correct block of text
     assert tokens[2].strip('()') == 'Ry/bohr**3'
     assert tokens[3].strip('()') == 'kbar'
-    press = float(tokens[5].strip('P=')) # average pressure in kbar, used for checking only
+    idx = header.find('P=')
+    press = float(header[idx:].strip('P=')) # average pressure in kbar, used for checking only
     au_mat   = [] # pressure in Ry/bohr**3
     kbar_mat = [] # pressure in kbar
     for idim in range(3): # assume 3 dimensions
@@ -520,7 +520,87 @@ def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4
     # end for idim
     kbar_mat = np.array(kbar_mat,dtype=float)
     assert np.isclose(np.diagonal(kbar_mat).mean(),press)
+    kbar_mat_list.append(kbar_mat)
     au_mat_list.append(np.array(au_mat,dtype=float))
   # end for idx
   return au_mat_list,kbar_mat_list
 # end def read_stress
+
+def vc_relax_output(fout):
+  all_axes,all_pos = available_structures(fout,variable_cell=True)
+  amats,kmats      = read_stress(fout)
+  data = []
+  for i in range(len(all_axes)):
+    axes = all_axes[i]
+    pos  = all_pos[i]
+    entry = {'istep':i,'axes':axes,'pos':pos,
+      'amat':amats[i],'kmat':kmats[i]}
+    data.append(entry)
+  # end for i
+  return data
+# end def vc_relax_output
+
+def relax_forces(fout,nstruct_max=4096):
+  """ read all force blocks from a relax output (may also work on md output) 
+  Args:
+    fout (str): quantum espresso output, expected scf='relax'
+    nstruct_max (int): maximum number of force blocks to be read
+  Return:
+    np.array: shape (nstep,natom,ndim), forces on atoms at each optimization step
+  """
+
+  nheader_before_forces = 2
+  """ e.g.      Forces acting on atoms (Ry/au): # header line 1
+                                                # header line 2
+           atom    1 type  1   force =    -0.00000000   -0.00012993   -0.00008628
+  """
+
+  # get a memory map of the file
+  fhandle = open(fout,'r+')
+  mm = mmap(fhandle.fileno(),0)
+
+  # decide on array size
+  ndim = 3 # !!!! assume 3 dimensions 
+  natom = value_by_label_sep_pos(mm,'number of atoms',dtype=int)
+  idx_list = all_lines_with_tag(mm,'Forces acting on atoms (Ry/au)',nstruct_max)
+  nstep = len(idx_list)
+
+  forces = np.zeros([nstep,natom,ndim])
+
+  # go through each force block
+  for istep in range(nstep):
+    mm.seek( idx_list[istep] )
+    for iheader in range(nheader_before_forces):
+      mm.readline() # skip headers
+    for iatom in range(natom):
+      line = mm.readline()
+      tokens = line.split()
+      if len(tokens) != 9:
+        raise RuntimeError('invalid force block %s' % line)
+      # end if
+      forces[istep,iatom,:] = map(float,tokens[-3:])
+    # end for iatom
+  # end for istep
+
+  # check that all forces have been read
+  line = mm.readline()
+  if line.startswith('atom'):
+    raise RuntimeError('extra force line %s before memory idx %d'%(line,mm.tell()))
+  # end if
+
+  return forces
+# end def relax_forces
+
+def relax_output(fout):
+  all_axes,all_pos = available_structures(fout,variable_cell=False)
+  forces = relax_forces(fout)
+  data = []
+  assert len(forces) == len(all_axes)
+  for i in range(len(all_axes)):
+    axes = all_axes[i]
+    pos  = all_pos[i]
+    entry = {'istep':i,'axes':axes,'pos':pos,'forces':forces[i]}
+    data.append(entry)
+  # end for i
+  return data
+# end def relax_output
