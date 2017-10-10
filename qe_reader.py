@@ -243,6 +243,9 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
     if (naxes != 0) and (not variable_cell):
         raise NotImplementedError('CELL_PARAMETERS found, are you sure this is not a variable cell run?')
     # end if
+
+    # crystal coords
+    crystal_pos = False
     
     # locate all atomic cd positions
     pos_tag    = 'ATOMIC_POSITIONS'.encode()
@@ -307,6 +310,7 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
         mm.seek(pos_idx)
         tag_line = mm.readline()
         unit_text= tag_line.split()[-1]
+        au2unit = 1. # !!!! assume bohr
         if 'angstrom' in unit_text:
             au2unit = 1./bohr
         elif 'bohr' in unit_text:
@@ -314,7 +318,7 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
         elif 'alat' in unit_text:
             au2unit = alat
         elif 'crystal' in unit_text:
-            raise NotImplementedError('crsytal units')
+            crystal_pos = True
         else:
             raise NotImplementedError('what unit is this? %s' % unit_text)
         # end if
@@ -324,11 +328,13 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
             name = line.split()[0]
             pos_text = line.strip(name)
             try:
-                name,xpos,ypos,zpos = struct.unpack('4sx14sx14sx13s',pos_text)
-                all_pos[istruct,iatom,:] = [xpos,ypos,zpos]
-                all_pos[istruct,iatom,:] *= au2unit
+              name,xpos,ypos,zpos = struct.unpack('4sx14sx14sx13s',pos_text)
+              pos = np.array([xpos,ypos,zpos],dtype=float) * au2unit
+              if crystal_pos:
+                pos = np.dot(pos,axes)
+              all_pos[istruct,iatom,:] = pos
             except:
-                print 'failed to read (istruct,iatom)=(%d,%d)' % (istruct,iatom)
+              print 'failed to read (istruct,iatom)=(%d,%d)' % (istruct,iatom)
             # end try
         # end for iatom
         
