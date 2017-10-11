@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 # define some static values
 struct_markers = {
     'cmca4':'v',
@@ -28,10 +30,11 @@ struct_colors = {
 }
 
 bohr = 0.52917721067e-10 # m
-ha   = 27.21138602 # ev
-joule= 6.241509126e18 # ev
+ha   = 27.21138602       # ev
+joule= 6.241509126e18    # ev
 
 gpa = ha/joule/bohr**3./1e9
+mev = ha*1000.
 
 def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,draw_line=True
     ,candidates=['cmca4','cmca12','c2c'],funcs=['pbe']):
@@ -172,12 +175,12 @@ def plot_against_funcs(ax,df,xcol,ycol,sname):
     return lines,line_leg
 # end def plot_against_funcs
 
-def interpret_subdir(subdir):
+def interpret_subdir(subdir,sep='_'):
     """ find (struct,func,press) from subdir of form cmca4-pbe-2000 """
-    tokens = subdir.split('-')
+    tokens = subdir.split(sep)
     if len(tokens) == 3:
         struct,func,press = tokens
-    elif len(tokens) == 4:
+    elif len(tokens) == 4: # extra 'if' needed when sep='-' and vdw-df
         struct,func1,func2,press = tokens
         func = '-'.join([func1,func2])
     else:
@@ -187,7 +190,10 @@ def interpret_subdir(subdir):
     return struct,func,press
 # end def
 
-import numpy as np
+def sfp_label(subdir,sep='_'):
+  struct,func,press = interpret_subdir(subdir,sep)
+  return pd.Series({'struct':struct,'func':func,'press':press})
+
 def vol2rs(vol):
     return (3.*vol/(4*np.pi))**(1./3)
 # end def vol2rs
