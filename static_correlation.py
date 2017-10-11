@@ -23,12 +23,40 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     dx  = myx[1] - myx[0]
     
     if gofr_norm is None:
-        gofr_norm = 4*np.pi*myx**2.*dx * nptcl*(nptcl-1)/2./struct.volume
+        # gofr_norm = 4*np.pi*myx**2.*dx * nptcl*(nptcl-1)/2./struct.volume
+        gofr_norm = 4*np.pi*myx**2.*dx *nptcl**2./struct.volume/2.
     # end if
     myy = counts/gofr_norm
     
     return myx,myy,gofr_norm
 # end def 
+
+def get_dimers(sep_max,axes,pos,sep_min=0.0):
+  """ get a list of pairs of particle indices, representing dimers with a separation between (sep_min,sep_max)
+  Args:
+    sep_max (float): maximum dimer separation.
+    axes (np.array): simulation cell axes.
+    pos (np.array):  particle coordinates.
+    sep_min (:obj:`float`, optional):  minimum dimer separation.
+  Returns:
+    list: a list of pairs of integers, denoting dimer pairs.
+  """
+
+  # get distance table
+  elem = ['H']*len(pos)
+  struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
+  dtable = struct.distance_matrix
+
+  # locate pairs
+  sel = (dtable < sep_max) & (dtable > sep_min)
+  pairs = np.argwhere(sel)
+
+  # remove permutation
+  usel  = pairs[:,0] < pairs[:,1]
+  upair = pairs[usel]
+  return upair
+# def get_dimers
+
 
 def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     """ calculate the structure factor of a snapshot of a crystal structure given 'axes' and 'pos' of atoms.
@@ -82,6 +110,12 @@ def gr2sk(k,grx,gry,rho):
     """ return spherical S(k) at given 'k' value, assuming spherical g(r)=(grx,gry)
       'rho' is density N/Vol. """ 
     integrand = grx**2. * (gry-1.0) * np.sin(k*grx)/(k*grx)
+    val = 4*np.pi*rho*sum(integrand*(grx[1]-grx[0]))
+    return 1.+val
+# end def
+
+def gr2compressibility(grx,gry,rho):
+    integrand = grx**2. * (gry-1.0)
     val = 4*np.pi*rho*sum(integrand*(grx[1]-grx[0]))
     return 1.+val
 # end def
