@@ -1,3 +1,4 @@
+# the one machine
 import os
 
 def apply_machine_settings(machine,run_dir,account='',nk=1):
