@@ -8,7 +8,16 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     """ calculate the pair correlation function of a snapshot of a crystal structure given the 'axes' of the simulation cell and the positions ('pos') of atoms inside the cell.
     'rmax' is the maximum pair distance to histogram. 'rmin','rmax', and 'nbin' are passed to numpy.histogram to generate the results.
     return 3 lists: r, g(r), and g(r) normalization.
-    Note: if a gofr_norm is given, then it will not be recalculated. This can save time if the simulation box does not change. """
+    Note: if a gofr_norm is given, then it will not be recalculated. This can save time if the simulation box does not change.
+    Args: 
+      axes (np.array): crystal lattice vectors.
+      pos (np.array):  positions of atoms. 
+      rmax (float): maximum distance to calculate g(r) to.
+      rmin (float,optional): minimum distance to calculate g(r) to, default is 0.
+      nbin (int,optional): number of bins, default is 40.
+      gofr_norm (float,optional): normalization factor for g(r), default is to recalculate.
+    Returns:
+      (np.array,np.array,float): (r,g(r),normalization) """
     elem = ['H']*len(pos)
     struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
     dtable = struct.distance_matrix
@@ -31,49 +40,30 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     return myx,myy,gofr_norm
 # end def 
 
-def get_dimers(sep_max,axes,pos,sep_min=0.0):
-  """ get a list of pairs of particle indices, representing dimers with a separation between (sep_min,sep_max)
-  Args:
-    sep_max (float): maximum dimer separation.
-    axes (np.array): simulation cell axes.
-    pos (np.array):  particle coordinates.
-    sep_min (:obj:`float`, optional):  minimum dimer separation.
-  Returns:
-    list: a list of pairs of integers, denoting dimer pairs.
-  """
-
-  # get distance table
-  elem = ['H']*len(pos)
-  struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
-  dtable = struct.distance_matrix
-
-  # locate pairs
-  sel = (dtable < sep_max) & (dtable > sep_min)
-  pairs = np.argwhere(sel)
-
-  # remove permutation
-  usel  = pairs[:,0] < pairs[:,1]
-  upair = pairs[usel]
-  return upair
-# def get_dimers
-
-
 def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     """ calculate the structure factor of a snapshot of a crystal structure given 'axes' and 'pos' of atoms.
     'nkmax' is the number of kvectors to include in each of x,y,z directions. 
-    return 2 lists: legal kvectors, and S(k) of each kvector """
+    return 2 lists: legal kvectors, and S(k) of each kvector 
+    Args: 
+      axes (np.array): crystal lattice vectors.
+      pos (np.array):  positions of atoms. 
+      nkmax (int,optional): maximum number of kvectors in each spatial dimension, default is 5. Used only if legal_kvecs is not give.
+      leagal_kvecs (np.array,optional): kvectors upon which S(k) is defined, default is to recalculate up to nkmax.
+    Returns:
+      (np.array,np.array): (kvecs,S(k))
+    """
     
     rho = lambda kvec: np.exp(1j* np.dot(pos,kvec) ).sum()
     elem = ['H']*len(pos)
-    
+
     struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
     reclat = struct.lattice.reciprocal_lattice
     
     if legal_kvecs is None:
-        import itertools
-        cube_pts = np.array( [a for a in itertools.product(
-            range(nkmax),repeat=3)] ) # 3 dimensions
-        legal_kvecs = np.dot(cube_pts,reclat.matrix)
+      import itertools
+      cube_pts = np.array( [a for a in itertools.product(
+          range(nkmax),repeat=3)] ) # 3 dimensions
+      legal_kvecs = np.dot(cube_pts,reclat.matrix)
     # end if
     
     sk_arr = np.array([(rho(kvec)*rho(-kvec)).real/len(pos) 
@@ -140,6 +130,33 @@ def cubic_rws(entry):
     # end if
     return alat/2
 # end def
+
+def get_dimers(sep_max,axes,pos,sep_min=0.0):
+  """ get a list of pairs of particle indices, representing dimers with a separation between (sep_min,sep_max)
+  Args:
+    sep_max (float): maximum dimer separation.
+    axes (np.array): simulation cell axes.
+    pos (np.array):  particle coordinates.
+    sep_min (:obj:`float`, optional):  minimum dimer separation.
+  Returns:
+    dict: a dictionary having keys ['upair','udist'], which store the pair indices and distances, respectively.
+  """
+
+  # get distance table
+  elem = ['H']*len(pos)
+  struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
+  dtable = struct.distance_matrix
+
+  # locate pairs
+  sel = (dtable < sep_max) & (dtable > sep_min)
+  pairs = np.argwhere(sel)
+
+  # remove permutation
+  usel  = pairs[:,0] < pairs[:,1]
+  upair = pairs[usel]
+  udist = dtable[sel][usel]
+  return {'upair':upair,'udist':udist}
+# def get_dimers
 
 if __name__ == '__main__':
     import argparse
