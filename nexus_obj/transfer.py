@@ -13,6 +13,7 @@ def nscf_input_from_scf_input(scf,scf_inputs,suffix='-scf'):
   """
   # copy scf inputs and make nscf inputs have unique identifier and path
   nscf_inputs = scf_inputs.copy()
+  nscf_inputs['input_type'] = 'nscf'
   nscf_inputs.identifier = scf_inputs.identifier.replace(suffix,'-nscf')
   nscf_inputs.path = scf_inputs.path.replace(suffix.strip('-'),'nscf')
 
