@@ -15,9 +15,18 @@ def collect_qmc_sims(qmc_sims):
   qmc_data = []
   for qmc in qmc_sims:
     qa = qmc.load_analyzer_image()
+    #qmc_data.append( qa.to_dict() ) # maximum recursion depth exceeded
+    
+    # select crucial data manually
+    meta_data = {
+      'wavefunction':qa['wavefunction'].to_dict(),
+      'input':qa['info']['input'].to_dict(),
+      'system':qa['info']['system'].to_dict()
+    }
     for iqmc in qa['qmc'].keys():
       entry = qa['qmc'][iqmc]['scalars'].to_dict()
       entry['path'] = qmc.path
+      entry.update(meta_data)
       qmc_data.append( entry )
     # end for
   # end for
