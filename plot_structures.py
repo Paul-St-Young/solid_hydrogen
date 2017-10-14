@@ -29,6 +29,12 @@ struct_colors = {
     'p63m':'violet'
 }
 
+space_group_id = {
+  'cmca':64,
+  'c2c':15,
+  'i41amd':141,
+}
+
 bohr = 0.52917721067e-10 # m
 ha   = 27.21138602       # ev
 joule= 6.241509126e18    # ev
@@ -105,46 +111,55 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
 
-def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[]):
-    """df must have columns ["struct","func","press"] + [xcol,ycol]. 
-    only one functional 'func' will be selected, then plot ycol vs. xcol
-    return: lines, line_leg """
-    
+def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[],lw=2,ms=10,alpha=1.0):
+  """df must have columns ["struct","func","press"] + [xcol,ycol]. 
+  only one functional 'func' will be selected, then plot ycol vs. xcol
+  return: lines, line_leg """
+  
+  if no_error:
+    xmean = xcol
+    ymean = ycol
+  else:
     xmean = xcol + '_mean'
     xerror= xcol + '_error'
     ymean = ycol + '_mean'
     yerror= ycol + '_error'
+  # end if
 
-    pdf = df
-    
-    lines = []
+  pdf = df
+  
+  lines = []
 
-    if len(slist) == 0:
-        slist = pdf['struct'].unique()
+  if len(slist) == 0:
+    slist = pdf['struct'].unique()
+  # end if
+
+  for sname in slist:
+    sel = (pdf['struct'] == sname) & (pdf['func']==func)
+    if no_error:
+      cols = ['press',xcol,ycol,xmean,ymean]
+    else:
+      cols = ['press',xcol,ycol,xmean,xerror,ymean,yerror]
+
+    mydf = pdf.loc[sel,]
+    mydf = mydf.sort_values(['press'])
+
+    if no_error:
+      line = ax.plot(mydf[xcol],mydf[ycol]
+          ,marker=struct_markers[sname],c=struct_colors[sname]
+          ,ls='-',lw=lw,ms=ms,label=sname,alpha=alpha)
+    else:
+      line = ax.errorbar(mydf[xmean],mydf[ymean]
+          ,xerr=mydf[xerror],yerr=mydf[yerror]
+          ,marker=struct_markers[sname],c=struct_colors[sname]
+          ,ls='-',lw=lw,ms=ms,label=sname,alpha=alpha)
     # end if
+    lines.append(line)
+  # end for sname
 
-    for sname in slist:
-        sel = (pdf['struct'] == sname) & (pdf['func']==func)
-
-        mydf = pdf.loc[sel,['press',xcol,ycol,xmean,xerror,ymean,yerror]]
-        mydf = mydf.sort_values(['press'])
-
-        if no_error:
-            line = ax.plot(mydf[xcol],mydf[ycol]
-                ,marker=struct_markers[sname],c=struct_colors[sname]
-                ,ls='-',label=sname)
-        else:
-            line = ax.errorbar(mydf[xmean],mydf[ymean]
-                ,xerr=mydf[xerror],yerr=mydf[yerror]
-                ,marker=struct_markers[sname],c=struct_colors[sname]
-                ,ls='-',label=sname)
-        # end if
-        lines.append(line)
-    # end for sname
-
-    line_leg = ax.legend(loc='lower right')
-    
-    return lines,line_leg
+  line_leg = ax.legend(loc='lower right')
+  
+  return lines,line_leg
 # end def plot_against_structs
 
 def plot_against_funcs(ax,df,xcol,ycol,sname):
