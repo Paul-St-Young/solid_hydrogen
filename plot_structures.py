@@ -194,6 +194,8 @@ def sfp_label(subdir,sep='_'):
   struct,func,press = interpret_subdir(subdir,sep)
   return pd.Series({'struct':struct,'func':func,'press':press})
 
+def cell_volume(axes):
+  return np.dot(axes[0],np.cross(axes[1],axes[2]))
 def vol2rs(vol):
     return (3.*vol/(4*np.pi))**(1./3)
 # end def vol2rs
