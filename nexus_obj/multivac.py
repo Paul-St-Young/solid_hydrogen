@@ -46,9 +46,10 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,status_only=False):
     status_only = status_only,
   )
 
-  pw_bin = os.path.join(qedir,'pw.x')
-  cc_bin = os.path.join(ccdir,'pw2qmcpack.x')
-  qmc_bin= os.path.join(qmcdir,"qmcpack_cpu_real")
+  pw_bin   = os.path.join(qedir,'pw.x')
+  cc_bin   = os.path.join(ccdir,'pw2qmcpack.x')
+  qmc_bin  = os.path.join(qmcdir,"qmcpack_cpu_real")
+  tabc_bin = os.path.join(qmcdir,"qmcpack_cpu_comp")
 
   # assign jobs
   if machine == 'titan':
@@ -56,17 +57,20 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,status_only=False):
     p2q_job  = Job(nodes=1,serial=True,minutes=30,app=cc_bin)
     opt_job  = Job(nodes=4,hours=2,app=qmc_bin)
     dmc_job  = Job(nodes=8,threads=8,hours=2,app=qmc_bin)
+    tabc_job = Job(nodes=8,threads=8,hours=2,app=tabc_bin)
   elif machine == 'golub':
     dft_job  = Job(nodes=1,hours=1,app=pw_bin,app_options='-nk %d'%nk)
     p2q_job  = Job(nodes=1,serial=True,minutes=30,app=cc_bin)
     opt_job  = Job(nodes=1,hours=2,app=qmc_bin)
     dmc_job  = Job(nodes=1,hours=2,app=qmc_bin)
+    tabc_job = Job(nodes=1,hours=2,app=tabc_bin)
   else:
     # using pw.x and qmcpack in PATH
     dft_job = Job(app_options='-nk %d'%nk)
     p2q_job = Job(serial=True,app=cc_bin)
     opt_job = Job()
     dmc_job = Job()
+    tabc_job = Job(app=tabc_bin)
   # end if
   jobs = {'dft':dft_job,'p2q':p2q_job,'opt':opt_job,'dmc':dmc_job}
 
