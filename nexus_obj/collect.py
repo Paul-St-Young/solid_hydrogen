@@ -83,3 +83,26 @@ def qmc_scf_path_map(qmc_sims):
   df = pd.DataFrame(data).set_index('qmc_path')
   return df
 # end def qmc_scf_path_map
+
+def expand_mean_and_error(df):
+  """ for each column that contains the keys ['mean','error'], create two new columns col+'_mean' and col+'_error' at top level
+  Args:
+    df (pd.DataFrame): qmc data dumped from nexus
+  Effect: 
+    new columns are added to df
+  """ 
+  for col in df.columns:
+    # get data entries for each column
+    mycols = []
+    try:
+      mycols = df.iloc[0][col].keys()
+    except:
+      pass
+    # end try
+
+    if ('mean' in mycols) and ('error' in mycols):
+      df[col+'_mean']  = df[col].apply(lambda x:x['mean'])
+      df[col+'_error'] = df[col].apply(lambda x:x['error'])
+    # end if
+  # end for
+# end def expand_mean_and_error
