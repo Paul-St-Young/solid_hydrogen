@@ -11,13 +11,13 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,status_only=False):
     nk (int,optional): the npool option in pw.x, default is 1 because it always runs. For large number of kpoints, set nk to be as large as possible for speed.
     status_only (bool,optional): print out status of runs and quit, default is False
   Returns:
-    dict: a dictionary of nexus.Job objects for ['dft','p2q','opt','dmc']
+    dict: jobs, a dictionary of nexus.obj objects for ['dft','p2q','opt','dmc'], each can be passed to create nexus.Job objects using Job(**jobs['dft']), for example.
     """
   if (machine not in ['golub','titan'])  and (not machine.startswith('ws')):
     raise NotImplementedError('cannot handle machine=%s yet'%machine)
   # end if
   
-  from nexus import settings, Job
+  from nexus import settings, obj
   if machine == 'titan':
     account    = 'mat158'
     pseudo_dir = '/ccs/home/yyang173/scratch/hsolid/pseudo'
@@ -53,25 +53,24 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,status_only=False):
 
   # assign jobs
   if machine == 'titan':
-    dft_job  = Job(nodes=1,minutes=10,app_options="-nk %d"%nk,app=pw_bin)
-    p2q_job  = Job(nodes=1,serial=True,minutes=30,app=cc_bin)
-    opt_job  = Job(nodes=4,hours=2,app=qmc_bin)
-    dmc_job  = Job(nodes=8,threads=8,hours=2,app=qmc_bin)
-    tabc_job = Job(nodes=8,threads=8,hours=2,app=tabc_bin)
+    dft_job  = obj(nodes=1,minutes=10,app_options="-nk %d"%nk,app=pw_bin)
+    p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
+    opt_job  = obj(nodes=4,hours=2,app=qmc_bin)
+    dmc_job  = obj(nodes=8,threads=8,hours=2,app=qmc_bin)
   elif machine == 'golub':
-    dft_job  = Job(nodes=1,hours=1,app=pw_bin,app_options='-nk %d'%nk)
-    p2q_job  = Job(nodes=1,serial=True,minutes=30,app=cc_bin)
-    opt_job  = Job(nodes=1,hours=2,app=qmc_bin)
-    dmc_job  = Job(nodes=1,hours=2,app=qmc_bin)
-    tabc_job = Job(nodes=1,hours=2,app=tabc_bin)
+    dft_job  = obj(nodes=1,hours=1,app=pw_bin,app_options='-nk %d'%nk)
+    p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
+    opt_job  = obj(nodes=1,hours=2,app=qmc_bin)
+    dmc_job  = obj(nodes=1,hours=2,app=qmc_bin)
   else:
     # using pw.x and qmcpack in PATH
-    dft_job = Job(app_options='-nk %d'%nk)
-    p2q_job = Job(serial=True,app=cc_bin)
-    opt_job = Job()
-    dmc_job = Job()
-    tabc_job = Job(app=tabc_bin)
+    dft_job  = obj(app_options='-nk %d'%nk)
+    p2q_job  = obj(serial=True,app=cc_bin)
+    opt_job  = obj()
+    dmc_job  = obj()
   # end if
+  tabc_job     = dmc_job.copy()
+  tabc_job.app = tabc_bin
   jobs = {'dft':dft_job,'p2q':p2q_job,'opt':opt_job,'dmc':dmc_job}
 
   return jobs
