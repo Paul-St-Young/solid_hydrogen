@@ -58,10 +58,10 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     opt_job  = obj(nodes=4,hours=2,app=qmc_bin)
     dmc_job  = obj(nodes=8,threads=8,hours=2,app=qmc_bin)
   elif machine == 'golub':
-    dft_job  = obj(nodes=1,hours=1,app=pw_bin,app_options='-nk %d'%nk)
+    dft_job  = obj(nodes=1,hours=4,app=pw_bin,app_options='-nk %d'%nk)
     p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
-    opt_job  = obj(nodes=1,hours=2,app=qmc_bin)
-    dmc_job  = obj(nodes=1,hours=2,app=qmc_bin)
+    opt_job  = obj(nodes=1,hours=4,app=qmc_bin)
+    dmc_job  = obj(nodes=1,hours=4,app=qmc_bin)
   else:
     # using pw.x and qmcpack in PATH
     dft_job  = obj(app_options='-nk %d'%nk)
