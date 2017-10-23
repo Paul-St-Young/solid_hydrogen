@@ -217,3 +217,20 @@ def vol2rs(vol):
 def rs2vol(rs):
     return 4*np.pi/3*rs**3.
 # end def
+
+def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
+  """ add Cp as top xlabel when actual xlabel is 1/Cp.
+   Cp is the proton orbital gaussian exponent.  """
+  ax1 = ax.twiny()
+  ax1.set_xticks( ax.get_xticks() )
+  ax1.set_xlim( ax.get_xlim() )
+  ax1.set_xlabel(xlabel)
+
+  xlabels = []
+  for tick in ax1.get_xticks():
+    inv = 1./tick
+    xlabels.append("%3.1f"%inv)
+  # end for tick
+  ax1.get_xaxis().set_ticklabels( xlabels )
+  return ax1
+# end def
