@@ -29,7 +29,7 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     pseudo_dir = '/home/yyang173/scratch/hsolid/pseudo'
     vdw_table  = '/home/yyang173/scratch/hsolid/vdw/vdW_kernel_table'
     qedir      = '/projects/physics/yyang/soft/espresso-5.3.0/bin'
-    ccdir      = '/projects/physics/yyang/soft/soft/qmcpack-espresso-5.3.0/bin'
+    ccdir      = '/projects/physics/yyang/soft/qmcpack-espresso-5.3.0/bin'
     qmcdir     = '~/soft/kylin_qmcpack'
   else: # workstation, defaults should do
     pseudo_dir = '/home/yyang173/Desktop/hsolid/pseudo'
