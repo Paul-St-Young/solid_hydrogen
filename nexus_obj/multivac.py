@@ -9,7 +9,7 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     run_dir (str): directory to run the jobs in.
     account (str,optional): default is to depend on the machine's default in nexus.
     nk (int,optional): the npool option in pw.x, default is 1 because it always runs. For large number of kpoints, set nk to be as large as possible for speed.
-    kwargs (dict): keyword arguments to be passed to nexus.settings.
+    kwargs (dict): extra keyword arguments to be passed to nexus.settings.
   Returns:
     dict: jobs, a dictionary of nexus.obj objects for ['dft','p2q','opt','dmc'], each can be passed to create nexus.Job objects using Job(**jobs['dft']), for example.
     """
@@ -42,7 +42,8 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     runs       = run_dir,
     machine    = machine,
     account    = account,
-    pseudo_dir  = pseudo_dir,
+    pseudo_dir = pseudo_dir,
+    vdw_table  = vdw_table,
     **kwargs
   )
 
