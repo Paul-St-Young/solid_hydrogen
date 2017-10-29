@@ -72,7 +72,7 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
   # end if
   tabc_job     = dmc_job.copy()
   tabc_job.app = tabc_bin
-  jobs = {'dft':dft_job,'p2q':p2q_job,'opt':opt_job,'dmc':dmc_job}
+  jobs = {'dft':dft_job,'p2q':p2q_job,'opt':opt_job,'dmc':dmc_job,'tabc':tabc_job}
 
   return jobs
 # end def apply_machine_settings
