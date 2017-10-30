@@ -64,11 +64,10 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     opt_job  = obj(nodes=1,hours=4,app=qmc_bin)
     dmc_job  = obj(nodes=1,hours=4,app=qmc_bin)
   else:
-    # using pw.x and qmcpack in PATH
-    dft_job  = obj(app_options='-nk %d'%nk)
+    dft_job  = obj(app_options='-nk %d'%nk,app=pw_bin)
     p2q_job  = obj(serial=True,app=cc_bin)
-    opt_job  = obj()
-    dmc_job  = obj()
+    opt_job  = obj(app=qmc_bin)
+    dmc_job  = obj(app=qmc_bin)
   # end if
   tabc_job     = dmc_job.copy()
   tabc_job.app = tabc_bin
