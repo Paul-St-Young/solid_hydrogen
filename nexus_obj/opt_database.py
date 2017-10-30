@@ -25,9 +25,9 @@ def opt_structure_sfp(sname,func,press,struct_df):
   return struct
 # end def opt_structure_sfp
 
-def supercell(struct,Tmat,remove_folded=True):
+def supercell(struct,Tmat,folded=False):
   super_struct = struct.tile(Tmat)
-  if remove_folded:
+  if not folded:
     super_struct.remove_folded_structure()
   # end if
   return super_struct
