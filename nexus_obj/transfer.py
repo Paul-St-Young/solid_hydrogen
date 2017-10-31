@@ -220,5 +220,5 @@ def hydrogen_estimators(nbin=50):
   ## species-summed S(k) and rho(k)
   #skall= skall({'type':'skall','name':'skall','hdf5':False,'source':'ion0'})
   gofr = gofr({'type':'gofr','name':'gofr','num_bin':nbin})
-  return [sksp,skest,skall,gofr,pres]
+  return [sksp,skest,gofr,pres]#,skall]
 # end def hydrogen_estimators
