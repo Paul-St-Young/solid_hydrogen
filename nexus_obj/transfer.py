@@ -215,10 +215,10 @@ def hydrogen_estimators(nbin=50):
   pres = pressure({'type':'Pressure'})
   # species-resolved rho(k)
   sksp = structurefactor({'type':'structurefactor','name':'sksp'})
-  # species-summed S(k)
+  # species-summed S(k); rho(k) hacked on kylin branch (21b33fb78c44172ec5dd)
   skest= sk({'type':'sk','name':'sk','hdf5':True})
-  # species-summed S(k) and rho(k)
-  skall= skall({'type':'skall','name':'skall','hdf5':False,'source':'ion0'})
+  ## species-summed S(k) and rho(k)
+  #skall= skall({'type':'skall','name':'skall','hdf5':False,'source':'ion0'})
   gofr = gofr({'type':'gofr','name':'gofr','num_bin':nbin})
   return [sksp,skest,skall,gofr,pres]
 # end def hydrogen_estimators
