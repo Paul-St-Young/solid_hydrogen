@@ -88,3 +88,137 @@ def gamma_opt_input(p2q,system,init_jas=None):
   )
   return opt_inputs
 # end def gamma_opt_input
+
+def get_zero_backflow():
+  from qmcpack_input import generate_transformation1, generate_transformation2
+  tr1 = generate_transformation1(['H'])
+  tr2 = generate_transformation2([('u','u'),('u','d')])
+  from qmcpack_input import backflow,collection
+  bf = backflow( transformations=collection([tr1,tr2]) )
+  return bf
+# end def get_zero_backflow
+
+def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.):
+  bopt_inputs = opt_inputs.copy()
+  # assumption 1: opt has Jastrows
+  #  have bopt depend on optimize Jastrows
+  deps = opt_inputs.dependencies
+  bopt_inputs.dependencies = deps + [(opt,'jastrow')]
+  # assumption 2: opt has optmization <loop>
+  #  edit VMC in optimization loop for backflow
+  calcs = bopt_inputs.calculations
+  for loop in calcs:
+    calc = loop['qmc']
+    # reduce timestep for all-particle move
+    calc['move'] = 'wbyw'
+    calc['timestep'] /= ts_reduce
+    # further reduce timestep for warmup
+    calc['warmupsteps']    = 128
+    calc['warmuptimestep'] = calc['timestep']/wts_reduce
+  # end for
+
+  # make a unique simulation 
+  bopt_inputs.identifier = opt_inputs.identifier.replace(suffix,'-bopt')
+  bopt_inputs.path = opt_inputs.path.replace(suffix.strip('-'),'bopt')
+  # add backflow
+  bopt_inputs.backflow = get_zero_backflow()
+  bopt_inputs['precision'] = 'double'
+
+  return bopt_inputs
+# end def bopt_input_from_opt
+
+def vmc_wbyw_input_from_p2q(p2q,system,suffix='-p2q'):
+  """ construct vmc (walker-by-walker) inputs as nexus.obj
+   assume orbitals come from a mean-field calculation "p2q"
+
+   The returned nexus.obj can be edited at will even after return
+    thus, the "system" input is not actually mandatory. I put it 
+    there simply as a reminder.
+
+   The "job" attribute still needs to be filled in after return.
+   "job" is not assigned in this function to improve tranferability 
+   among machines.
+  Args:
+   p2q (nexus.Pw2qmcpack): may also be any other Simulation object 
+    having 'orbitals' in 'application_results'.
+   system (nexus.PhysicalSystem): system to simulate.
+   suffix (str,optional): suffix to the p2q simulation identifier and path.
+  """
+  from nexus import vmc
+
+  # determine ID and path from p2q simulation
+  myid    = p2q.identifier.replace(suffix,'-vmc')
+  p2q_dir = os.path.basename(p2q.path)
+  mypath  = p2q.path.replace(p2q_dir,'vmc')
+
+  # write default inputs
+  vmc_block = obj(
+    warmuptimestep = 0.01,
+    move        = 'not_pbyp_or_whatever',
+    warmupsteps = 128,
+    blocks      =  64,
+    steps       =   4,
+    substeps    =   4,
+    timestep    = 0.06,
+    walkers     = 16,
+  )
+  calcs = [vmc(**vmc_block)]
+  vmc_inputs = obj(
+    identifier = myid,
+    path       = mypath,
+    system     = system,
+    input_type = 'basic',
+    bconds     = 'ppp',
+    calculations = calcs,
+    dependencies = [(p2q,'orbitals')]
+  )
+  return vmc_inputs
+# end def vmc_wbyw_input_from_p2q
+
+def dmc_wbyw_input_from_p2q(p2q,system,nwalker=512
+  ,tss=[0.006,0.002],corr=0.4,suffix='-p2q'):
+  from nexus import dmc
+
+  # get a quick start from VMC defaults
+  dmc_inputs = vmc_wbyw_input_from_p2q(p2q,system)
+
+  # change ID and path
+  myid    = p2q.identifier.replace(suffix,'-dmc')
+  p2q_dir = os.path.basename(p2q.path)
+  mypath  = p2q.path.replace(p2q_dir,'dmc')
+  dmc_inputs.identifier = myid
+  dmc_inputs.path       = mypath
+
+  # ask VMC for samples
+  calcs = dmc_inputs.calculations
+  assert len(calcs) == 1 # expect 1 VMC calculation
+  vcalc = calcs[0]
+  vcalc['samples'] = nwalker
+
+  # add DMC calculations
+  for ts in tss:
+    steps = int(round(corr/ts))
+    dmc_block = obj(
+      move        = 'not_pbyp_or_whatever',
+      blocks      = 64,
+      steps       = steps,
+      timestep    = ts,
+      targetwalkers = nwalker
+    )
+    calcs += [dmc(**dmc_block)]
+  # end for ts
+  return dmc_inputs
+# end def dmc_wbyw_input_from_p2q
+
+def hydrogen_estimators(nbin=50):
+  from qmcpack_input import gofr,sk,skall,structurefactor,pressure
+  pres = pressure({'type':'Pressure'})
+  # species-resolved rho(k)
+  sksp = structurefactor({'type':'structurefactor','name':'sksp'})
+  # species-summed S(k)
+  skest= sk({'type':'sk','name':'sk','hdf5':True})
+  # species-summed S(k) and rho(k)
+  skall= skall({'type':'skall','name':'skall','hdf5':False,'source':'ion0'})
+  gofr = gofr({'type':'gofr','name':'gofr','num_bin':nbin})
+  return [sksp,skest,skall,gofr,pres]
+# end def hydrogen_estimators
