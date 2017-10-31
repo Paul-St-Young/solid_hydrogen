@@ -21,7 +21,7 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
   if machine == 'titan':
     account    = 'mat158'
     pseudo_dir = '/ccs/home/yyang173/scratch/hsolid/pseudo'
-    vdw_table  = '/ccs/home/yyang173/scratch/hsolid/pseudo'
+    vdw_table  = '/ccs/home/yyang173/scratch/hsolid/vdw/vdW_kernel_table'
     qedir      = '~/soft/espresso-5.3.0/bin'
     ccdir      = '~/soft/qmcpack-espresso-5.3.0/bin'
     qmcdir     = '~/soft/kylin_qmcpack'
