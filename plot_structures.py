@@ -213,6 +213,12 @@ def sfr_label(subdir,sep='_'):
   struct,func,rs100 = interpret_subdir(subdir,sep)
   return pd.Series({'struct':struct,'func':func,'rs100':rs100})
 
+def sra_label(subdir,sep='-'):
+  sname,rst,cat = subdir.split(sep)
+  rs = float(rst.replace('rs',''))
+  ca = float(cat.replace('ca',''))
+  return pd.Series({'sname':sname,'rs':rs,'ca':ca})
+
 def cell_volume(axes):
   return np.dot(axes[0],np.cross(axes[1],axes[2]))
 def vol2rs(vol):
