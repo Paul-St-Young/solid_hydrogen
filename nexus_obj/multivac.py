@@ -56,18 +56,18 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
   if machine == 'titan':
     dft_job  = obj(nodes=1,minutes=10,app_options="-nk %d"%nk,app=pw_bin)
     p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
-    opt_job  = obj(nodes=4,hours=2,app=qmc_bin)
+    opt_job  = obj(nodes=4,threads=8,hours=2,app=qmc_bin)
     dmc_job  = obj(nodes=8,threads=8,hours=2,app=qmc_bin)
   elif machine == 'golub':
     dft_job  = obj(nodes=1,hours=4,app=pw_bin,app_options='-nk %d'%nk)
     p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
-    opt_job  = obj(nodes=1,hours=4,app=qmc_bin)
-    dmc_job  = obj(nodes=1,hours=4,app=qmc_bin)
+    opt_job  = obj(nodes=1,threads=8,hours=4,app=qmc_bin)
+    dmc_job  = obj(nodes=1,threads=8,hours=4,app=qmc_bin)
   else:
     dft_job  = obj(app_options='-nk %d'%nk,app=pw_bin)
     p2q_job  = obj(serial=True,app=cc_bin)
-    opt_job  = obj(app=qmc_bin)
-    dmc_job  = obj(app=qmc_bin)
+    opt_job  = obj(app=qmc_bin,threads=8)
+    dmc_job  = obj(app=qmc_bin,threads=8)
   # end if
   tabc_job     = dmc_job.copy()
   tabc_job.app = tabc_bin
