@@ -159,7 +159,7 @@ def vmc_wbyw_input_from_p2q(p2q,system,suffix='-p2q'):
     blocks      =  64,
     steps       =   4,
     substeps    =   4,
-    timestep    = 0.06,
+    timestep    = 0.03,
     walkers     = 16,
   )
   calcs = [vmc(**vmc_block)]
@@ -210,7 +210,7 @@ def dmc_wbyw_input_from_p2q(p2q,system,nwalker=512
   return dmc_inputs
 # end def dmc_wbyw_input_from_p2q
 
-def hydrogen_estimators(nbin=50):
+def hydrogen_estimators(nbin=400):
   from qmcpack_input import gofr,sk,skall,structurefactor,pressure
   pres = pressure({'type':'Pressure'})
   # species-resolved rho(k)
