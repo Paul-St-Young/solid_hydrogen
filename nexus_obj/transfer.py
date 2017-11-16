@@ -210,15 +210,17 @@ def dmc_wbyw_input_from_p2q(p2q,system,nwalker=512
   return dmc_inputs
 # end def dmc_wbyw_input_from_p2q
 
-def hydrogen_estimators(nbin=400):
-  from qmcpack_input import gofr,sk,skall,structurefactor,pressure
+def hydrogen_estimators(nbin=128): # 128 grid points over 4 bohr is good spacing
+  from qmcpack_input import pressure,gofr,sk,csk#,skall,structurefactor
   pres = pressure({'type':'Pressure'})
   # species-resolved rho(k)
-  sksp = structurefactor({'type':'structurefactor','name':'sksp'})
-  # species-summed S(k); rho(k) hacked on kylin branch (21b33fb78c44172ec5dd)
-  skest= sk({'type':'sk','name':'sk','hdf5':True})
+  #sksp = structurefactor({'type':'structurefactor','name':'sksp'})
   ## species-summed S(k) and rho(k)
   #skall= skall({'type':'skall','name':'skall','hdf5':False,'source':'ion0'})
+  # charged structure factor (create on kylin branch 1d4d188e53939)
+  csk = csk({'type':'csk','name':'csk'})
+  # species-summed S(k); rho(k) hacked on kylin branch (21b33fb78c44172ec5dd)
+  skest= sk({'type':'sk','name':'sk','hdf5':True})
   gofr = gofr({'type':'gofr','name':'gofr','num_bin':nbin})
-  return [sksp,skest,gofr,pres]#,skall]
+  return [csk,skest,gofr,pres]#,sksp,skall]
 # end def hydrogen_estimators
