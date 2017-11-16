@@ -210,6 +210,38 @@ def dmc_wbyw_input_from_p2q(p2q,system,nwalker=512
   return dmc_inputs
 # end def dmc_wbyw_input_from_p2q
 
+def vmc_pbyp_input_from_p2q(p2q,system,suffix='-p2q'):
+  from nexus import vmc
+
+  # determine ID and path from p2q simulation
+  myid    = p2q.identifier.replace(suffix,'-vmc')
+  p2q_dir = os.path.basename(p2q.path)
+  mypath  = p2q.path.replace(p2q_dir,'vmc')
+
+  # write default inputs
+  vmc_block = obj(
+    move        = 'pbyp',
+    warmupsteps =  16,
+    blocks      =  64,
+    steps       =   4,
+    substeps    =   4,
+    timestep    = 0.4,
+    walkers     = 16,
+    checkpoint  = 0
+  )
+  calcs = [vmc(**vmc_block)]
+  vmc_inputs = obj(
+    identifier = myid,
+    path       = mypath,
+    system     = system,
+    input_type = 'basic',
+    bconds     = 'ppp',
+    calculations = calcs,
+    dependencies = [(p2q,'orbitals')]
+  )
+  return vmc_inputs
+# end def vmc_pbyp_input_from_p2q
+
 def hydrogen_estimators(nbin=128): # 128 grid points over 4 bohr is good spacing
   from qmcpack_input import pressure,gofr,sk,csk#,skall,structurefactor
   pres = pressure({'type':'Pressure'})
