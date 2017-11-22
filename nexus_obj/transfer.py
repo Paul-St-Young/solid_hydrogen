@@ -89,10 +89,10 @@ def gamma_opt_input(p2q,system,init_jas=None):
   return opt_inputs
 # end def gamma_opt_input
 
-def get_zero_backflow():
+def get_zero_backflow(rcut):
   from qmcpack_input import generate_transformation1, generate_transformation2
-  tr1 = generate_transformation1(['H'])
-  tr2 = generate_transformation2([('u','u'),('u','d')])
+  tr1 = generate_transformation1(['H'],rcut)
+  tr2 = generate_transformation2([('u','u'),('u','d')],rcut)
   from qmcpack_input import backflow,collection
   bf = backflow( transformations=collection([tr1,tr2]) )
   return bf
@@ -100,10 +100,17 @@ def get_zero_backflow():
 
 def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.):
   bopt_inputs = opt_inputs.copy()
+
+  # assumption 0: opt has system, which has a periodic structure (i.e. has axes)
+  axes = bopt_inputs.system.structure.axes # get simulation cell
+  from qharv.inspect import axes_pos
+  rins = axes_pos.rins(axes) # get simulation cell radius
+
   # assumption 1: opt has Jastrows
   #  have bopt depend on optimize Jastrows
   deps = opt_inputs.dependencies
   bopt_inputs.dependencies = deps + [(opt,'jastrow')]
+
   # assumption 2: opt has optmization <loop>
   #  edit VMC in optimization loop for backflow
   calcs = bopt_inputs.calculations
@@ -120,8 +127,11 @@ def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.
   # make a unique simulation 
   bopt_inputs.identifier = opt_inputs.identifier.replace(suffix,'-bopt')
   bopt_inputs.path = opt_inputs.path.replace(suffix.strip('-'),'bopt')
+
   # add backflow
-  bopt_inputs.backflow = get_zero_backflow()
+  # !!!! reduce rcut. This is a workaround for backflow bug (cannot go beyond simulation cell)
+  bf = get_zero_backflow(rins)
+  bopt_inputs.backflow = bf
   bopt_inputs['precision'] = 'double'
 
   return bopt_inputs
