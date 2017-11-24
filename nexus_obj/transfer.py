@@ -98,13 +98,8 @@ def get_zero_backflow(rcut):
   return bf
 # end def get_zero_backflow
 
-def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.):
+def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.,rcut=None):
   bopt_inputs = opt_inputs.copy()
-
-  # assumption 0: opt has system, which has a periodic structure (i.e. has axes)
-  axes = bopt_inputs.system.structure.axes # get simulation cell
-  from qharv.inspect import axes_pos
-  rins = axes_pos.rins(axes) # get simulation cell radius
 
   # assumption 1: opt has Jastrows
   #  have bopt depend on optimize Jastrows
@@ -129,8 +124,8 @@ def bopt_input_from_opt(opt,opt_inputs,suffix='-opt',ts_reduce=15.,wts_reduce=5.
   bopt_inputs.path = opt_inputs.path.replace(suffix.strip('-'),'bopt')
 
   # add backflow
-  # !!!! reduce rcut. This is a workaround for backflow bug (cannot go beyond simulation cell)
-  bf = get_zero_backflow(rins)
+  
+  bf = get_zero_backflow(rcut)
   bopt_inputs.backflow = bf
   bopt_inputs['precision'] = 'double'
 
