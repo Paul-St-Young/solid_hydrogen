@@ -104,6 +104,15 @@ def gr2sk(k,grx,gry,rho):
     return 1.+val
 # end def
 
+def sk2gr(k,grx,gry,rho):
+    """ return spherical S(k) at given 'k' value, assuming spherical g(r)=(grx,gry)
+      'rho' is density N/Vol. """ 
+    integrand = grx**2. * (gry-1.0) * np.sin(k*grx)/(k*grx)
+    val = 4*np.pi*rho*sum(integrand*(grx[1]-grx[0]))
+    val /= (2.*np.pi)**3.
+    return 1.+val
+# end def
+
 def gr2compressibility(grx,gry,rho):
     integrand = grx**2. * (gry-1.0)
     val = 4*np.pi*rho*sum(integrand*(grx[1]-grx[0]))
