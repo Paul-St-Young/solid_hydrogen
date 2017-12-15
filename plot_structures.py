@@ -42,6 +42,18 @@ joule= 6.241509126e18    # ev
 gpa = ha/joule/bohr**3./1e9
 mev = ha*1000.
 
+def show_sel_xyname(ax,sel,xname,yname,df,**kwargs):
+  ymean = yname+'_mean'
+  yerr  = yname+'_error'
+
+  myx = df.loc[sel,xname]
+  myy = df.loc[sel,ymean]
+  myye= df.loc[sel,yerr]
+
+  line = ax.errorbar(myx,myy,myye,**kwargs)
+  return line
+# end def show_sel_xyname
+
 def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,draw_line=True
     ,candidates=['cmca4','cmca12','c2c'],funcs=['pbe']):
     """ given a pandas dataframe 'plotdf' that uses (candidate_name,functional) as index,
