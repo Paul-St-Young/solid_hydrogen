@@ -32,3 +32,15 @@ def supercell(struct,Tmat,folded=False):
   # end if
   return super_struct
 # end def
+
+def rs_ca_from_axes_pos(tmat,axes,pos,cidx,aidx=0):
+  natom  = len(pos)
+  volume = np.dot(axes[0],np.cross(axes[1],axes[2]))
+  vol_pp = volume/natom # volume per particle
+  rs     = (3.*vol_pp/(4*np.pi))**(1./3)
+  axes0  = np.dot(np.linalg.inv(tmat),axes)
+  abc = [np.linalg.norm(axes0[i]) for i in range(3)]
+  cmag= abc[cidx]
+  amag= abc[aidx]
+  return rs, cmag/amag
+# end def rs_ca_from_axes_pos
