@@ -1,3 +1,4 @@
+import numpy as np
 from nexus import generate_structure
 
 def opt_structure_sfp(sname,func,press,struct_df):
@@ -44,3 +45,35 @@ def rs_ca_from_axes_pos(tmat,axes,pos,cidx,aidx=0):
   amag= abc[aidx]
   return rs, cmag/amag
 # end def rs_ca_from_axes_pos
+
+def i4_structure(rs,ca): # ca is c/a ratio
+  from nexus import Structure, generate_structure
+  bravais_basis = [[0,0,0.5],[0.5,0.5,0.0],[0.5,0.0,0.25],[0.0,0.5,0.75]] # i41amd
+
+  def rs2a(rs,ca,atoms_per_unit_cell):
+    space_per_atom = 4.*np.pi/3*rs**3.
+    cell_volume    = space_per_atom*atoms_per_unit_cell
+    alat = (cell_volume/ca)**(1./3)
+    return alat
+  # end def rs2a
+  alat = rs2a(rs,ca,len(bravais_basis))
+
+  axes = alat*np.array([
+    [1,0,0],
+    [0,1,0],
+    [0,0,ca]
+  ])
+
+  pos  = np.dot(bravais_basis,axes)
+  elem = ['H']*len(pos)
+
+  structure = generate_structure(
+    axes = axes,
+    elem = elem,
+    pos  = pos,
+    units= 'B',
+    #tiling    = tiling #  use folded structure
+    # to actually make super cell: use tile(), then remove_folded_structure()
+  )
+  return structure
+# end def i4_strucrture
