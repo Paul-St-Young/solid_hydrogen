@@ -42,14 +42,18 @@ joule= 6.241509126e18    # ev
 gpa = ha/joule/bohr**3./1e9
 mev = ha*1000.
 
-def show_sel_xyname(ax,sel,xname,yname,df,**kwargs):
+def xyye(df,sel,xname,yname):
   ymean = yname+'_mean'
   yerr  = yname+'_error'
 
   myx = df.loc[sel,xname]
   myy = df.loc[sel,ymean]
   myye= df.loc[sel,yerr]
+  return myx,myy,myye
+# end def xyye
 
+def show_sel_xyname(ax,sel,xname,yname,df,**kwargs):
+  myx,myy,myye = xyye(df,sel,xname,yname)
   line = ax.errorbar(myx,myy,myye,**kwargs)
   return line
 # end def show_sel_xyname
