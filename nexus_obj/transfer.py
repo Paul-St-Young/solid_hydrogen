@@ -1,6 +1,7 @@
 # guide the flow
 import os
 from nexus import obj
+from lxml import etree
 
 def nscf_input_from_scf_input(scf,scf_inputs,suffix='-scf'):
   """ take an scf simulation object along with the inputs for it, create an nscf simulation to generate orbitals only at kpoints needed for wavefunction. 
@@ -261,3 +262,33 @@ def hydrogen_estimators(nbin=128): # 128 grid points over 4 bohr is good spacing
   gofr = gofr({'type':'gofr','name':'gofr','num_bin':nbin})
   return [csk,skest,gofr,pres]#,sksp,skall]
 # end def hydrogen_estimators
+
+def dynamic_wbyw_opt(identifier,qsyst):
+  """ assemble custom input using xml text 
+   the returned xml template is meant to be customized further
+  Args:
+    identifier (str): QMCPACK project id (not essential)
+    qsyst (str): string representation of <qmcsystem>
+  Returns:
+    lxml.etree.Element: <simulation>
+  """
+  from qharv.seed import xml,xml_examples
+  pnode = etree.Element('project',{'id':identifier,'series':'0'})
+  qnode = xml.parse(qsyst)
+  cnode = xml_examples.wbyw_optimize()
+  cnode.set('max','5')
+  vnode = cnode.find('.//qmc')
+  vnode.append( etree.Element('fokker_planck',{'nfp':'1'}) )
+  vnode.append( etree.Element('ts_boost',{'group':'p','factor':'3'}) ) # boost proton diffusion
+  xml.set_param(vnode,'warmupsteps','512')
+  xml.set_param(vnode,'timestep','0.03') # 0.03 a.u. for 67% acceptance
+  xml.set_param(vnode,'substeps','25') # important to use many steps because of slow protons
+  # turn off latdev per_xyz
+  qnode.find('.//estimator[@type="latticedeviation"]').set('per_xyz','no')
+
+  snode = etree.Element('simulation')
+  for node in [pnode,qnode,cnode]:
+    snode.append(node)
+  # end for
+  return snode
+# end def dynamic_wbyw_opt
