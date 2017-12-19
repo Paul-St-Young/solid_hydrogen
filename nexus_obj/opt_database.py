@@ -77,3 +77,12 @@ def i4_structure(rs,ca): # ca is c/a ratio
   )
   return structure
 # end def i4_strucrture
+
+def rs_ca_from_id(myid):
+  # myid e.g. c2c-rs1.27-ca1.75
+  st,rst,cat = myid.split('-')
+  rs = float(rst.replace('rs',''))
+  ca = float(cat.replace('ca',''))
+  return rs,ca
+# end def rs_ca_from_id
+
