@@ -8,6 +8,12 @@ tmat72 = {
 'i41amd':np.array([[2,-2,1],[2,3,0],[-2,1,1]])
 }
 
+rs2ca_pmap = {
+'c2c':[0.59540928,0.99294395],
+'cmca4':[0.40630975,1.03284052],
+'cmca12':[-0.2654712,1.41515302]
+}
+
 def opt_structure_sfp(sname,func,press,struct_df):
   """ request structure from struct_df using labels (sname,func,press)
   Args:
