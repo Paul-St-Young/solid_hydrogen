@@ -151,7 +151,7 @@ def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[],lw=2,ms=10
   # end if
 
   for sname in slist:
-    sel = (pdf['struct'] == sname) & (pdf['func']==func)
+    sel = (pdf['struct'] == sname) #& (pdf['func']==func)
     if no_error:
       cols = ['press',xcol,ycol,xmean,ymean]
     else:
@@ -173,7 +173,7 @@ def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[],lw=2,ms=10
     lines.append(line)
   # end for sname
 
-  line_leg = ax.legend(loc='lower right')
+  line_leg = ax.legend(loc=0)#'lower right')
   
   return lines,line_leg
 # end def plot_against_structs
