@@ -1,5 +1,6 @@
 import numpy as np
 from nexus import generate_structure
+from qharv.inspect import axes_pos
 
 tmat72 = {
 'c2c':np.array([[2,1,0],[1,2,0],[0,0,1]]),
@@ -99,3 +100,53 @@ def rs_ca_from_id(myid):
   return rs,ca
 # end def rs_ca_from_id
 
+def stretch_dimers(axes,pos,frac,rmax=1.5):
+  """ multiply all dimer separations by given fraction
+  Args:
+    axes (np.array): cell
+    pos  (np.array): positions
+    frac (float): new bond length = frac * current bond length
+    rmax (float,optional): atoms separated by r<rmax are considered dimers, default=1.5 for hydrogen
+  Returns:
+    np.array: pos1, stretch atomic configuration
+    np.array: coml, center of mass of the molecules
+  """
+  import static_correlation as sc
+  # modify h2 bond length
+  dimer_dict = sc.get_dimers(rmax,axes,pos)
+  upair = dimer_dict['upair']
+  udist = dimer_dict['udist']
+  nmol  = len(upair)
+  if nmol != len(pos)/2:
+    raise RuntimeError('wrong number of molecules %d'%nmol)
+  # end if
+  pos1  = pos.copy()
+  coml = []
+  for imol in range(nmol):
+    # get dimer positions
+    pair_ij = upair[imol]
+    mol_pos = pos[ pair_ij ]
+
+    # get orientation
+    bond_vec = axes_pos.displacement(axes,mol_pos[0],mol_pos[1])
+    rbond = np.linalg.norm(bond_vec) # pos0-pos1
+    if not np.isclose(rbond,udist[imol]):
+      raise RuntimeError('molecule mismatch')
+    # end if
+    ovec = bond_vec/rbond
+
+    # find COM
+    com = 0.5*rbond*ovec + mol_pos[1]
+    com = axes_pos.pos_in_axes(axes,com)
+    coml.append(com)
+
+    # stretch/shrink molecule
+    rbond1 = frac*rbond
+    mol_pos1 = mol_pos.copy()
+    mol_pos1[0] = com - rbond1/2.*ovec
+    mol_pos1[1] = com + rbond1/2.*ovec
+
+    pos1[ pair_ij ] = mol_pos1
+  # end for imol
+  return axes_pos.pos_in_axes(axes,pos1),np.array(coml)
+# end def stretch_dimers
