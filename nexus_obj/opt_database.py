@@ -1,6 +1,13 @@
 import numpy as np
 from nexus import generate_structure
 
+tmat72 = {
+'c2c':np.array([[2,1,0],[1,2,0],[0,0,1]]),
+'cmca4':np.array([[3,3,0],[-1,2,1],[2,-1,1]]),
+'cmca12':np.array([[2,1,-1],[-1,1,0],[2,1,1]]),
+'i41amd':np.array([[2,-2,1],[2,3,0],[-2,1,1]])
+}
+
 def opt_structure_sfp(sname,func,press,struct_df):
   """ request structure from struct_df using labels (sname,func,press)
   Args:
