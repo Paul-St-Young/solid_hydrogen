@@ -60,11 +60,11 @@ def bw_qsub_file(fnames,nmpi=64,title='title',hours=2):
 #PBS -N %s
 #PBS -l walltime=0%d:00:00
 #PBS -l nodes=%d:ppn=32:xe
+#PBS -j oe
 
 . /opt/modules/default/init/bash
 module load cray-hdf5-parallel libxml2
 
-#PBS -j oe
 cd ${PBS_O_WORKDIR}
 export OMP_NUM_THREADS=8
 
