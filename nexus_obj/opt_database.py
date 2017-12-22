@@ -23,6 +23,12 @@ rs2sig_pmap = { # 45
 'i41amd':[0.19753849,-0.00268172]
 }
 
+rs2rb_pmap = { # 50/init/bond
+'c2c':[0.18850855,1.11832306],
+'cmca4':[0.12621216,1.25741813],
+'cmca12':[ 0.20065344,1.1204539]
+}
+
 def opt_structure_sfp(sname,func,press,struct_df):
   """ request structure from struct_df using labels (sname,func,press)
   Args:

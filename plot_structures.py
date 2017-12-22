@@ -127,6 +127,23 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
 
+def plot_against_sname(ax,df,xcol,ycol,slist,**kwargs):
+  ymean = ycol + '_mean'
+  yerror= ycol + '_error'
+  lines = []
+  for sname in slist:
+    sel  = df.sname==sname
+    cols = [xcol,ymean,yerror]
+    mydf = df.loc[sel].sort_values(xcol)
+    line = ax.errorbar(mydf[xcol],mydf[ymean],yerr=mydf[yerror]
+        ,marker=struct_markers[sname],c=struct_colors[sname]
+        ,**kwargs)
+    lines.append(line)
+  # end for
+  return lines
+# end def plot_against_sname
+
+
 def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[],lw=2,ms=10,alpha=1.0):
   """df must have columns ["struct","func","press"] + [xcol,ycol]. 
   only one functional 'func' will be selected, then plot ycol vs. xcol
@@ -236,6 +253,14 @@ def sra_label(subdir,sep='-'):
   return pd.Series({'sname':sname,'rs':rs,'ca':ca})
 # end def sra_label
 
+def srab_label(subdir,sep='-'):
+  sname,rst,cat,rbt = subdir.split(sep)
+  rs = float(rst.replace('rs',''))
+  ca = float(cat.replace('ca',''))
+  rb = float(rbt.replace('rb',''))
+  return {'sname':sname,'rs':rs,'ca':ca,'rb':rb}
+# end def srab_label
+
 def dbond_dn(moldir,sep='-'):
   tokens = moldir.split(sep)
   dbond  = float(tokens[0].replace('dbond',''))
@@ -268,3 +293,33 @@ def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
   ax1.get_xaxis().set_ticklabels( xlabels )
   return ax1
 # end def
+
+def check_rs(axes,natom,rs0,rs_tol=1e-6):
+  from qharv.inspect import axes_pos
+  rs = axes_pos.rs(axes,natom)
+  if not np.isclose(rs,rs0,atol=rs_tol):
+    raise RuntimeError('rs mismatch')
+  # end if
+# end def check_rs
+
+def check_ca(axes0,ca0,aidx=0,cidx=2,ca_tol=5e-3):
+  from qharv.inspect import axes_pos
+  abc= axes_pos.abc(axes0)
+  ca = abc[cidx]/abc[aidx]
+  if not np.isclose(ca,ca0,atol=ca_tol):
+    raise RuntimeError('ca mismatch')
+  # end if
+# end def check_ca
+
+def check_rb(axes,pos,rb0,rmax=1.6,rb_tol=1e-3):
+  from qharv.inspect import axes_pos
+  upair,udist = axes_pos.dimer_pairs_and_dists(axes,pos,rmax)
+  if not len(udist) == len(pos)/2:
+    raise RuntimeError('wrong number of molecules %d' % len(udist))
+  # end if
+
+  rb = udist.mean()
+  if not np.isclose(rb,rb0,atol=rb_tol):
+    raise RuntimeError('rb mismatch')
+  # end if
+# end def check_rb
