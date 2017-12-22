@@ -234,6 +234,14 @@ def sra_label(subdir,sep='-'):
   rs = float(rst.replace('rs',''))
   ca = float(cat.replace('ca',''))
   return pd.Series({'sname':sname,'rs':rs,'ca':ca})
+# end def sra_label
+
+def dbond_dn(moldir,sep='-'):
+  tokens = moldir.split(sep)
+  dbond  = float(tokens[0].replace('dbond',''))
+  dn     = int(tokens[1].replace('dn',''))
+  return {'dbond':dbond,'dn':dn}
+# end def dbond_dn
 
 def cell_volume(axes):
   return np.dot(axes[0],np.cross(axes[1],axes[2]))
