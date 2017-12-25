@@ -125,11 +125,8 @@ def stretch_dimers(axes,pos,frac,rmax=1.5):
     np.array: pos1, stretch atomic configuration
     np.array: coml, center of mass of the molecules
   """
-  import static_correlation as sc
   # modify h2 bond length
-  dimer_dict = sc.get_dimers(rmax,axes,pos)
-  upair = dimer_dict['upair']
-  udist = dimer_dict['udist']
+  upair,udist = axes_pos.dimer_pairs_and_dists(axes,pos,rmax)
   nmol  = len(upair)
   if nmol != len(pos)/2:
     raise RuntimeError('wrong number of molecules %d'%nmol)
