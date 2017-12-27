@@ -13,7 +13,7 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
   Returns:
     dict: jobs, a dictionary of nexus.obj objects for ['dft','p2q','opt','dmc'], each can be passed to create nexus.Job objects using Job(**jobs['dft']), for example.
     """
-  if (machine not in ['golub','titan'])  and (not machine.startswith('ws')):
+  if (machine not in ['golub','titan','bluewaters_xe'])  and (not machine.startswith('ws')):
     raise NotImplementedError('cannot handle machine=%s yet'%machine)
   # end if
   
@@ -22,6 +22,12 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
     account    = 'mat158'
     pseudo_dir = '/ccs/home/yyang173/scratch/hsolid/pseudo'
     vdw_table  = '/ccs/home/yyang173/scratch/hsolid/vdw/vdW_kernel_table'
+    qedir      = '~/soft/espresso-5.3.0/bin'
+    ccdir      = '~/soft/qmcpack-espresso-5.3.0/bin'
+    qmcdir     = '~/soft/kylin_qmcpack'
+  elif machine == 'bluewaters_xe':
+    pseudo_dir = '/u/sciteam/yang5/scratch/hsolid/pseudo'
+    vdw_table  = '/u/sciteam/yang5/scratch/hsolid/vdw/vdW_kernel_table'
     qedir      = '~/soft/espresso-5.3.0/bin'
     ccdir      = '~/soft/qmcpack-espresso-5.3.0/bin'
     qmcdir     = '~/soft/kylin_qmcpack'
@@ -54,6 +60,11 @@ def apply_machine_settings(machine,run_dir,account='',nk=1,**kwargs):
 
   # assign jobs
   if machine == 'titan':
+    dft_job  = obj(nodes=1,minutes=10,app_options="-nk %d"%nk,app=pw_bin)
+    p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
+    opt_job  = obj(nodes=4,threads=8,hours=2,app=qmc_bin)
+    dmc_job  = obj(nodes=8,threads=8,hours=2,app=qmc_bin)
+  elif machine == 'bluewaters_xe':
     dft_job  = obj(nodes=1,minutes=10,app_options="-nk %d"%nk,app=pw_bin)
     p2q_job  = obj(nodes=1,serial=True,minutes=30,app=cc_bin)
     opt_job  = obj(nodes=4,threads=8,hours=2,app=qmc_bin)
