@@ -127,22 +127,34 @@ def plot_hydrogen_solids(ax,plotdf,xname='myx',yname='myy',draw_scatter=True,dra
     return scatter_plots,line_plots,scatter_leg,line_leg
 # end plot_hydrogen_solids
 
-def plot_against_sname(ax,df,xcol,ycol,slist,**kwargs):
-  ymean = ycol + '_mean'
-  yerror= ycol + '_error'
+def plot_against_sname(ax,df,xcol,ycol,slist,yerr=False,**kwargs):
+  if yerr:
+    ymean = ycol + '_mean'
+    yerror= ycol + '_error'
+  # end if
+
   lines = []
   for sname in slist:
     sel  = df.sname==sname
-    cols = [xcol,ymean,yerror]
+
     mydf = df.loc[sel].sort_values(xcol)
-    line = ax.errorbar(mydf[xcol],mydf[ymean],yerr=mydf[yerror]
-        ,marker=struct_markers[sname],c=struct_colors[sname]
-        ,**kwargs)
+    myx  = mydf.loc[:,xcol]
+    if yerr:
+      myy  = mydf.loc[:,ymean]
+      myye = mydf.loc[:,yerror]
+    else:
+      myy  = mydf.loc[:,ycol]
+      myye = 0.0
+    # end if
+
+    line = ax.errorbar(myx,myy,yerr=myye
+      ,marker=struct_markers[sname],c=struct_colors[sname]
+      ,**kwargs)
+
     lines.append(line)
   # end for
   return lines
 # end def plot_against_sname
-
 
 def plot_against_structs(ax,df,xcol,ycol,func,no_error=False,slist=[],lw=2,ms=10,alpha=1.0):
   """df must have columns ["struct","func","press"] + [xcol,ycol]. 
