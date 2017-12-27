@@ -55,12 +55,16 @@ BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   return text
 # end def qsub_file
 
-def bw_qsub_file(fnames,nmpi=64,title='title',hours=2):
+def bw_qsub_file(fnames,nmpi=64,title='title',hours=2,queue='normal'):
+  qs = ['low','normal','high']
+  if queue not in qs:
+    raise RuntimeError('unknown queue %s; choose from'%queue+str(qs))
+  # end if
   header = """#!/bin/bash
 #PBS -N %s
 #PBS -l walltime=0%d:00:00
 #PBS -l nodes=%d:ppn=32:xe
-#PBS -j oe
+#PBS -q %s
 
 . /opt/modules/default/init/bash
 module load cray-hdf5-parallel libxml2
@@ -71,7 +75,8 @@ export OMP_NUM_THREADS=8
 BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   title,
   hours,
-  len(fnames)*nmpi/4
+  len(fnames)*nmpi/4,
+  queue
   )
 
   body = 'cwd=`pwd`\n'
