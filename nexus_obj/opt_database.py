@@ -29,6 +29,12 @@ rs2rb_pmap = { # 50/init/bond
 'cmca12':[ 0.20065344,1.1204539]
 }
 
+rs2carb_pmap = { # 55/sname-rs_ca-rb_grid/grid.py
+'c2c':{'ca':[0.25205619,1.43017007],'rb':[-1.33414778,3.53568222,-0.97115101]},
+'cmca4':{'ca':[0.28167668,1.19844864],'rb':[-3.41019865,8.77500764,-4.21965519]},
+'cmca12':{'ca':[-0.16499329,1.28828894],'rb':[-2.43595819,6.40101745,-2.81177197]}
+}
+
 def opt_structure_sfp(sname,func,press,struct_df):
   """ request structure from struct_df using labels (sname,func,press)
   Args:
