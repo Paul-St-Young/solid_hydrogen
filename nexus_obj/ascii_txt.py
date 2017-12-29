@@ -71,7 +71,7 @@ def eos_qsub_file(fname,nmpi=64,title='title',hours=2
 cd ${PBS_O_WORKDIR}
 export OMP_NUM_THREADS=8
 
-BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
+BIN=~/soft/intel_kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   title,
   hours,
   nmpi/2
