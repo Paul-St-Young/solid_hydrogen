@@ -74,7 +74,7 @@ export OMP_NUM_THREADS=8
 BIN=~/soft/intel_kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   title,
   hours,
-  nmpi/2
+  nmpi/4
   )
 
   body = 'cwd=`pwd`\n'
