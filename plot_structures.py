@@ -259,10 +259,13 @@ def sfr_label(subdir,sep='_'):
   return pd.Series({'struct':struct,'func':func,'rs100':rs100})
 
 def sra_label(subdir,sep='-'):
-  sname,rst,cat = subdir.split(sep)
+  tokens = subdir.split(sep)
+  sname  = tokens[0]
+  rst    = tokens[1]
+  cat    = tokens[2]
   rs = float(rst.replace('rs',''))
   ca = float(cat.replace('ca',''))
-  return pd.Series({'sname':sname,'rs':rs,'ca':ca})
+  return {'sname':sname,'rs':rs,'ca':ca}
 # end def sra_label
 
 def srab_label(subdir,sep='-'):
