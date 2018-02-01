@@ -46,10 +46,11 @@ def xyye(df,sel,xname,yname):
   ymean = yname+'_mean'
   yerr  = yname+'_error'
 
-  myx = df.loc[sel,xname]
-  myy = df.loc[sel,ymean]
-  myye= df.loc[sel,yerr]
-  return myx,myy,myye
+  myx = df.loc[sel,xname].values
+  myy = df.loc[sel,ymean].values
+  myye= df.loc[sel,yerr].values
+  idx = np.argsort(myx)
+  return myx[idx],myy[idx],myye[idx]
 # end def xyye
 
 def show_sel_xyname(ax,sel,xname,yname,df,**kwargs):
