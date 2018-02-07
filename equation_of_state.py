@@ -165,7 +165,7 @@ def get_eos_df(df,order,volpp_name='volpp',epp_name='Epp',with_error=False):
   for sname in snamel:
     sel = df.sname == sname
     # get eos
-    feos,peos = get_eos(df,sel,order,epp_name=epp_name,with_error=with_error)
+    feos,peos = get_eos(df,sel,order,volpp_name=volpp_name,epp_name=epp_name,with_error=with_error)
     # get eos validity range
     myx  = df.loc[sel,volpp_name]
     entry = {'sname':sname,'volpp_min':min(myx),'volpp_max':max(myx)
