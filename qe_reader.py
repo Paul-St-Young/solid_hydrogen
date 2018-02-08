@@ -616,3 +616,33 @@ def relax_output(fout):
   # end for i
   return data
 # end def relax_output
+
+def axes_elem_pos(infile_str,tmp_floc='./tmp.in'):
+  """ return structure from pw.x input
+  Args:
+    infile_str (str): string representation of input file
+    tmp_floc (str,optional): temporary file, default './tmp.in'
+  Returns:
+    dict: with entries ['axes','axes_unit','pos','pos_unit','elem']
+  """
+  from qeutil.readers import read_in_file
+  with open(tmp_floc,'w') as f: f.write(infile_str)
+  obj = read_in_file(tmp_floc)
+
+  # get axes
+  axes_unit = obj['CELL_PARAMETERS']['attrib']
+  axes = obj['CELL_PARAMETERS']['cell']
+
+  # get pos
+  pos_unit = obj['ATOMIC_POSITIONS']['attrib']
+  atoms = obj['ATOMIC_POSITIONS']['atoms']
+  pos   = [atom['pos'] for atom in atoms]
+
+  # get elem
+  elem  = [atom['symbol'] for atom in atoms]
+  
+  entry = {'axes':axes,'axes_unit':axes_unit
+          ,'pos':pos,'pos_unit':pos_unit
+          ,'elem':elem}
+  return entry
+# end def axes_elem_pos
