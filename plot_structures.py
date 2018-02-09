@@ -310,6 +310,10 @@ def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
   return ax1
 # end def
 
+def add_diag_line(ax):
+  ax.plot(ax.get_xlim(),ax.get_ylim(),c='k',ls='--')
+# end def
+
 def check_rs(axes,natom,rs0,rs_tol=1e-6):
   from qharv.inspect import axes_pos
   rs = axes_pos.rs(axes,natom)
