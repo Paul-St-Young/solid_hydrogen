@@ -97,6 +97,13 @@ def resample1d(myx,nx=100):
   return finex
 # end def
 
+def mutual_range(myx0,myx):
+  nx = min(len(myx0),len(myx))
+  xmin = max(min(myx0),min(myx))
+  xmax = min(max(myx0),max(myx))
+  return np.linspace(xmin,xmax,nx)
+# end def
+
 def relative_energy(volpp,feos0,feos1):
   """ evaluate the relative energy between two eos at selected volpp 
   Args:
@@ -225,3 +232,5 @@ def abs_epp_vs_volpp_raw(ax,df,sel,volpp_name='volpp',epp_name='Epp'
   # end if
   return line
 # end def abs_epp_vs_volpp_raw
+
+# ---- level 2: relative quantities based on eos_df ---- #
