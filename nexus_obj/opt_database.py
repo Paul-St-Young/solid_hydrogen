@@ -9,6 +9,14 @@ tmat72 = {
 'i41amd':np.array([[2,-2,1],[2,3,0],[-2,1,1]])
 }
 
+rwsc_tmat72 = {
+'i41amd':np.array([[1,4,3],[4,1,3],[2,2,0]])
+}
+
+tmat96 = {
+'c2c':np.array([[2,0,2],[1,1,0],[0,0,2]]) # 90a
+}
+
 rs2ca_pmap = {
 'c2c':[0.59540928,0.99294395], # 36
 'cmca4':[0.40630975,1.03284052], # 42
@@ -111,6 +119,27 @@ def i4_structure(rs,ca): # ca is c/a ratio
   )
   return structure
 # end def i4_strucrture
+
+def i4_prim(rs,ca):
+  volpp   = 4./3*np.pi*rs**3.
+  upos = np.array([
+    [0.50,0.50,1.00],
+    [0.25,0.75,0.50]
+  ])
+
+  # construct conventional cell
+  natom   = 4
+  volconv = volpp*natom
+  alat = (volconv/ca)**(1./3)
+  clat = alat*ca
+  axes = np.array([[alat,0,0],[0,alat,0],[0,0,clat]])
+
+  # get primitive cell
+  fcc0 = np.ones(3)-np.eye(3)
+  axes0= np.dot(np.linalg.inv(fcc0),axes)
+  pos0 = np.dot(upos,axes0)
+  return axes0,pos0
+# end def i4_prim
 
 def rs_ca_from_id(myid):
   # myid e.g. c2c-rs1.27-ca1.75
