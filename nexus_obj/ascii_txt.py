@@ -94,6 +94,46 @@ BIN=~/soft/intel_kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   return text
 # end def eos_qsub_file
 
+def golub_qsub_file(fname,nmpi=2,title='title',hours=2
+  ,fout='out',ferr='err',queue='secondary',node_spec='ppn=16'):
+  if type(fname) is not str:
+    raise TypeError('Golub accepts one input at a time, %s should be str'%type(fname))
+  # end if
+  infile = os.path.basename(fname)
+  rundir = os.path.dirname(fname)
+
+  header = """#!/bin/bash
+#PBS -N %s
+#PBS -l walltime=0%d:00:00
+#PBS -l nodes=%d:%s
+#PBS -q %s
+
+#PBS -j oe
+#PBS -k n
+cd ${PBS_O_WORKDIR}
+export OMP_NUM_THREADS=8
+
+BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
+  title,
+  hours,
+  nmpi/2,
+  node_spec,
+  queue
+  )
+  
+  move_cmd = 'cd '+rundir
+  mpi_cmd  = 'mpirun -n %d $BIN '%nmpi
+  run_cmd  = mpi_cmd + infile + ' > %s 2> %s' % (fout,ferr)
+  inv_move = 'cd $cwd'
+
+  body  = 'cwd=`pwd`\n'
+  body += 'date\n' + '\n'.join([move_cmd,run_cmd,inv_move]) + '\ndate'
+
+  text = header + body
+  return text
+# end def golub_qsub_file
+
+
 def bw_qsub_file(fnames,nmpi=64,title='title',hours=2,queue='normal'):
   qs = ['low','normal','high']
   if queue not in qs:
