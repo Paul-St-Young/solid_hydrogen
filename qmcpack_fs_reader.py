@@ -33,3 +33,30 @@ def get_dsk_amat(floc):
                                                                                 
   return amat                                                                   
 # end def get_dsk_amat
+
+def add_mixed_vint(df2):
+  """ add mixed vint (\int vk Sk) column to extrapolated entries
+   df2 must have columns ['timestep','vint'], there must be a timestep=0
+   entry, and a timestep > 0 entry.
+  Args:
+    df2 (pd.DataFrame): DMC database
+  Returns:
+    None
+  """
+  df2['vmixed'] = np.nan                                                      
+  for subdir in df2.subdir.unique():                                          
+    sel = (df2.subdir==subdir)                                                
+    ts0_sel = (df2.timestep==0)                                               
+    # !!!! assume smallest non-zero timestep is best DMC                      
+    min_ts  = df2.loc[sel&(~ts0_sel),'timestep'].min()                        
+    ts1_sel = (df2.timestep==min_ts)                                          
+                                                                              
+    # get mixed vint entry                                                    
+    entry = df2.loc[sel&(ts1_sel),'vint']                                     
+    assert len(entry) == 1                                                    
+    vmixed = entry.values[0]                                                  
+                                                                              
+    # transfer to pure entry                                                  
+    df2.loc[ts0_sel,'vmixed'] = vmixed                                        
+  # end for        
+# end def add_mixed_vint
