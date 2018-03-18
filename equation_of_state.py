@@ -39,6 +39,21 @@ def eos_with_error(volpp,eppm,eppe,order):
   return popt,perr
 # end def
 
+def fpeos_with_error(volpp,eppm,eppe,order):
+  """ energy and pressure v.s. volume functions
+  Args:
+    volpp (np.array): volume per particle
+    eppm  (np.array): energy per particle mean
+    eppe  (np.array): energy per particle error
+  Returns:
+    tuple: (feos,peos), each a function a volpp
+  """
+  popt,perr = eos_with_error(volpp,eppm,eppe,order)                           
+  feos = lambda volpp:models[order]( volpp,*popt)                                   
+  peos = lambda volpp:pmodels[order](volpp,*popt)                                   
+  return feos,peos                                                              
+# end def
+
 def eos(df,sel,volpp_name,epp_name,order,with_error=False):
   """ fit energy per particle (epp) to inverse volume per particle (volpp)
   Args:
@@ -131,6 +146,23 @@ def volpp_at_pressures(myp,peos,vol0=9.):
   volpp = np.array([op.fsolve(lambda x:peos(x)-p,vol0)[0] for p in myp])
   return volpp
 # end def volpp_at_pressures
+
+def absolute_enthalpy(myp,feos,peos):
+  """ evaluate the absolute enthalpy using energy & pressure v.s. volume
+   functions
+  Args:
+    myp (np.array): a list of pressures in Hartree atomic units
+    feos (function): energy eos
+    peos (function): pressure eos
+  Returns:
+    np.array: h, a list of enthalpies difference at myp
+  """
+  v  = volpp_at_pressures(myp,peos)
+  e = feos(v)
+  p = peos(v)
+  h = e+p*v
+  return h
+# end def absolute_enthalpy
 
 def relative_enthalpy(myp,feos0,peos0,feos1,peos1):
   """ evaluate the relative enthalpy between two eos at selected myp
