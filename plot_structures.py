@@ -150,6 +150,7 @@ def plot_against_sname(ax,df,xcol,ycol,slist,yerr=False,**kwargs):
 
     line = ax.errorbar(myx,myy,yerr=myye
       ,marker=struct_markers[sname],c=struct_colors[sname]
+      ,label=sname
       ,**kwargs)
 
     lines.append(line)
