@@ -2,7 +2,6 @@
 import os
 import numpy as np
 import pandas as pd
-import pymatgen as mg
 
 def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     """ calculate the pair correlation function of a snapshot of a crystal structure given the 'axes' of the simulation cell and the positions ('pos') of atoms inside the cell.
@@ -18,6 +17,7 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
       gofr_norm (float,optional): normalization factor for g(r), default is to recalculate.
     Returns:
       (np.array,np.array,float): (r,g(r),normalization) """
+    import pymatgen as mg
     elem = ['H']*len(pos)
     struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
     dtable = struct.distance_matrix
@@ -52,6 +52,7 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     Returns:
       (np.array,np.array): (kvecs,S(k))
     """
+    import pymatgen as mg
     
     rho = lambda kvec: np.exp(1j* np.dot(pos,kvec) ).sum()
     elem = ['H']*len(pos)
