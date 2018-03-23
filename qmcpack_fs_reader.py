@@ -34,6 +34,23 @@ def get_dsk_amat(floc):
   return amat                                                                   
 # end def get_dsk_amat
 
+def get_data_block(floc,name):
+  known_names = ['SK_RAW','SK_SPLINE']
+  if name not in known_names: raise RuntimeError()
+
+  start_tag = '#'+name + '_START#'
+  stop_tag  = '#'+name + '_STOP#'
+
+  mm = ascii_out.read(floc)                                                     
+  text = ascii_out.block_text(mm,start_tag,stop_tag)
+  lines= text.split('\n')
+  header = lines[0]
+  data   = np.array(
+    [map(float,line.split()) for line in lines[1:-1]]
+  ,dtype=float)
+  return data
+# end def get_data_block
+
 def add_mixed_vint(df2):
   """ add mixed vint (\int vk Sk) column to extrapolated entries
    df2 must have columns ['timestep','vint'], there must be a timestep=0
