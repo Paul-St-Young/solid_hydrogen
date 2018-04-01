@@ -646,3 +646,65 @@ def axes_elem_pos(infile_str,tmp_floc='./tmp.in'):
           ,'elem':elem}
   return entry
 # end def axes_elem_pos
+
+def get_axsf_normal_mode(faxsf,imode):
+  """ extract the first normal mode labeled by 'PRIMCOORD {imode:d}' 
+  assume the following format:
+
+  PRIMCOORD  1
+    16   1
+  H      0.00000   0.00000   1.50303  -0.00000   0.00000   0.02501
+  H      0.63506   0.63506   0.00000   0.00000  -0.00000   0.02500
+  ...
+
+  Args:
+    faxsf (str): name of axsf file
+    imode (int): index of normal mode
+  Return:
+    tuple: (elem,data), elem is a list of atomic symbols,
+     data is a np.array of floats (6 columns in above example).
+  """
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(faxsf)
+
+  # search through all modes for requested imode
+  all_idx = ascii_out.all_lines_with_tag(mm,'PRIMCOORD')
+  found = False
+  for idx in all_idx:
+    mm.seek(idx)
+    line = mm.readline()
+    myi  = int(line.split()[1])
+    if myi != imode: continue
+    
+    # found imode
+    found = True
+
+    # get number of atoms
+    line = mm.readline()
+    natom = int(line.split()[0])
+
+    # get atomic symbols, positions and normal mode
+    elem = []
+    data = []
+    for iatom in range(natom):
+      line = mm.readline()
+      tokens = line.split()
+      elem.append(tokens[0])
+      data.append(map(float,tokens[1:]))
+    # end for iatom
+
+    # check that the next line is either next mode or empty
+    line = mm.readline()
+    expected = (line == '') or (line.startswith('PRIMCOORD'))
+    if not expected:
+      raise RuntimeError('failed to read mode %d correctly'%imode)
+    # end if
+    break
+  # end for idx
+
+  if not found:
+    raise RuntimeError('failed to find mode %d in %s'%(imode,faxsf))
+  # end if
+
+  return elem,np.array(data)
+# end def get_axsf_normal_mode
