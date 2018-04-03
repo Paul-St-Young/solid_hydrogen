@@ -73,13 +73,18 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     return legal_kvecs, sk_arr
 # end def
 
-def shell_avg_sofk(legal_kvecs,sk_arr,smear_fac=100):
-    """ average S(k) if multiple k-vectors have the same magnitude,
-     legal_kvecs.shape should be (Nk,Ndim)
-     sk_arr.shape should be (Nk) """
 
-    # determine similarity of k-vectors by converting magnitude to int
-    kmags = np.linalg.norm(legal_kvecs,axis=1)
+def shell_average(kmags,vals,smear_fac=100):
+    """ spherical average value over k vector magnutudes 
+    multiple elements of vals may have the same kmag
+
+    Args:
+      kmags (np.array): magnitude of k vectors
+      vals  (np.array): value of function at each k vector
+      smear_fac (int, optional): smearing factor, default is 100. e.g. kmags of 3.145, 3.146 will be considered to occupy the same kshell, whereas kmags of 3.145 and 3.134 will occupy different kshells.
+    Returns:
+      tuple: (unique_kmags, unique_vals), shell-averaged kvector magnitudes and function values.
+    """
     kids  = map(int,map(round,kmags*smear_fac))
 
     # pick unique kshells according to index
@@ -87,15 +92,27 @@ def shell_avg_sofk(legal_kvecs,sk_arr,smear_fac=100):
 
     # loop over each shell and average
     unique_kmags = np.zeros(len(unique_kid))
-    unique_sk    = np.zeros(len(unique_kid))
+    unique_vals  = np.zeros(len(unique_kid))
     for iukmag in range(len(unique_kid)):
-        kid = unique_kid[iukmag] # shell ID
-        sel = kids == kid # select this shell
-        unique_sk[iukmag] = np.mean(sk_arr[sel])
+        kid = unique_kid[iukmag]  # shell ID
+        sel = kids == kid         # select this shell
         unique_kmags[iukmag] = float(kid)/smear_fac
+        unique_vals[iukmag] = np.mean(vals[sel])
     # end for iukmag
-    return unique_kmags,unique_sk
-# end def 
+    return unique_kmags,unique_vals
+# end def shell_average
+
+
+def shell_avg_sofk(legal_kvecs,sk_arr,**kwargs):
+    """ average S(k) if multiple k-vectors have the same magnitude,
+     legal_kvecs.shape should be (Nk,Ndim)
+     sk_arr.shape should be (Nk) """
+
+    # determine similarity of k-vectors by converting magnitude to int
+    kmags = np.linalg.norm(legal_kvecs,axis=1)
+    return shell_average(kmags,sk_arr,**kwargs)
+# end def
+
 
 def gr2sk(k,grx,gry,rho):
     """ return spherical S(k) at given 'k' value, assuming spherical g(r)=(grx,gry)
