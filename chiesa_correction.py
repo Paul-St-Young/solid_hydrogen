@@ -72,3 +72,16 @@ def get_uk(jk2_dat,ftur_dat):
   totk, uk = isotropic_uk(kmags,jk2m,myk,fturm)                                 
   return totk, uk                                                               
 # end def
+
+
+chiesa_rpa_uk = lambda k,a,b:4*np.pi*a*(k**(-2)-(k**2+b**(-1))**(-1))
+drum_rpa_uk   = lambda k,A,B:4*np.pi*(A/k**2+B/k)
+
+def fit_rpa_uk(model, totk, uk, kmax):
+  import scipy.optimize as op
+  sel = (totk <= kmax)
+  popt,pcov = op.curve_fit(model,totk[sel],uk[sel])
+
+  fuk = lambda k:model(k,*popt)
+  return fuk,popt
+# end def
