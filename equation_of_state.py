@@ -32,6 +32,20 @@ def eos_no_error(volpp,epp,order):
   return popt,perr
 # end def
 
+def fpeos_no_error(volpp,eppm,order):
+  """ energy and pressure v.s. volume functions
+  Args:
+    volpp (np.array): volume per particle
+    eppm  (np.array): energy per particle mean
+  Returns:
+    tuple: (feos,peos), each a function a volpp
+  """
+  popt,perr = eos_no_error(volpp,eppm,order)                           
+  feos = lambda volpp:models[order]( volpp,*popt)                                   
+  peos = lambda volpp:pmodels[order](volpp,*popt)                                   
+  return feos,peos                                                              
+# end def
+
 def eos_with_error(volpp,eppm,eppe,order):
   model = models[order]
   popt,pcov = op.curve_fit(model,volpp,eppm,sigma=eppe,absolute_sigma=True)
