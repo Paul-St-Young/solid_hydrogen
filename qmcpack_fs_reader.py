@@ -35,9 +35,6 @@ def get_dsk_amat(floc):
 # end def get_dsk_amat
 
 def get_data_block(floc,name):
-  known_names = ['SK_RAW','SK_SPLINE']
-  if name not in known_names: raise RuntimeError()
-
   start_tag = '#'+name + '_START#'
   stop_tag  = '#'+name + '_STOP#'
 
