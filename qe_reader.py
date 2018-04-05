@@ -1,34 +1,7 @@
 import numpy as np
 from mmap import mmap
 
-def value_by_label_sep_pos(mm,label,sep=b'=',pos=-1,dtype=float,from_start=False):
-    """ find the value of the line 'keyword = value' in memory map 'mm' by default """
-    
-    if from_start:
-        mm.seek(0)
-    # end if
-    
-    # accomodate python3
-    if type(label) is str:
-        label = label.encode()
-    elif type(sep) is str:
-        sep = label.encode()
-    # end if
-    
-    idx = mm.find(label)
-    if idx == -1:
-        raise RuntimeError(label+' not found')
-    # end if
-    
-    mm.seek(idx)
-    line = mm.readline()
-    tokens = line.split(sep)
-    
-    val_text = tokens[pos]
-    val = dtype(val_text)
-    return val
-
-# end def value_by_label_sep_pos
+from qharv.reel.ascii_out import read, name_sep_val, all_lines_with_tag
 
 def read_first_energy(scf_out):
     with open(scf_out,'r+') as f:
@@ -202,27 +175,6 @@ def find_pwscf_io(path,infile_subfix='-scf.in',outfile_subfix='.out',use_last=Fa
     
     return infile,outfile
 # end def find_pwscf_io
-
-def all_lines_with_tag(mm,tag,nline_max):
-    """ return a list of memory indices pointing to the start of tag """
-    mm.seek(0) # rewind file
-    all_idx = []
-    for iline in range(nline_max):
-        idx = mm.find(tag)
-        if idx == -1:
-            break
-        # end if
-        mm.seek(idx)
-        all_idx.append(idx)
-        mm.readline()
-    # end for iline
-    
-    # guard
-    if iline >= nline_max-1:
-        raise NotImplementedError('may need to increase nline_max')
-    # end if
-    return all_idx
-# end def all_lines_with_tag
 
 import struct
 def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
@@ -708,3 +660,28 @@ def get_axsf_normal_mode(faxsf,imode):
 
   return elem,np.array(data)
 # end def get_axsf_normal_mode
+
+
+def parse_output(floc):
+  """ get energy, volume and pressure from QE output """
+  etot = read_first_energy(floc)
+  entry = {'energy':etot/2.}  # Ry to ha
+
+  mm  = read(floc)
+
+  label_map = {
+    'volume':'unit-cell volume',
+    'natom':'number of atoms/cell'
+  }
+
+  for key in label_map.keys():
+    val = name_sep_val(mm, label_map[key])
+    entry[key] = val
+  # end for
+  au_stressl,kbar_stressl = read_stress(floc)
+  assert len(au_stressl) == 1
+  au_stress = au_stressl[0]
+  entry['pressure'] = np.diag(au_stress).mean()/2.  # Ry to ha
+
+  return entry
+# end def parse_output
