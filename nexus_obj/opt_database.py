@@ -149,6 +149,18 @@ def i4_prim(rs,ca):
   return axes0,pos0
 # end def i4_prim
 
+def i4_conv(rs, ca):
+  axes0, pos0 = i4_prim(rs, ca)
+  tmat = np.ones(3) - np.eye(3)
+  from ase import Atoms
+  from ase.build import make_supercell
+  s0 = Atoms('H%d'%len(pos0), cell=axes0, positions=pos0, pbc=[1,1,1])
+  s1 = make_supercell(s0, tmat)
+  axes1 = s1.get_cell()
+  pos1  = s1.get_positions()
+  return axes1, pos1
+# end def i4_conv
+
 def rs_ca_from_id(myid):
   # myid e.g. c2c-rs1.27-ca1.75
   st,rst,cat = myid.split('-')
