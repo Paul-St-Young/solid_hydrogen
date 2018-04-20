@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import scipy.interpolate as interp
 
 from qharv.reel import ascii_out
 def get_dsk_amat(floc):                                                         
@@ -34,6 +35,13 @@ def get_dsk_amat(floc):
   return amat                                                                   
 # end def get_dsk_amat
 
+
+def get_volume(fout):
+  mm = ascii_out.read(fout)
+  omega = ascii_out.name_sep_val(mm, 'Vol', pos=1)
+  return omega
+
+
 def get_data_block(floc,name):
   start_tag = '#'+name + '_START#'
   stop_tag  = '#'+name + '_STOP#'
@@ -47,6 +55,7 @@ def get_data_block(floc,name):
   ,dtype=float)
   return data
 # end def get_data_block
+
 
 def add_mixed_vint(df2):
   """ add mixed vint (\int vk Sk) column to extrapolated entries
@@ -74,3 +83,98 @@ def add_mixed_vint(df2):
     df2.loc[ts0_sel,'vmixed'] = vmixed                                        
   # end for        
 # end def add_mixed_vint
+
+
+# ================= reproduce QMCPACK implementation ================= #
+# step 1: get long-range Coulomb pair potential vk
+def get_vk(fout):
+  """ long-range coulomb pair potential """
+  data = get_data_block(fout, 'VK')
+  vkx, vky = data.T
+
+  # QMCPACK vk is divided by volume, undo!
+  omega = get_volume(fout)
+  vky *= omega
+
+  return vkx, vky
+
+def get_fvk(fout):
+  """ interpolated long-range coulomb pair potential """
+  vkx, vky = get_vk(fout)
+  tck = interp.splrep(vkx, vky)
+  fvk = lambda k:interp.splev(k, tck)
+  return fvk
+
+
+# step 2: get raw static structure factor S(k)
+def get_dsk(fjson, obs='dsk'):
+  """ raw structure factor """
+  import pandas as pd
+  df = pd.read_json(fjson)
+  kvecs = np.array(df.loc[0,'kvecs'])
+  skm   = np.array(df.loc[0,'%s_mean'%obs])
+  ske   = np.array(df.loc[0,'%s_error'%obs])
+  return kvecs, skm, ske
+
+
+# step 3: get sum
+def get_vsum(vk, skm, omega):
+  """
+  skm should contain S(k) values at ALL supercell reciprocal vectors used
+  vk should be the same length as skm and NOT divided by volume omega
+  """
+  summand = 0.5*vk*skm
+  vsum = 1/omega* summand.sum()
+  return vsum
+
+
+def get_qmcpack_vsum(fjson, fout):
+  kvecs, skm, ske = get_dsk(fjson)
+  kmags = np.linalg.norm(kvecs, axis=1)
+
+  fvk = get_fvk(fout)
+  vk = fvk(kmags)
+  omega = get_volume(fout)
+
+  vsum = get_vsum(vk, skm, omega)
+  return vsum
+
+
+# step 4: get sphericall averaged Savg(k) spline
+def get_fsk(fout):
+  """ interpolated spherically-averaged structure factor """
+  data = get_data_block(fout, 'SK_SPLINE')
+  skx, sky = data.T
+  tck = interp.splrep(skx, sky)
+  fsk = lambda k:interp.splev(k, tck)
+  return fsk
+
+
+# step 4: get 1D integrand
+def get_intx_inty(fout):
+  fsk = get_fsk(fout)
+  vkx, vky = get_vk(fout)
+  myinty = 0.5*vkx**2*vky*fsk(vkx)
+  return vkx, myinty
+
+
+# step 5: interpolate 1D integrand
+def get_fint(fout):
+  intx, inty = get_intx_inty(fout)
+  padx = np.array([0.0])
+  pady = np.array([0.0]*len(padx))
+  myx  = np.concatenate([padx, intx])
+  myy  = np.concatenate([pady, inty])
+  tck  = interp.splrep(myx, myy)
+  fint = lambda k:interp.splev(k, tck)
+  return fint
+
+# step 6: get integral
+def get_vint(fout):
+  from scipy.integrate import quad
+  vkx, vky = get_vk(fout)
+  fint = get_fint(fout)
+  intnorm = 1./(2*np.pi**2)
+  intval  = quad(fint,0,max(vkx))[0]
+  vint = intnorm * intval
+  return vint
