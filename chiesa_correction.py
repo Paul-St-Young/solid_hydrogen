@@ -141,3 +141,16 @@ def get_jk_kvecs(fout):
   kvecs = data[:,:3]
   kmags = data[:,3]
   return kvecs
+
+# ================== routines for S(k)  ==================
+
+hfsk = lambda k,kf:3*k/(4*kf)-k**3/(16*kf**3)
+heg_kfermi = lambda rs:((9*np.pi)/(4.*rs**3.))**(1./3)
+
+def load_dsk(fjson, obs='dsk'):
+  import pandas as pd
+  df = pd.read_json(fjson)
+  kvecs = np.array(df.loc[0,'kvecs'])
+  skm   = np.array(df.loc[0,'%s_mean'%obs])
+  ske   = np.array(df.loc[0,'%s_error'%obs])
+  return kvecs, skm, ske
