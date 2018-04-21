@@ -85,3 +85,59 @@ def fit_rpa_uk(model, totk, uk, kmax):
   fuk = lambda k:model(k,*popt)
   return fuk,popt
 # end def
+
+# ================== basic routines for klist  ==================
+def cubic_pos(nx):
+  from itertools import product
+  pos  = np.array([spos for spos in product(xrange(nx),repeat=3)],dtype=float)
+  return pos
+
+
+def mirror_xyz(pos):
+  from itertools import product
+  natom, ndim = pos.shape
+  new_pos = np.zeros([natom*2**ndim,ndim])
+
+  iflip = 0
+  for dim_mult in product([-1,1],repeat=ndim):
+    pos1 = pos.copy()
+    for idim, mult in zip(xrange(ndim),dim_mult):
+      pos1[:,idim] *= mult
+    new_pos[natom*iflip:natom*(iflip+1)] = pos1
+    iflip += 1
+  # end for
+
+  return new_pos
+
+
+def get_kshells(nk, raxes, atol = 1e-8):
+  ukvecs = mirror_xyz( cubic_pos(nk) )
+
+  # throw out k vector at zero
+  sel    = np.linalg.norm(ukvecs, axis=1) < atol
+  ukvecs = ukvecs[~sel]
+
+  kvecs  = np.dot(ukvecs, raxes)
+  return kvecs
+
+
+def get_jk_kvecs(fout):
+  """ parse QMCPACK output for kSpace Jastrow kvecs """
+  from qharv.reel import ascii_out
+
+  header  = 'kSpace coefficent groups'
+  trailer = 'QMCHamiltonian::addOperator'
+
+  mm   = ascii_out.read(fout)
+  text = ascii_out.block_text(mm, header, trailer)
+
+  data = []
+  for line in text.split('\n'):
+    tokens = line.split()
+    if len(tokens) != 4: continue
+    data.append( map(float, tokens) )
+
+  data  = np.array(data)
+  kvecs = data[:,:3]
+  kmags = data[:,3]
+  return kvecs
