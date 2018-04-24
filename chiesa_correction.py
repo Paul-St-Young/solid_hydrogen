@@ -142,7 +142,7 @@ def get_jk_kvecs(fout):
   kmags = data[:,3]
   return kvecs
 
-# ================== routines for S(k)  ==================
+# ================ routines for structure factor S(k)  ================
 
 hfsk = lambda k,kf:3*k/(4*kf)-k**3/(16*kf**3)
 heg_kfermi = lambda rs:((9*np.pi)/(4.*rs**3.))**(1./3)
@@ -154,3 +154,15 @@ def load_dsk(fjson, obs='dsk'):
   skm   = np.array(df.loc[0,'%s_mean'%obs])
   ske   = np.array(df.loc[0,'%s_error'%obs])
   return kvecs, skm, ske
+
+# ================ routines for jastrow potential U(k)  ================
+def gaskell_rpa_uk(k, rs, kf):
+
+  # build pieces
+  hfsk_val  = hfsk(k, kf)      # non-interacting S0(k)
+  prefactor = 2*np.pi/3*rs**3  # 1/(2*density)
+  arg2sqrt  = hfsk_val**(-2) + 12./(rs**3*k**4)
+
+  # put pieces together
+  uk = prefactor * ( -hfsk_val**(-1) + arg2sqrt**0.5 )
+  return uk
