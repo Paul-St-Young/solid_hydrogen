@@ -121,6 +121,27 @@ def get_kshells(nk, raxes, atol = 1e-8):
   return kvecs
 
 
+def get_iso_jk_kmags(raxes, kshell_max, kc, smear_fac=1000.):
+  import chiesa_correction as chc
+  # get k vectors
+  kvecs = chc.get_kshells(kshell_max, raxes)
+
+  # get unique k vectors given cubic symmetry
+  # step 1: throw out half sphere due to inversion symmetry
+  sel   = kvecs[:, 0] >= 0
+  kvecs = kvecs[sel]
+  # step 2: throw out k vectors > kc
+  kmags = np.linalg.norm(kvecs, axis=1)
+  kcsel = kmags < kc
+  kvecs = kvecs[kcsel]
+  # step 3: use isotropic symmetry
+  kmags = np.linalg.norm(kvecs, axis=1)
+  kshs  = (kmags*smear_fac).astype(int)
+  uk, uidx = np.unique(kshs, return_index=True)
+
+  return kmags[uidx]
+
+
 def get_jk_kvecs(fout):
   """ parse QMCPACK output for kSpace Jastrow kvecs """
   from qharv.reel import ascii_out
