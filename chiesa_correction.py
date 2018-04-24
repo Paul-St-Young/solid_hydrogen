@@ -165,7 +165,19 @@ def get_jk_kvecs(fout):
 
 # ================ routines for structure factor S(k)  ================
 
-hfsk = lambda k,kf:3*k/(4*kf)-k**3/(16*kf**3)
+def hfsk(karr, kf):
+  """ static structure factor of non-interacting Fermions
+  Args:
+    karr (np.array): k vector magnitudes
+    kf (float): Fermi k vector magnitude
+  Return:
+    float: S0(k, kf)
+  """
+  skm = 3*karr/(4*kf)-karr**3/(16*kf**3)
+  sel = np.where(karr>=2*kf)
+  skm[sel] = 1.0
+  return skm
+
 heg_kfermi = lambda rs:((9*np.pi)/(4.*rs**3.))**(1./3)
 
 def load_dsk(fjson, obs='dsk'):
