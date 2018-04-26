@@ -165,6 +165,7 @@ def get_jk_kvecs(fout):
 
 # ================ routines for structure factor S(k)  ================
 
+
 def hfsk(karr, kf):
   """ static structure factor of non-interacting Fermions
   Args:
@@ -189,6 +190,8 @@ def load_dsk(fjson, obs='dsk'):
   return kvecs, skm, ske
 
 # ================ routines for jastrow potential U(k)  ================
+
+
 def gaskell_rpa_uk(k, rs, kf):
 
   # build pieces
@@ -199,3 +202,54 @@ def gaskell_rpa_uk(k, rs, kf):
   # put pieces together
   uk = prefactor * ( -hfsk_val**(-1) + arg2sqrt**0.5 )
   return uk
+
+
+def ceperley_rpa_uk(k, rs):
+
+  # build pieces
+  vol = (4*np.pi/3*rs**3)
+  ak = 12/rs**3/k**4  # k in units of rs
+
+  # put pieces together
+  uk = vol* 0.5*(-1+(1+ak)**0.5)
+  return uk
+
+
+def evaluate_ft_usr(myk, node, rcut):
+  """ return FT[Usr] at given k magnitudes
+  assume Bspline Jastrow for 'uu' and 'ud' are in QMCPACK xml input format
+  contained in 'node'
+
+  Args:
+    myk (list): a list of k vector magnitudes to evaluate FT[Usr] on
+    node (lxml.etree.Element): xml node, probably <jastrow>
+    rcut (float): coordinate-space cutoff radius
+  """
+  from jastrow import create_jastrow_from_param
+  from scipy.integrate import quad
+
+  # hard-code cusp condition
+  uu_cusp = -0.25
+  ud_cusp = -0.50
+
+  # read spline knots
+  cuu_name = 'uu'
+  cud_name = 'ud'
+
+  uu_node = node.find('.//coefficients[@id="%s"]'%cuu_name)
+  uu_coeff = np.array(uu_node.text.split(), dtype=float)
+
+  ud_node = node.find('.//coefficients[@id="%s"]'%cud_name)
+  ud_coeff = np.array(ud_node.text.split(), dtype=float)
+
+  # construct e-e Usr(r)
+  juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
+  jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
+  j2sr = lambda r: 0.5*( juu.evaluate_v(r) + jud.evaluate_v(r) )
+
+  # perform spherical FT
+  integrand = lambda r, k: r*np.sin(k*r)/k* j2sr(r)
+  intval = lambda k: quad(lambda r:integrand(r, k), 0, rcut)[0]
+  ft = 4*np.pi* np.array([intval(k) for k in myk])
+  return ft
+
