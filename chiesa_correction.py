@@ -166,6 +166,19 @@ def get_jk_kvecs(fout):
 # ================ routines for structure factor S(k)  ================
 
 
+def heg_kfermi(rs):
+  """ magnitude of the fermi k vector for the homogeneous electron gas (HEG)
+
+  Args:
+    rs (float): Wigner-Seitz radius
+  Return:
+    float: kf
+  """
+  density = (4*np.pi*rs**3/3)**(-1)
+  kf = (3*np.pi**2*density)**(1./3)
+  return kf
+
+
 def hfsk(karr, kf):
   """ static structure factor of non-interacting Fermions
   Args:
@@ -179,7 +192,13 @@ def hfsk(karr, kf):
   skm[sel] = 1.0
   return skm
 
-heg_kfermi = lambda rs:((9*np.pi)/(4.*rs**3.))**(1./3)
+
+def effective_fsk_from_fuk(fuk, rs):
+  """ construct S(k) from U(k) assuming HEG kf """
+  density = (4*np.pi*rs**3/3)**(-1)
+  kf = heg_kfermi(rs)
+  return lambda k:(hfsk(k, kf)**(-1) + 2*density*fuk(k))**(-1)
+
 
 def load_dsk(fjson, obs='dsk'):
   import pandas as pd
@@ -188,6 +207,7 @@ def load_dsk(fjson, obs='dsk'):
   skm   = np.array(df.loc[0,'%s_mean'%obs])
   ske   = np.array(df.loc[0,'%s_error'%obs])
   return kvecs, skm, ske
+
 
 # ================ routines for jastrow potential U(k)  ================
 
