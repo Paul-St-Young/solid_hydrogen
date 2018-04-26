@@ -207,10 +207,17 @@ def hfsk(karr, kf):
 
 
 def effective_fsk_from_fuk(fuk, rs):
-  """ construct S(k) from U(k) assuming HEG kf """
+  """ construct S(k) from U(k) assuming HEG kf and RPA """
   density = (4*np.pi*rs**3/3)**(-1)
   kf = heg_kfermi(rs)
   return lambda k:(hfsk(k, kf)**(-1) + 2*density*fuk(k))**(-1)
+
+
+def effective_fuk_from_fsk(fsk, rs):
+  """ construct U(k) from S(k) assuming HEG kf and RPA """
+  density = (4*np.pi*rs**3/3)**(-1)
+  kf = heg_kfermi(rs)
+  return lambda k:( fsk(k)**(-1) - hfsk(k, kf)**(-1) )/(2*density)
 
 
 def load_dsk(fjson, obs='dsk'):
