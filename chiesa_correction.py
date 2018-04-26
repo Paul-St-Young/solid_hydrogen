@@ -93,6 +93,19 @@ def cubic_pos(nx):
   return pos
 
 
+def remove_com(pos):
+  """ remove the center of mass (com)
+  assume equally weighted particles
+
+  Args:
+    pos (np.array): position array
+  Return:
+    np.array: new position array with zero com
+  """
+  com = pos.mean(axis=0)
+  return pos - com[np.newaxis, :]
+
+
 def mirror_xyz(pos):
   from itertools import product
   natom, ndim = pos.shape
