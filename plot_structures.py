@@ -42,6 +42,12 @@ joule= 6.241509126e18    # ev
 gpa = ha/joule/bohr**3./1e9
 mev = ha*1000.
 
+def xy(df, sel, xname, yname):
+  myx = df.loc[sel, xname].values
+  myy = df.loc[sel, yname].values
+  idx = np.argsort(myx)
+  return myx[idx], myy[idx]
+
 def xyye(df,sel,xname,yname):
   ymean = yname+'_mean'
   yerr  = yname+'_error'
