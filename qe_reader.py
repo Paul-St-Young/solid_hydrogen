@@ -685,3 +685,40 @@ def parse_output(floc):
 
   return entry
 # end def parse_output
+
+
+def parse_bands_out(bout, max_evline=1024):
+  fp = open(bout, 'r')
+  header = fp.readline()
+  nbnd, nks = [int(keyval.split('=')[1].strip('\n').strip('/'))
+    for keyval in header.split(',')]
+
+  kvecs = []
+  etable = []
+  for iks in xrange(nks):
+    kline = fp.readline()
+    kvecs.append( map(float, kline.split()) )
+
+    evl = []
+    mynbnd = 0
+    for i in xrange(max_evline):
+      bline = fp.readline()
+      nums = map(float, bline.split())
+      evl.append( nums )
+      mynbnd += len(nums)
+      if mynbnd >= nbnd: break
+    # end for
+    eva = [a for b in evl for a in b]
+
+    if not len(eva) == nbnd:
+      raise RuntimeError('increase max_evline')
+    etable.append(eva)
+  # end for
+
+  if len(fp.readline()) != 0:
+    raise RuntimeError('wrong nbnd')
+
+  fp.close()
+
+  return np.array(kvecs), np.array(etable)
+# end def parse_bands_out
