@@ -86,6 +86,13 @@ def fit_rpa_uk(model, totk, uk, kmax):
   return fuk,popt
 # end def
 
+
+def drum_uk(k, wp, kf):
+  """ swap parameters A,B out for effective plasmon freq. wp and Fermi kf """
+  A = 4*np.pi/wp
+  B = -2*np.pi**2/kf**2
+  return A/k**2+B/k
+
 # ================== basic routines for klist  ==================
 def cubic_pos(nx):
   from itertools import product
@@ -293,3 +300,10 @@ def evaluate_ft_usr(myk, node, rcut):
   ft = 4*np.pi* np.array([intval(k) for k in myk])
   return ft
 
+
+# =========================== density quantities =========================== 
+def rs_kf_wp(rho):
+  rs = (3./(4*np.pi*rho))**(1./3)
+  kf = (3*np.pi**2*rho)**(1./3)
+  wp = (4*np.pi*rho)**0.5
+  return rs, kf, wp
