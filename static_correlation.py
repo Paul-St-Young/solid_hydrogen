@@ -122,6 +122,17 @@ def gr2sk(k,grx,gry,rho):
     return 1.+val
 # end def
 
+
+def gr2sk2d(k, myr, grm, rho):
+  """ 2D Fourier transform of isotropic g(r), need Bessel J """
+  from scipy.special import jv
+  dr = myr[1]-myr[0]
+  integrand = myr*jv(0, k*myr)*(grm-1)
+  val = 2*np.pi*rho* integrand.sum()*dr
+  sk = 1+val
+  return sk
+
+
 def sk2gr(k,grx,gry,rho):
     """ return spherical S(k) at given 'k' value, assuming spherical g(r)=(grx,gry)
       'rho' is density N/Vol. """ 
