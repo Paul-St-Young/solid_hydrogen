@@ -142,9 +142,8 @@ def get_kshells(nk, raxes, atol = 1e-8):
 
 
 def get_iso_jk_kmags(raxes, kshell_max, kc, smear_fac=1000.):
-  import chiesa_correction as chc
   # get k vectors
-  kvecs = chc.get_kshells(kshell_max, raxes)
+  kvecs = get_kshells(kshell_max, raxes)
 
   # get unique k vectors given cubic symmetry
   # step 1: throw out half sphere due to inversion symmetry
@@ -302,8 +301,90 @@ def evaluate_ft_usr(myk, node, rcut):
 
 
 # =========================== density quantities =========================== 
+
+
 def rs_kf_wp(rho):
   rs = (3./(4*np.pi*rho))**(1./3)
   kf = (3*np.pi**2*rho)**(1./3)
   wp = (4*np.pi*rho)**0.5
   return rs, kf, wp
+
+
+# =========================== pure RPA FSC ===========================
+
+
+def mp_grid(raxes, nx):
+  """ shifted uniform grid
+  Args:
+    raxes (np.array): reciprocal space lattice
+    nx (int): number of grid points in each dimension
+  """
+  ugrid = 1./nx* cubic_pos(nx)
+  ucom = ugrid.mean(axis=0)
+  ugrid -= ucom[np.newaxis, :]
+
+  qgrid = np.dot(ugrid, raxes)
+  return qgrid
+
+
+def rpa_dv(axes, rs, nx=32):
+  """ calculate potential finite size error assuming RPA S(k)
+  Args:
+    raxes (np.array): reciprocal space lattice
+    rs (float): Wigner-Seitz radius i.e. density parameter
+  """
+  from qharv.inspect import axes_pos
+
+  # get RPA S(k)
+  kf = heg_kfermi(rs)
+
+  fuk = lambda k:gaskell_rpa_uk(k, rs, kf)
+  fsk = effective_fsk_from_fuk(fuk, rs)
+
+  # Coulomb v(k)
+  fvk = lambda k:4*np.pi/k**2
+
+  # setup integration grid
+  raxes = axes_pos.raxes(axes)
+  qgrid = mp_grid(raxes, nx)
+
+  # perform quadrature
+  #  weights
+  rvol = axes_pos.volume(raxes)
+  intnorm = 1./(2*np.pi)**3* rvol/nx**3
+  #  sum
+  qmags = np.linalg.norm(qgrid, axis=1)
+  integrand = lambda k:0.5*fvk(k)*fsk(k)
+  dvlr = intnorm* integrand(qmags).sum()
+  return dvlr
+
+
+def rpa_dt(axes, rs, nx=32):
+  """ calculate kinetic finite size error assuming RPA U(k) and S(k)
+  Args:
+    raxes (np.array): reciprocal space lattice
+    rs (float): Wigner-Seitz radius i.e. density parameter
+  """
+  from qharv.inspect import axes_pos
+
+  density = (4*np.pi/3*rs**3.)**(-1)
+
+  # get RPA U(k) and S(k)
+  kf = heg_kfermi(rs)
+
+  fuk = lambda k:gaskell_rpa_uk(k, rs, kf)
+  fsk = effective_fsk_from_fuk(fuk, rs)
+
+  # setup integration grid
+  raxes = axes_pos.raxes(axes)
+  qgrid = mp_grid(raxes, nx)
+
+  # perform quadrature
+  #  weights
+  rvol = axes_pos.volume(raxes)
+  intnorm = 1./(2*np.pi)**3* rvol/nx**3* density
+  #  sum
+  qmags = np.linalg.norm(qgrid, axis=1)
+  integrand = lambda k:0.5*k**2*fuk(k)**2*fsk(k)
+  dtlr = intnorm* integrand(qmags).sum()
+  return dtlr
