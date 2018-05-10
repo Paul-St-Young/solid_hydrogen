@@ -350,3 +350,41 @@ def check_rb(axes,pos,rb0,rmax=1.6,rb_tol=1e-3):
     raise RuntimeError('rb mismatch')
   # end if
 # end def check_rb
+
+
+# ---------------- database I/O ----------------
+
+
+def add_columns(df):
+  """ add Potential and Virial columns
+  ['axes', 'pos'] must have been added already
+  """
+  df['natom'] = df['pos'].apply(len)
+  df['volume'] = df['axes'].apply(axes_pos.volume)
+
+  df['Potential_mean'] = df['ElecElec_mean']\
+                       + df['ElecIon_mean']\
+                       + df['IonIon_mean']
+  df['Potential_error'] = np.sqrt(df['ElecElec_error']**2.+df['ElecIon_error']**2)
+
+  df['Virial_mean'] = 2*df['Kinetic_mean']\
+                    + df['Potential_mean']\
+                    - 3*df['Pressure_mean']*df['volume']
+  df['Virial_error'] = np.sqrt(
+    2*df['Kinetic_error']**2. + df['Potential_error']**2\
+  + 3*df['Pressure_error']**2.*df['volume']
+  )
+
+
+def add_per_atom_columns(df):
+  """ energy, kinetic, potential
+  ['natom', 'Potential'] must have been added already
+  """
+  df['Epp_mean'] = df['LocalEnergy_mean']/df['natom']
+  df['Epp_error'] = df['LocalEnergy_error']/df['natom']
+  df['Tpp_mean'] = df['Kinetic_mean']/df['natom']
+  df['Tpp_error'] = df['Kineticerror']/df['natom']
+  df['Vpp_mean'] = df['Potential_mean']/df['natom']
+  df['Vpp_error'] = df['Potential_error']/df['natom']
+  df['Epp_vint_mean'] = df['Epp_mean'] + df['vint']/1e3
+  df['Epp_vint_error'] = df['Epp_error']
