@@ -295,10 +295,8 @@ def cell_volume(axes):
   return np.dot(axes[0],np.cross(axes[1],axes[2]))
 def vol2rs(vol):
     return (3.*vol/(4*np.pi))**(1./3)
-# end def vol2rs
 def rs2vol(rs):
     return 4*np.pi/3*rs**3.
-# end def
 
 def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
   """ add Cp as top xlabel when actual xlabel is 1/Cp.
@@ -359,8 +357,12 @@ def add_columns(df):
   """ add Potential and Virial columns
   ['axes', 'pos'] must have been added already
   """
+  from qharv.inspect import axes_pos
   df['natom'] = df['pos'].apply(len)
   df['volume'] = df['axes'].apply(axes_pos.volume)
+  df['rho'] = df['natom']/df['volume']
+  df['rs'] = df['rho'].apply(lambda x:vol2rs(1./x))
+  df['rs100'] = df['rs'].apply(lambda x:int(round(100*x)))
 
   df['Potential_mean'] = df['ElecElec_mean']\
                        + df['ElecIon_mean']\
@@ -383,7 +385,7 @@ def add_per_atom_columns(df):
   df['Epp_mean'] = df['LocalEnergy_mean']/df['natom']
   df['Epp_error'] = df['LocalEnergy_error']/df['natom']
   df['Tpp_mean'] = df['Kinetic_mean']/df['natom']
-  df['Tpp_error'] = df['Kineticerror']/df['natom']
+  df['Tpp_error'] = df['Kinetic_error']/df['natom']
   df['Vpp_mean'] = df['Potential_mean']/df['natom']
   df['Vpp_error'] = df['Potential_error']/df['natom']
   df['Epp_vint_mean'] = df['Epp_mean'] + df['vint']/1e3
