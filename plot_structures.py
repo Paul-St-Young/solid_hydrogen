@@ -353,7 +353,7 @@ def check_rb(axes,pos,rb0,rmax=1.6,rb_tol=1e-3):
 # ---------------- database I/O ----------------
 
 
-def add_columns(df):
+def add_columns(df, ae=True):
   """ add Potential and Virial columns
   ['axes', 'pos'] must have been added already
   """
@@ -364,10 +364,16 @@ def add_columns(df):
   df['rs'] = df['rho'].apply(lambda x:vol2rs(1./x))
   df['rs100'] = df['rs'].apply(lambda x:int(round(100*x)))
 
-  df['Potential_mean'] = df['ElecElec_mean']\
-                       + df['ElecIon_mean']\
-                       + df['IonIon_mean']
-  df['Potential_error'] = np.sqrt(df['ElecElec_error']**2.+df['ElecIon_error']**2)
+  if ae:
+    df['Potential_mean'] = df['ElecElec_mean']\
+                         + df['ElecIon_mean']\
+                         + df['IonIon_mean']
+    df['Potential_error'] = np.sqrt(df['ElecElec_error']**2.\
+                         +df['ElecIon_error']**2)
+  else:
+    df['Potential_mean'] = df['LocalPotential_mean']
+    df['Potential_error'] = df['LocalEnergy_error']
+  # end if ae
 
   df['Virial_mean'] = 2*df['Kinetic_mean']\
                     + df['Potential_mean']\
