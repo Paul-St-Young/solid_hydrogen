@@ -375,6 +375,14 @@ def add_columns(df, ae=True):
     df['Potential_error'] = df['LocalEnergy_error']
   # end if ae
 
+  # check E - (T+V), expect 0
+  df['EmTV_mean'] = df['LocalEnergy_mean'] - df['Kinetic_mean'] \
+                  - df['Potential_mean']
+  df['EmTV_error'] = np.sqrt(df['LocalEnergy_mean']**2
+                  + df['Kinetic_mean']**2.
+                  + df['Potential_mean']**2.)
+
+  # check Virial, expect 0
   df['Virial_mean'] = 2*df['Kinetic_mean']\
                     + df['Potential_mean']\
                     - 3*df['Pressure_mean']*df['volume']
@@ -396,3 +404,5 @@ def add_per_atom_columns(df):
   df['Vpp_error'] = df['Potential_error']/df['natom']
   df['Epp_vint_mean'] = df['Epp_mean'] + df['vint']/1e3
   df['Epp_vint_error'] = df['Epp_error']
+  df['EmTVpp_mean'] = df['EmTV_mean']/df['natom']
+  df['EmTVpp_error'] = df['EmTV_error']/df['natom']
