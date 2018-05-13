@@ -396,13 +396,17 @@ def add_per_atom_columns(df):
   """ energy, kinetic, potential
   ['natom', 'Potential'] must have been added already
   """
-  df['Epp_mean'] = df['LocalEnergy_mean']/df['natom']
-  df['Epp_error'] = df['LocalEnergy_error']/df['natom']
-  df['Tpp_mean'] = df['Kinetic_mean']/df['natom']
-  df['Tpp_error'] = df['Kinetic_error']/df['natom']
-  df['Vpp_mean'] = df['Potential_mean']/df['natom']
-  df['Vpp_error'] = df['Potential_error']/df['natom']
-  df['Epp_vint_mean'] = df['Epp_mean'] + df['vint']/1e3
-  df['Epp_vint_error'] = df['Epp_error']
-  df['EmTVpp_mean'] = df['EmTV_mean']/df['natom']
-  df['EmTVpp_error'] = df['EmTV_error']/df['natom']
+  xname = 'natom'
+  obsl = ['LocalEnergy', 'Kinetic', 'Potential'
+    , 'EmTV', 'Virial']
+  for obs in obsl:
+    ymean = obs+'_mean'
+    yerror = obs+'_error'
+    obs1 = obs+'_pp'
+    ymean1 = obs1+'_mean'
+    yerror1 = obs1+'_error'
+    df[ymean1] = df[ymean]/df[xname]
+    df[yerror1] = df[yerror]/df[xname]
+
+  df['Epp_vint_mean'] = df['LocalEnergy_pp_mean'] + df['vint']/1e3
+  df['Epp_vint_error'] = df['LocalEnergy_pp_error']
