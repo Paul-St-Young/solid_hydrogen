@@ -376,11 +376,10 @@ def add_columns(df, ae=True):
   # end if ae
 
   # check E - (T+V), expect 0
-  df['EmTV_mean'] = df['LocalEnergy_mean'] - df['Kinetic_mean'] \
-                  - df['Potential_mean']
-  df['EmTV_error'] = np.sqrt(df['LocalEnergy_error']**2
-                  + df['Kinetic_error']**2.
-                  + df['Potential_error']**2.)
+  df['EmTV_mean'] = df['LocalEnergy_mean'] \
+                  - (df['Kinetic_mean'] + df['Potential_mean'])
+  df['EmTV_error'] = np.sqrt(df['Kinetic_error']**2. \
+                           + df['Potential_error']**2.)  # correlated error
 
   # check Virial, expect 0
   df['Virial_mean'] = 2*df['Kinetic_mean']\
