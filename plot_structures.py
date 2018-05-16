@@ -409,3 +409,10 @@ def add_per_atom_columns(df):
 
   df['Epp_vint_mean'] = df['LocalEnergy_pp_mean'] + df['vint']/1e3
   df['Epp_vint_error'] = df['LocalEnergy_pp_error']
+
+
+def add_unit_columns(df):
+  """ add different units of columns
+  """
+  df['Pressure_gpa_mean'] = df['Pressure_mean']*gpa
+  df['Pressure_gpa_error'] = df['Pressure_error']*gpa
