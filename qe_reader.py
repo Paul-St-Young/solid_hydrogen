@@ -722,3 +722,63 @@ def parse_bands_out(bout, max_evline=1024):
 
   return np.array(kvecs), np.array(etable)
 # end def parse_bands_out
+
+
+def parse_nscf_bands(nscf_out):
+  data = {}  # build a dictionary as return value
+  def scanf_7f(line, n):
+    """ implement scanf("%7.*f") """
+    span = 7
+    numl = []
+    for i in range(n):
+      num = float(line[span*i:span*(i+1)])
+      numl.append(num)
+    return numl
+  def parse_float_body(body):
+    """ parse a blob of floats """
+    lines = body.split('\n')
+    numl = []
+    for line in lines:
+      if len(line) == 0: continue
+      numl += map(float, line.split())
+    return numl
+  from qharv.reel import ascii_out
+  ndim = 3
+  mm = ascii_out.read(nscf_out)
+
+  # find the beginnings of each band
+  idxl = ascii_out.all_lines_with_tag(mm, ' k =')
+  nkpt = len(idxl)
+  data['nkpt'] = nkpt
+
+  # find the end of the last band
+  idx1 = mm.find('the Fermi energy is')
+  efermi = ascii_out.name_sep_val(mm, 'the Fermi energy', sep='is')
+  data['efermi'] = efermi
+
+  # trick to use no if statement in the loop
+  idxl = idxl + [idx1]
+
+  kvecs = []  # (nkpt, ndim)
+  mat = []    # (nkpt, nbnd)
+  for ikpt in range(nkpt):
+    # specify beginning and end of the band output
+    idx0 = idxl[ikpt]
+    idx1 = idxl[ikpt+1]
+
+    # parse band output
+    #  first read header
+    mm.seek(idx0)
+    header = mm.readline()
+    if not 'bands (ev)' in header: continue
+    kxkykz = ascii_out.lr_mark(header, '=', '(')
+    kvec = scanf_7f(kxkykz, ndim)
+    kvecs.append(kvec)
+    #  then read body
+    body = mm[mm.tell():idx1].strip('\n')
+    row = parse_float_body(body)
+    mat.append(row)
+  # end for ikpt
+  data['kvecs'] = kvecs
+  data['bands'] = mat
+  return data
