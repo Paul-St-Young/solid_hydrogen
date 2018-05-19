@@ -274,6 +274,7 @@ def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
   Return:
     callable: short-range Jastrow potential
   """
+  from jastrow import create_jastrow_from_param
   juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
   jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
   fusr = lambda r: 0.5*( juu.evaluate_v(r) + jud.evaluate_v(r) )
@@ -290,7 +291,6 @@ def evaluate_ft_usr(myk, node, rcut):
     node (lxml.etree.Element): xml node, probably <jastrow>
     rcut (float): coordinate-space cutoff radius
   """
-  from jastrow import create_jastrow_from_param
   from scipy.integrate import quad
 
   # read spline knots
