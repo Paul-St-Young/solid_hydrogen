@@ -94,8 +94,8 @@ BIN=~/soft/intel_kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   return text
 # end def eos_qsub_file
 
-def golub_qsub_file(fname,nmpi=2,title='title',hours=2
-  ,fout='out',ferr='err',queue='secondary',node_spec='ppn=16'):
+def golub_qsub_file(fname, hours=4, title='title', nmpi=2
+  ,fout='out' ,ferr='err' ,queue='secondary' ,node_spec='ppn=16'):
   if type(fname) is not str:
     raise TypeError('Golub accepts one input at a time, %s should be str'%type(fname))
   # end if
