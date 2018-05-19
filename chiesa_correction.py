@@ -261,6 +261,25 @@ def ceperley_rpa_uk(k, rs):
   return uk
 
 
+def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
+  """ construct short-range Jastrow potential function
+  using Bspline knots in QMCPACK
+
+  Args:
+    rcut (float): real-space cutoff
+    uu_coeff (list): a list of floats for up-up Jastrow Bspline knots
+    ud_coeff (list): a list of floats for up-down Jastrow Bspline knots
+    uu_cusp (float, optional): up-up cusp, default -0.25 
+    ud_cusp (float, optional): up-down cusp, default -0.50
+  Return:
+    callable: short-range Jastrow potential
+  """
+  juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
+  jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
+  fusr = lambda r: 0.5*( juu.evaluate_v(r) + jud.evaluate_v(r) )
+  return fusr
+
+
 def evaluate_ft_usr(myk, node, rcut):
   """ return FT[Usr] at given k magnitudes
   assume Bspline Jastrow for 'uu' and 'ud' are in QMCPACK xml input format
@@ -274,10 +293,6 @@ def evaluate_ft_usr(myk, node, rcut):
   from jastrow import create_jastrow_from_param
   from scipy.integrate import quad
 
-  # hard-code cusp condition
-  uu_cusp = -0.25
-  ud_cusp = -0.50
-
   # read spline knots
   cuu_name = 'uu'
   cud_name = 'ud'
@@ -289,9 +304,8 @@ def evaluate_ft_usr(myk, node, rcut):
   ud_coeff = np.array(ud_node.text.split(), dtype=float)
 
   # construct e-e Usr(r)
-  juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
-  jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
-  j2sr = lambda r: 0.5*( juu.evaluate_v(r) + jud.evaluate_v(r) )
+  j2sr = fusr(rcut, uu_coeff, ud_coeff)
+
 
   # perform spherical FT
   integrand = lambda r, k: r*np.sin(k*r)/k* j2sr(r)
