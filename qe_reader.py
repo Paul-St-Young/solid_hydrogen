@@ -796,10 +796,14 @@ def parse_scf_conv(scf_out):
     # read iteration number
     iternow = ascii_out.name_sep_val(mm, 'iteration', sep='#', dtype=int)
 
-    # find total energy
-    enow = ascii_out.name_sep_val(mm, 'total energy')
+    # find total energy and other info (!!!! must be in order)
+    try:
+      time = ascii_out.name_sep_val(mm, 'cpu time spent up to now', sep='is')
+      enow = ascii_out.name_sep_val(mm, 'total energy')
+    except:
+      continue
 
-    entry = {'istep':iternow, 'energy':enow}
+    entry = {'istep':iternow, 'energy':enow, 'time':time}
     data.append(entry)
 
   return data
