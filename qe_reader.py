@@ -782,3 +782,24 @@ def parse_nscf_bands(nscf_out):
   data['kvecs'] = kvecs
   data['bands'] = mat
   return data
+
+
+def parse_scf_conv(scf_out):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(scf_out)
+
+  idxl = ascii_out.all_lines_with_tag(mm, 'iteration #')
+  data = []
+  for idx in idxl:
+    mm.seek(idx)
+
+    # read iteration number
+    iternow = ascii_out.name_sep_val(mm, 'iteration', sep='#', dtype=int)
+
+    # find total energy
+    enow = ascii_out.name_sep_val(mm, 'total energy')
+
+    entry = {'istep':iternow, 'energy':enow}
+    data.append(entry)
+
+  return data
