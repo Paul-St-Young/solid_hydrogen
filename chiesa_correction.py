@@ -241,13 +241,21 @@ def load_dsk(fjson, obs='dsk'):
 def gaskell_rpa_uk(k, rs, kf):
 
   # build pieces
-  hfsk_val  = hfsk(k, kf)      # non-interacting S0(k)
+  hfsk_val  = hfsk(k, kf)      # determinant contribution S0(k)
   prefactor = 2*np.pi/3*rs**3  # 1/(2*density)
   arg2sqrt  = hfsk_val**(-2) + 12./(rs**3*k**4)
 
   # put pieces together
   uk = prefactor * ( -hfsk_val**(-1) + arg2sqrt**0.5 )
   return uk
+
+
+def gaskell_rpa_sk(k, rs, kf):
+
+  rho = 3./(4*np.pi*rs**3)
+  hfsk_val  = hfsk(k, kf)      # determinant contribution S0(k)
+  sk = hfsk_val*(1+16.*np.pi*rho*hfsk_val**2/k**4)**(-0.5)
+  return sk
 
 
 def ceperley_rpa_uk(k, rs):
