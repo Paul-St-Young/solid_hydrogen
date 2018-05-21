@@ -395,6 +395,8 @@ def add_per_atom_columns(df):
   """ energy, kinetic, potential
   ['natom', 'Potential'] must have been added already
   """
+
+  # add per-proton (pp) columns with error
   xname = 'natom'
   obsl = ['LocalEnergy', 'Kinetic', 'Potential'
     , 'EmTV', 'Virial']
@@ -406,6 +408,9 @@ def add_per_atom_columns(df):
     yerror1 = obs1+'_error'
     df[ymean1] = df[ymean]/df[xname]
     df[yerror1] = df[yerror]/df[xname]
+
+  # add per-proton (pp) columns without error
+  df['volpp'] = df['volume']/df[xname]
 
   df['Epp_vint_mean'] = df['LocalEnergy_pp_mean'] + df['vint']/1e3
   df['Epp_vint_error'] = df['LocalEnergy_pp_error']
