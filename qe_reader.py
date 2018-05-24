@@ -747,14 +747,15 @@ def parse_nscf_bands(nscf_out):
   mm = ascii_out.read(nscf_out)
 
   # find the beginnings of each band
-  idxl = ascii_out.all_lines_with_tag(mm, ' k =')
+  bhead = ' k ='
+  idxl = ascii_out.all_lines_with_tag(mm, bhead)
   nkpt = len(idxl)
   data['nkpt'] = nkpt
 
-  # find the end of the last band
-  idx1 = mm.find('the Fermi energy is')
-  efermi = ascii_out.name_sep_val(mm, 'the Fermi energy', sep='is')
-  data['efermi'] = efermi
+  # estimate the end of the last band
+  idxa = np.array(idxl)
+  idx_sep = idxa[1:] - idxa[:-1]
+  idx1 = idx_sep.max() + idxl[-1] - len(bhead)
 
   # trick to use no if statement in the loop
   idxl = idxl + [idx1]
