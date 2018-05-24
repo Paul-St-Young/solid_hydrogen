@@ -42,11 +42,13 @@ joule= 6.241509126e18    # ev
 gpa = ha/joule/bohr**3./1e9
 mev = ha*1000.
 
+
 def xy(df, sel, xname, yname):
   myx = df.loc[sel, xname].values
   myy = df.loc[sel, yname].values
   idx = np.argsort(myx)
   return myx[idx], myy[idx]
+
 
 def xyye(df,sel,xname,yname):
   ymean = yname+'_mean'
@@ -57,7 +59,21 @@ def xyye(df,sel,xname,yname):
   myye= df.loc[sel,yerr].values
   idx = np.argsort(myx)
   return myx[idx],myy[idx],myye[idx]
-# end def xyye
+
+
+def xxeyye(df,sel,xname,yname):
+  xmean = xname+'_mean'
+  xerr  = xname+'_error'
+  ymean = yname+'_mean'
+  yerr  = yname+'_error'
+
+  myx = df.loc[sel,xmean].values
+  myxe= df.loc[sel,xerr].values
+  myy = df.loc[sel,ymean].values
+  myye= df.loc[sel,yerr].values
+  idx = np.argsort(myx)
+  return myx[idx], myxe[idx],myy[idx],myye[idx]
+
 
 def show_sel_xyname(ax,sel,xname,yname,df,**kwargs):
   myx,myy,myye = xyye(df,sel,xname,yname)
@@ -390,6 +406,11 @@ def add_columns(df, ae=True):
   + 3*df['Pressure_error']**2.*df['volume']
   )
 
+  # enthalpy
+  df['Enthalpy_mean'] = df['LocalEnergy_mean'] + df['Pressure_mean']*df['volume']
+  df['Enthalpy_error'] = np.sqrt(df['LocalEnergy_error']**2. +\
+    (df['Pressure_error']*df['volume'])**2.)
+
 
 def add_per_atom_columns(df):
   """ energy, kinetic, potential
@@ -399,7 +420,7 @@ def add_per_atom_columns(df):
   # add per-proton (pp) columns with error
   xname = 'natom'
   obsl = ['LocalEnergy', 'Kinetic', 'Potential'
-    , 'EmTV', 'Virial']
+    , 'EmTV', 'Virial', 'Enthalpy']
   for obs in obsl:
     ymean = obs+'_mean'
     yerror = obs+'_error'
