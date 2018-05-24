@@ -176,7 +176,24 @@ def absolute_enthalpy(myp,feos,peos):
   p = peos(v)
   h = e+p*v
   return h
-# end def absolute_enthalpy
+
+
+def reference_enthalpy(myp, feos0, peos0):
+  """ evaluate reference enthalpy at given pressures
+
+  Args:
+    myp (np.array): a list of pressures in Hartree atomic units
+    feos0 (function): reference eos
+    peos0 (function): reference pressure eos
+  Returns:
+    np.array: h0, reference enthalpy at myp
+  """
+  v0 = volpp_at_pressures(myp, peos0)
+  e0 = feos0(v0)
+  p0 = peos0(v0)
+  h0 = e0+p0*v0
+  return h0
+
 
 def relative_enthalpy(myp,feos0,peos0,feos1,peos1):
   """ evaluate the relative enthalpy between two eos at selected myp
@@ -191,10 +208,7 @@ def relative_enthalpy(myp,feos0,peos0,feos1,peos1):
   """
 
   # get reference enthalpies
-  v0 = volpp_at_pressures(myp,peos0)
-  e0 = feos0(v0)
-  p0 = peos0(v0)
-  h0 = e0+p0*v0
+  h0 = reference_enthalpy(myp, feos0, peos0)
 
   # get target enthalpies
   v1 = volpp_at_pressures(myp,peos1)
@@ -204,7 +218,7 @@ def relative_enthalpy(myp,feos0,peos0,feos1,peos1):
 
   dh = h1-h0
   return dh
-# end def relative_enthalpy
+
 
 # ---- level 1: based on eos_df ---- #
 def get_eos_df(df,order,volpp_name='volpp',epp_name='Epp',with_error=False):
