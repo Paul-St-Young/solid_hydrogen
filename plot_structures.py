@@ -380,6 +380,7 @@ def add_columns(df, ae=True):
   df['rs'] = df['rho'].apply(lambda x:vol2rs(1./x))
   df['rs100'] = df['rs'].apply(lambda x:int(round(100*x)))
 
+  """ # Potential for dynamic is simply ElecElec; decide outside of this func.!
   if ae:
     df['Potential_mean'] = df['ElecElec_mean']\
                          + df['ElecIon_mean']\
@@ -390,6 +391,7 @@ def add_columns(df, ae=True):
     df['Potential_mean'] = df['LocalPotential_mean']
     df['Potential_error'] = df['LocalEnergy_error']
   # end if ae
+  """
 
   # check E - (T+V), expect 0
   df['EmTV_mean'] = df['LocalEnergy_mean'] \
@@ -420,7 +422,7 @@ def add_per_atom_columns(df):
   # add per-proton (pp) columns with error
   xname = 'natom'
   obsl = ['LocalEnergy', 'Kinetic', 'Potential'
-    , 'EmTV', 'Virial', 'Enthalpy']
+    , 'EmTV', 'Virial', 'Enthalpy', 'Variance']
   for obs in obsl:
     ymean = obs+'_mean'
     yerror = obs+'_error'
