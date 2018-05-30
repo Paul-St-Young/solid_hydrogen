@@ -173,3 +173,33 @@ BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
 # end def qsub_file
 
 
+def parse_stats_out(stats_out):
+  import pandas as pd
+  with open(stats_out, 'r') as f:
+    text = f.read()
+  lines = text.split('\n')
+
+  # step 1: find status start
+  header = 'setup, sent_files, submitted, finished, got_output, analyzed, failed'
+  bits = header.split(',')
+  nbit = len(bits)
+  iline = 0
+  for line in lines:
+    if header in line:
+      break
+    iline += 1
+
+  # expected columns
+  cols = ['bits', 'fail', 'qid', 'myid', 'path']
+  ncol = len(cols)
+
+  # step 2: collect data
+  lines1 = lines[iline+1:]
+  data = []
+  for line in lines1:
+    tokens = line.split()
+    if len(tokens) != ncol:
+      break
+    data.append(tokens)
+  df = pd.DataFrame(data, columns=cols)
+  return df
