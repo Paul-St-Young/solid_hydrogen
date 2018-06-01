@@ -808,3 +808,34 @@ def parse_scf_conv(scf_out):
     data.append(entry)
 
   return data
+
+
+def get_gc_occ(mat, efermi):
+  """ get grand canonical occupation vector
+
+  example:
+    data = qer.parse_nscf_bands(scf_out)
+    kvecs = data['kvecs']
+    bands = np.array(data['bands'])
+
+    mm = ascii_out.read(scf_out)
+    efermi = ascii_out.name_sep_val(mm, 'the Fermi energy', sep='is')
+
+    norbs = get_gc_occ(bands, efermi)
+
+  Args:
+    mat (np.array): Kohn-Sham eigenvalues (nkpt, nband)
+    efermi (float): Fermi energy
+  Return:
+    np.array: number of occupied orbitals at each kpoint
+  """
+  norbl = []
+  nkpt, nbnd = mat.shape
+  for ikpt in range(nkpt):
+    row = mat[ikpt]
+    sel = row<=efermi
+    norb = len(row[sel])
+    norbl.append(norb)
+  # end for
+  norbs = np.array(norbl)
+  return norbs
