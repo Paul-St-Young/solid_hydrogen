@@ -48,10 +48,9 @@ def get_data_block(floc,name):
 
   mm = ascii_out.read(floc)                                                     
   text = ascii_out.block_text(mm,start_tag,stop_tag)
-  lines= text.split('\n')
-  header = lines[0]
+  lines= text.split('\n')[:-1]  # empty after the last \n
   data   = np.array(
-    [map(float,line.split()) for line in lines[1:-1]]
+    [map(float,line.split()) for line in lines]
   ,dtype=float)
   return data
 # end def get_data_block
