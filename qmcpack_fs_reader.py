@@ -42,13 +42,13 @@ def get_volume(fout):
   return omega
 
 
-def get_data_block(floc,name):
+def get_data_block(floc, name, nhead=0):
   start_tag = '#'+name + '_START#'
   stop_tag  = '#'+name + '_STOP#'
 
   mm = ascii_out.read(floc)                                                     
   text = ascii_out.block_text(mm,start_tag,stop_tag)
-  lines= text.split('\n')[:-1]  # empty after the last \n
+  lines= text.split('\n')[nhead:-1]  # empty after the last \n
   data   = np.array(
     [map(float,line.split()) for line in lines]
   ,dtype=float)
