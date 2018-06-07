@@ -216,3 +216,42 @@ def stretch_dimers(axes,pos,frac,rmax=1.5):
   # end for imol
   return axes_pos.pos_in_axes(axes,pos1),np.array(coml)
 # end def stretch_dimers
+
+
+def nexus_tile(axes0, pos0, tmat):
+  """ tile a single species of particles from primitive to supercell
+
+  for multiple species, tile one species at a time, then concatenate.
+
+  Args:
+    axes0 (np.array): primitive lattice vectors
+    pos0 (np.array): primitive atomic positions
+    tmat (np.array): tile matrix
+  Return:
+    (np.array, np.array): axes, pos in supercell
+  """
+  from nexus import Structure
+  s0 = Structure(axes=axes0, pos=pos0, elem=['H']*len(pos0), units='B')
+  s1 = s0.tile(tmat)
+  return s1.axes, s1.pos
+
+
+def ase_tile(axes0, pos0, tmat):
+  """ tile a single species of particles from primitive to supercell
+
+  for multiple species, tile one species at a time, then concatenate.
+
+  Args:
+    axes0 (np.array): primitive lattice vectors
+    pos0 (np.array): primitive atomic positions
+    tmat (np.array): tile matrix
+  Return:
+    (np.array, np.array): axes, pos in supercell
+  """
+  from ase import Atoms
+  from ase.build import make_supercell
+  s0 = Atoms('H%d' % len(pos0), cell=axes0, positions=pos0, pbc=[1, 1, 1])
+  s1 = make_supercell(s0, tmat)
+  return s1.get_cell(), s1.get_positions()
+  s1 = s0.tile(tmat)
+  return s1.axes, s1.pos
