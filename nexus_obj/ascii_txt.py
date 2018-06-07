@@ -16,7 +16,7 @@ def dsk_out(fout,kvecs,mdsk,edsk):
     kvec = kvecs[ik]
     dskm = mdsk[ik]
     dske = edsk[ik]
-    line = '%8.4f  %8.4f  %8.4f  %10.6f  %10.6f\n' % (kvec[0],kvec[1],kvec[2],dskm,dske)
+    line = '%12.8f  %12.8f  %12.8f  %10.6f  %10.6f\n' % (kvec[0],kvec[1],kvec[2],dskm,dske)
     fp.write(line)
   # end for
   fp.close()
