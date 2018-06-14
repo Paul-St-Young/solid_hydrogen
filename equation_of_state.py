@@ -110,7 +110,7 @@ def get_eos(df,sel,order,volpp_name='volpp',epp_name='Epp',with_error=False):
     sel (np.array): boolean array i.e. selector
     order (int): polynomial order
   Returns:
-    tuple: (feos,peos)
+    dict: ['feos', 'peos', 'popt', 'perr']
   """
   check_order(order)
   popt,perr = eos(df,sel,volpp_name,epp_name,order,with_error=with_error)
@@ -118,7 +118,8 @@ def get_eos(df,sel,order,volpp_name='volpp',epp_name='Epp',with_error=False):
   pmodel = pmodels[order]
   feos = lambda x: model(x,*popt)
   peos = lambda x:pmodel(x,*popt)
-  return feos,peos
+  entry = {'popt': popt, 'perr': perr, 'feos': feos, 'peos': peos}
+  return entry
 # end def get_eos
 
 def resample1d(myx,nx=100):
@@ -231,12 +232,16 @@ def get_eos_df(df,order,volpp_name='volpp',epp_name='Epp',with_error=False):
   snamel = df.sname.unique()
   for sname in snamel:
     sel = df.sname == sname
-    # get eos
-    feos,peos = get_eos(df,sel,order,volpp_name=volpp_name,epp_name=epp_name,with_error=with_error)
     # get eos validity range
     myx  = df.loc[sel,volpp_name]
-    entry = {'sname':sname,'volpp_min':min(myx),'volpp_max':max(myx)
-      ,'feos':feos,'peos':peos}
+    entry = {
+      'sname': sname,
+       'volpp_min': min(myx),
+       'volpp_max': max(myx)
+    }
+    # get eos
+    myeos = get_eos(df,sel,order,volpp_name=volpp_name,epp_name=epp_name,with_error=with_error)
+    entry.update(myeos)
     data.append(entry)
   # end for sname
   eos_df = pd.DataFrame(data)
