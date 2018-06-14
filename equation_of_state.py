@@ -246,21 +246,29 @@ def get_eos_df(df,order,volpp_name='volpp',epp_name='Epp',with_error=False):
   # end for sname
   eos_df = pd.DataFrame(data)
   return eos_df
-# end def get_eos_df
 
-def eos_df_volpp(eos_df,esel,nx=32):
-  xmin = eos_df.loc[esel,'volpp_min'].squeeze()
-  xmax = eos_df.loc[esel,'volpp_max'].squeeze()
-  volpp= np.linspace(xmin,xmax,nx)
+
+def get_fpeos(eosdf, sname):
+  esel = eosdf['sname'] == sname
+  feos = eosdf.loc[esel, 'feos'].squeeze()
+  peos = eosdf.loc[esel, 'peos'].squeeze()
+  return feos, peos
+
+
+def get_volpp(eosdf, sname, nx=32):
+  esel = eosdf['sname'] == sname
+  xmin = eosdf.loc[esel, 'volpp_min'].squeeze()
+  xmax = eosdf.loc[esel, 'volpp_max'].squeeze()
+  volpp = np.linspace(xmin, xmax, nx)
   return volpp
-# end def
+
 
 def abs_epp_vs_volpp_eos(ax,eos_df,esel,nx=32,**kwargs):
   import plot_structures as ps
   sname = eos_df.loc[esel,'sname'].squeeze()
   feos = eos_df.loc[esel,'feos'].squeeze()
-  myx  = eos_df_volpp(eos_df,esel)
-  line = ax.plot(myx,feos(myx)
+  myx  = get_volpp(eos_df, sname)
+  line = ax.plot(myx, feos(myx)
     ,c=ps.struct_colors[sname],lw=3,**kwargs)
   return line
 # end def abs_epp_vs_volpp_eos
@@ -270,7 +278,7 @@ def abs_hpp_vs_volpp_eos(ax,eos_df,esel,nx=32,**kwargs):
   sname = eos_df.loc[esel,'sname'].squeeze()
   feos = eos_df.loc[esel,'feos'].squeeze()
   peos = eos_df.loc[esel,'peos'].squeeze()
-  myx  = eos_df_volpp(eos_df,esel)
+  myx  = get_volpp(eos_df, sname)
   mye  = feos(myx)
   myp  = peos(myx)
   myy  = mye+myp*myx
