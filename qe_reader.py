@@ -745,6 +745,8 @@ def parse_nscf_bands(nscf_out):
   from qharv.reel import ascii_out
   ndim = 3
   mm = ascii_out.read(nscf_out)
+  alat = ascii_out.name_sep_val(mm, 'lattice parameter (alat)')
+  blat = 2*np.pi/alat
 
   # find the beginnings of each band
   bhead = ' k ='
@@ -780,8 +782,45 @@ def parse_nscf_bands(nscf_out):
     row = parse_float_body(body)
     mat.append(row)
   # end for ikpt
-  data['kvecs'] = kvecs
+  data['kvecs'] = blat*np.array(kvecs)
   data['bands'] = mat
+  return data
+
+
+def read_kpoints(scf_out):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(scf_out)
+
+  # get lattice units
+  alat = ascii_out.name_sep_val(mm, 'lattice parameter (alat)')
+  blat = 2*np.pi/alat
+
+  # start parsing k points
+  idx = mm.find('number of k points')
+  mm.seek(idx)
+
+  # read first line
+  #  e.g. number of k points=    32  Fermi-Dirac smearing ...
+  line = mm.readline()
+  nk = int(line.split('=')[1].split()[0])
+
+  # confirm units in second line
+  line = mm.readline()
+  assert '2pi/alat' in line
+
+  # start parsing kvectors
+  data = np.zeros([nk, 4])  # ik, kx, ky, kz, wk
+  for ik in range(nk):
+    line = mm.readline()
+    assert 'k(' in line
+    ikt, kvect, wkt = line.split('=')
+    myik = int(ascii_out.lr_mark(ikt, '(', ')'))
+    assert ik == myik-1  # fortran 1-based indexing
+    wk = float(wkt)
+    klist = ascii_out.lr_mark(kvect, '(', ')').split()
+    kvec = np.array(klist, dtype=float)
+    data[ik, :3] = kvec*blat
+    data[ik, 3] = wk
   return data
 
 
