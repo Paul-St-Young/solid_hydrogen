@@ -839,3 +839,23 @@ def get_gc_occ(mat, efermi):
   # end for
   norbs = np.array(norbl)
   return norbs
+
+
+def get_occ_df(kvecs, norbs):
+  """ save grand canonical occupation vector with twists
+
+  Args:
+    kvecs (np.array): twist vectors, user-defined units
+    norbs (np.array): a list of integers
+  """
+  import pandas as pd
+  cols = ('kmag', 'norb', 'kx', 'ky', 'kz')
+  kmags = np.linalg.norm(kvecs, axis=1)
+  data = np.zeros([len(norbs), len(cols)])
+  data[:, 0] = kmags
+  data[:, 1] = norbs
+  data[:, 2:] = kvecs
+  mydf = pd.DataFrame(data, columns=cols)
+  mydf['norb'] = mydf['norb'].astype(int)
+  mydf['group'] = mydf.index
+  return mydf
