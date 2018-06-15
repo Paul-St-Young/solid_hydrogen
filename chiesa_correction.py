@@ -2,7 +2,7 @@ import numpy as np
 # =========================== get long-range U(k) =========================== 
 
 
-def isotropic_jk2(jk2_dat):                                                     
+def isotropic_jk2(jk2_dat, **kwargs):
   """ extract ee long-range Jastrow from Jk2.dat 
   Jk2.dat should have kx,ky,kz, coeff_real columns
 
@@ -21,7 +21,7 @@ def isotropic_jk2(jk2_dat):
   assert np.allclose(data[:,4],0)  # imaginary part of Jk2 is zero              
   kmags = np.linalg.norm(kvecs,axis=1)                                          
                                                                                 
-  unique_k, unique_jk2 = sc.shell_avg_sofk(kvecs,jk2m)                          
+  unique_k, unique_jk2 = sc.shell_avg_sofk(kvecs, jk2m, **kwargs)
   return unique_k, unique_jk2                                                   
 # end def isotropic_jk2
 
@@ -97,6 +97,12 @@ def drum_uk(k, wp, kf):
 def cubic_pos(nx):
   from itertools import product
   pos  = np.array([spos for spos in product(xrange(nx),repeat=3)],dtype=float)
+  return pos
+
+
+def shifted_mp_grid(nx):
+  pos = cubic_pos(nx)/float(nx) + 0.5/nx
+  pos = (pos+0.5)%1-0.5
   return pos
 
 
