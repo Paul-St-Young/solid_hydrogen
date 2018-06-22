@@ -357,9 +357,12 @@ def mp_grid(raxes, nx):
 
 def rpa_dv(axes, rs, nx=32):
   """ calculate potential finite size error assuming RPA S(k)
+
   Args:
     raxes (np.array): reciprocal space lattice
     rs (float): Wigner-Seitz radius i.e. density parameter
+  Return:
+    float: potential finite size correction
   """
   from qharv.inspect import axes_pos
 
@@ -389,9 +392,12 @@ def rpa_dv(axes, rs, nx=32):
 
 def rpa_dt(axes, rs, nx=32):
   """ calculate kinetic finite size error assuming RPA U(k) and S(k)
+
   Args:
     raxes (np.array): reciprocal space lattice
     rs (float): Wigner-Seitz radius i.e. density parameter
+  Return:
+    float: kinetic finite size correction
   """
   from qharv.inspect import axes_pos
 
@@ -416,3 +422,80 @@ def rpa_dt(axes, rs, nx=32):
   integrand = lambda k:0.5*k**2*fuk(k)**2*fsk(k)
   dtlr = intnorm* integrand(qmags).sum()
   return dtlr
+
+# ================ routines for spherical average  ================
+
+
+def get_regular_grid_dimensions(gvecs):
+  gmin = gvecs.min(axis=0)
+  gmax = gvecs.max(axis=0)
+  ng = np.around(gmax-gmin+1).astype(int)
+  return gmin, gmax, ng
+
+
+def get_index3d(gvec, gmin, dg):
+  idx3d = np.around( (gvec - gmin)/dg )
+  return idx3d.astype(int)
+
+
+def fill_regular_grid(gvecs, skm, fill_value=np.nan):
+  """ Fill a regular grid with given scalar field (gvecs, skm).
+  gvecs should fill (at least parts of) a structured grid consiting of
+  congruent rectangular parallelepipeds. By default, missing points are
+  filled with np.nan. User may construct a boolean selector for the
+  missing points, then go through and fill them.
+
+  Example:
+    kvecs, skm, ske = read_sofk('sofk.dat')  # read S(k) in Cartesian units
+    gvecs = np.dot(kvecs, np.linalg.inv(raxes))  # convert to lattice units
+    rgvecs, rskm = fill_regular_grid(gvecs, skm)
+
+    # set S(0) to 0
+    zsel = (np.linalg.norm(rgvecs, axis=1) == 0).reshape(rskm.shape)
+    rskm[zsel] = 0compiler flags for
+
+    # fill k>kc with max( S(k) )
+    msel = np.isnan(skm)
+    rskm[msel] = skm.max()
+
+  Args:
+    gvecs (np.array): reciprocal space points in lattice units
+    skm (np.array): S(k) at gvecs
+    fill_zero (float, optional): default is do nothing
+    fill_value (float, optiona): default is np.nan
+  Return:
+    tuple: (rgrid, msel), regular grid (3D np.array of floats) and
+     msel (1D np.array of booleans) for missing grid points
+  """
+  from itertools import product
+
+  ndim = gvecs.shape[1]
+  if ndim != 3:
+    raise RuntimeError('need to generalize to %d dimensions' % ndim)
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
+  dg = (gmax-gmin)/(ng-1)
+
+  # construct grid points
+  grid_gvecs_iter = product(
+    np.linspace(gmin[0], gmax[0], ng[0]),
+    np.linspace(gmin[1], gmax[1], ng[1]),
+    np.linspace(gmin[2], gmax[2], ng[2]),
+  )
+  rgvecs = np.array([np.around(spos) for spos in grid_gvecs_iter], dtype=int)
+
+  # initialize regular grid
+  rgrid = np.empty(ng)
+  filled = np.zeros(ng, dtype=bool)  # keep track of filled grid points
+  rgrid.fill(fill_value)
+
+  # fill regular grid
+  for gvec, sk in zip(gvecs, skm):
+    idx3d = get_index3d(gvec, gmin, dg)
+    rgrid[tuple(idx3d)] = sk
+    filled[tuple(idx3d)] = True
+
+  # check that data points did not overlap
+  nfill = len(filled[filled])
+  if nfill != len(skm):
+    raise RuntimeError('%d/%d input data retained' % (nfill, len(sk)))
+  return rgvecs, rgrid
