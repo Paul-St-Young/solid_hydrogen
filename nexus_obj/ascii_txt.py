@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 def dsk_out(fout,kvecs,mdsk,edsk):
   """ output fluctuating structure factor dS(k) in energy.pl format 
@@ -21,7 +22,15 @@ def dsk_out(fout,kvecs,mdsk,edsk):
   # end for
   fp.close()
   return True
-# end def np_dsk_ascii
+
+
+def read_dsk_out(fout):
+  data = np.loadtxt(fout)
+  kvecs = data[:, :3]
+  dskm = data[:, 3]
+  dske = data[:, 4]
+  return kvecs, dskm, dske
+
 
 def qsub_file(fnames,nmpi=64,title='title',hours=2):
   header = """#!/bin/bash
