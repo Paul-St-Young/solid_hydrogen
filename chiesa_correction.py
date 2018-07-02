@@ -452,7 +452,7 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
 
     # set S(0) to 0
     zsel = (np.linalg.norm(rgvecs, axis=1) == 0).reshape(rskm.shape)
-    rskm[zsel] = 0compiler flags for
+    rskm[zsel] = 0
 
     # fill k>kc with max( S(k) )
     msel = np.isnan(skm)
@@ -461,11 +461,9 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
   Args:
     gvecs (np.array): reciprocal space points in lattice units
     skm (np.array): S(k) at gvecs
-    fill_zero (float, optional): default is do nothing
     fill_value (float, optiona): default is np.nan
   Return:
-    tuple: (rgrid, msel), regular grid (3D np.array of floats) and
-     msel (1D np.array of booleans) for missing grid points
+    tuple: (gvecs, rgrid), regular grid basis (gvecs) and values (rgrid).
   """
   from itertools import product
 
@@ -481,7 +479,7 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
     np.linspace(gmin[1], gmax[1], ng[1]),
     np.linspace(gmin[2], gmax[2], ng[2]),
   )
-  rgvecs = np.array([np.around(spos) for spos in grid_gvecs_iter], dtype=int)
+  rgvecs = np.array([spos for spos in grid_gvecs_iter])
 
   # initialize regular grid
   rgrid = np.empty(ng)
