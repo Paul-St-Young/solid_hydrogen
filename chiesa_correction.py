@@ -497,3 +497,32 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
   if nfill != len(skm):
     raise RuntimeError('%d/%d input data retained' % (nfill, len(sk)))
   return rgvecs, rgrid
+
+
+def get_skgrid(kvecs, dskm, raxes):
+  """ example usage of fill_regular_grid for S(k)
+
+  Args:
+    kvecs (np.array): reciprocal space vectors with S(k) data
+    dskm (np.array): S(k) data
+    raxes (np.array): reciprocal space lattice
+  Return:
+    tuple: (rkvecs, rdskm), kvectors and S(k) on regular grid
+  """
+
+  # get a regular grid in lattice units
+  gvecs = np.dot(kvecs, np.linalg.inv(raxes))
+  rgvecs, rdskm = fill_regular_grid(gvecs, dskm)
+  rdskm = rdskm.flatten()
+
+  # fill S(0)
+  zsel = (np.linalg.norm(rgvecs, axis=1)==0)
+  rdskm[zsel] = 0
+
+  # fill S(k>kc)
+  msel = np.isnan(rdskm)
+  rdskm[msel] = dskm.max()
+
+  # convert back to Cartesian coordinate
+  rkvecs = np.dot(rgvecs, raxes)
+  return rkvecs, rdskm
