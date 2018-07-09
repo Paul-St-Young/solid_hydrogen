@@ -526,3 +526,31 @@ def get_skgrid(kvecs, dskm, raxes):
   # convert back to Cartesian coordinate
   rkvecs = np.dot(rgvecs, raxes)
   return rkvecs, rdskm
+
+
+# ================ routines to analyze spherical average  ================
+
+
+def get_hess_mat(hess):
+  """ construct hessian matrix stored in upper-triangular form
+
+  Args:
+    hess (array-like): 6-element array storing unique hessian matrix elements
+  Return:
+    np.array: hmat, the hessian matrix
+  """
+  hxx, hyy, hzz, hxy, hxz, hyz = hess
+  hmat = np.zeros([3, 3])
+  # diagnoal
+  hmat[0][0] = hxx
+  hmat[1][1] = hyy
+  hmat[2][2] = hzz
+  # off-diagnoal
+  hmat[0][1] = hxy
+  hmat[0][2] = hxz
+  hmat[1][2] = hyz
+  #hmat = 0.5*(hmat+hmat.T)
+  hmat[1][0] = hxy
+  hmat[2][0] = hxz
+  hmat[2][1] = hyz
+  return hmat
