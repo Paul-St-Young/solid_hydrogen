@@ -779,6 +779,9 @@ def parse_nscf_bands(nscf_out):
     kvecs.append(kvec)
     #  then read body
     body = mm[mm.tell():idx1].strip('\n')
+    if 'occupation numbers' in body:
+      idx2 = mm.find('occupation numbers')
+      body = mm[mm.tell():idx2].strip('\n')
     row = parse_float_body(body)
     mat.append(row)
   # end for ikpt
