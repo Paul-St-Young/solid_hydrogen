@@ -901,3 +901,21 @@ def get_occ_df(kvecs, norbs):
   mydf['norb'] = mydf['norb'].astype(int)
   mydf['group'] = mydf.index
   return mydf
+
+def read_cell(scf_in, ndim=3):
+  with open(scf_in,'r+') as f:
+    mm = mmap(f.fileno(), 0)
+  idx = mm.find('CELL_PARAMETERS')
+  mm.seek(idx)
+  header = mm.readline()
+  unit = header.split()[-1]
+  mat = np.zeros([ndim, ndim])
+  for idim in range(ndim):
+    line = mm.readline()
+    vec = np.array(line.split(), dtype=float)
+    mat[idim, :] = vec
+  data = {
+    'unit': str(unit),
+    'axes': mat
+  }
+  return data
