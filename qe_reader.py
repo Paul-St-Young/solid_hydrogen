@@ -786,7 +786,7 @@ def parse_nscf_bands(nscf_out):
     mat.append(row)
   # end for ikpt
   data['kvecs'] = blat*np.array(kvecs)
-  data['bands'] = mat
+  data['bands'] = np.array(mat)
   return data
 
 
