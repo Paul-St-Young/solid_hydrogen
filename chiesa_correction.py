@@ -96,7 +96,9 @@ def drum_uk(k, wp, kf):
 # ================== basic routines for klist  ==================
 def cubic_pos(nx):
   from itertools import product
-  pos  = np.array([spos for spos in product(xrange(nx),repeat=3)],dtype=float)
+  pos  = np.array([
+    spos for spos in product(xrange(nx), repeat=3)
+    ], dtype=int)
   return pos
 
 
@@ -138,6 +140,9 @@ def mirror_xyz(pos):
 
 def get_kshells(nk, raxes, atol = 1e-8):
   ukvecs = mirror_xyz( cubic_pos(nk) )
+
+  # remove non-unique
+  ukvecs = np.unique(ukvecs, axis=0)
 
   # throw out k vector at zero
   sel    = np.linalg.norm(ukvecs, axis=1) < atol
@@ -495,7 +500,7 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
   # check that data points did not overlap
   nfill = len(filled[filled])
   if nfill != len(skm):
-    raise RuntimeError('%d/%d input data retained' % (nfill, len(sk)))
+    raise RuntimeError('%d/%d input data retained' % (nfill, len(skm)))
   return rgvecs, rgrid
 
 
