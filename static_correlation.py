@@ -96,7 +96,7 @@ def shell_average(kmags,vals,smear_fac=100):
     for iukmag in range(len(unique_kid)):
         kid = unique_kid[iukmag]  # shell ID
         sel = kids == kid         # select this shell
-        unique_kmags[iukmag] = float(kid)/smear_fac
+        unique_kmags[iukmag] = np.mean(kmags[sel])
         unique_vals[iukmag] = np.mean(vals[sel])
     # end for iukmag
     return unique_kmags,unique_vals
