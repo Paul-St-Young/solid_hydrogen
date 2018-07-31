@@ -352,7 +352,7 @@ def mp_grid(raxes, nx):
     raxes (np.array): reciprocal space lattice
     nx (int): number of grid points in each dimension
   """
-  ugrid = 1./(nx-1)* cubic_pos(nx)
+  ugrid = 1./nx* cubic_pos(nx)
   ucom = ugrid.mean(axis=0)
   ugrid -= ucom[np.newaxis, :]
 
