@@ -919,3 +919,23 @@ def read_cell(scf_in, ndim=3):
     'axes': mat
   }
   return data
+
+
+def get_occupation_numbers(nscf_out, nmax=1024):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(nscf_out)
+  idx = ascii_out.all_lines_with_tag(mm, 'occupation numbers')
+  occl = []
+  for i in idx:
+    mm.seek(i)
+    mm.readline()
+    occ = []
+    for j in range(nmax):
+      line = mm.readline()
+      tokens = line.split()
+      if len(tokens) == 0:
+        break
+      occ += map(float, tokens)
+    next_line = mm.readline()
+    occl.append(occ)
+  return np.array(occl)
