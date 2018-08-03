@@ -724,14 +724,14 @@ def parse_bands_out(bout, max_evline=1024):
 # end def parse_bands_out
 
 
-def parse_nscf_bands(nscf_out):
+def parse_nscf_bands(nscf_out, span=7):
   data = {}  # build a dictionary as return value
   def scanf_7f(line, n):
     """ implement scanf("%7.*f") """
-    span = 7
     numl = []
     for i in range(n):
-      num = float(line[span*i:span*(i+1)])
+      token = line[span*i:span*(i+1)]
+      num = float(token)
       numl.append(num)
     return numl
   def parse_float_body(body):
