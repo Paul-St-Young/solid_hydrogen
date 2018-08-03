@@ -269,6 +269,17 @@ def gaskell_rpa_sk(k, rs, kf):
   return sk
 
 
+def mixed_rpa_sk(k, rs, sk0, ktf):
+  rho = 3./(4*np.pi*rs**3)
+  vk = 4*np.pi/k**2
+  vk1 = 4*np.pi/(k**2+ktf**2)
+  ek = 0.5*k**2
+
+  ak = 1.+2*rho*sk0**2*vk/ek
+  ak1 = 1.+2*rho*sk0**2*vk1/ek
+  return sk0*( 2./(ak**0.5+ak1**0.5) )
+
+
 def ceperley_rpa_uk(k, rs):
 
   # build pieces
