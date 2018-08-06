@@ -570,3 +570,51 @@ def get_hess_mat(hess):
   hmat[2][0] = hxz
   hmat[2][1] = hyz
   return hmat
+
+# ================ routines for free fermion determinant  ================
+
+
+def freec(iorb, midx):
+  """ PW coefficients for the ith free fermion orbital
+  e.g. freec(0, np.argsort(gmags))
+
+  Args:
+    iorb (int): orbital index
+    midx (np.array): the list of indices that sort the gvectors
+  Return:
+    np.array: PW coefficients
+  """
+  ci = np.zeros(len(midx))
+  ci[midx[iorb]] = 1.0
+  return ci
+
+
+def get_gvecs(nsh):
+  """ get nsh shells of gvectors
+
+  Args:
+    nsh (int): number of shells to get
+  Return:
+    np.array: gvectors in units of reciprocal lattice
+  """
+  gvecs = cubic_pos(2*nsh+1)
+  com = gvecs.mean(axis=0)
+  gvecs -= com.astype(int)
+  return gvecs
+
+
+def select(gvecs0, gvecs):
+  """ select a subset of gvectors (gvecs0) from the full set gvecs
+  Example:
+    idx = select(gvecs0, gvecs)
+    assert np.allclose(gvecs0, gvecs[idx])
+
+  Args:
+    gvecs0 (np.array): subset of integer vectors
+    gvecs (np.array): full set of integer vectors
+  Return:
+    np.array: the list of indices selecting gvecs0 out of gvecs
+  """
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
+  idx = np.ravel_multi_index((gvecs0-gmin).T, ng)
+  return idx
