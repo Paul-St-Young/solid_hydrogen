@@ -2,11 +2,32 @@
 import os
 import pandas as pd
 
+def get_supertwists(qmc_out):
+  """ read supercell twists from QMCPACK output
+
+  Args:
+    qmc_out (str): QMCPACK output, must contain "Super twist #"
+  Return:
+    np.array: an array of twist vectors (ntwist, ndim)
+  """
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(qmc_out)
+  idxl = ascii_out.all_lines_with_tag(mm, 'Super twist #')
+  lines = ascii_out.all_lines_at_idx(mm ,idxl)
+  data = []
+  for line in lines:
+    text = ascii_out.lr_mark(line, '[', ']')
+    vec = np.array(text.split(), dtype=float)
+    data.append(vec)
+  mat = np.array(data)
+  return mat
+
 def epl_val_err(epl_out):
   """ convert epl_out to a pandas DataFrame. 
   epl_out is expected to be an output of energy.pl from QMCPACK
   It simply has to have the format {name:22c}={val:17.3f} +/- {err:26.4f}.
   rows with forces will be recognized with 'force_prefix'
+
   Args:
     epl_out (str): energy.pl output filename
   Returns:
@@ -29,25 +50,29 @@ def epl_val_err(epl_out):
 # end def epl_val_err
 
 def sk_from_fs_out(fs_out):
-    """ extract fluctuating S(k) from qmcfinitesize output
-      returns: kmag,sk,vk,spk,spsk
-       kmag: magnitude of kvectors, sk: raw fluc. S(k), vk: long-range potential after break-up
-       spk: kmags for splined S(k), spsk: splined S(k) """
+  """ extract fluctuating S(k) from qmcfinitesize output
+    returns: kmag,sk,vk,spk,spsk
+     kmag: magnitude of kvectors, sk: raw fluc. S(k), vk: long-range potential after break-up
+     spk: kmags for splined S(k), spsk: splined S(k) """
 
-    import reader
-    bint = reader.BlockInterpreter()
-    sfile = reader.SearchableFile(fs_out)
+  import reader
+  bint = reader.BlockInterpreter()
+  sfile = reader.SearchableFile(fs_out)
 
-    # read raw data
-    block_text = sfile.block_text('#SK_RAW_START#','#SK_RAW_STOP#')
-    kmag,sk,vk = bint.matrix(block_text[block_text.find('\n')+1:]).T
+  # read raw data
+  block_text = sfile.block_text('#SK_RAW_START#','#SK_RAW_STOP#')
+  kmag,sk,vk = bint.matrix(block_text[block_text.find('\n')+1:]).T
 
-    # read splined S(k)
-    block_text = sfile.block_text('#SK_SPLINE_START#','#SK_SPLINE_STOP#')
-    spk,spsk = bint.matrix(block_text[block_text.find('\n')+1:]).T
+  # read splined S(k)
+  block_text = sfile.block_text('#SK_SPLINE_START#','#SK_SPLINE_STOP#')
+  spk,spsk = bint.matrix(block_text[block_text.find('\n')+1:]).T
 
-    return kmag,sk,vk,spk,spsk
+  return kmag,sk,vk,spk,spsk
 # end def
+
+
+# =============== complicated functions ===============
+
 
 import numpy as np
 from copy import deepcopy
