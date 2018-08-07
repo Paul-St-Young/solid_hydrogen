@@ -482,6 +482,8 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
     tuple: (gvecs, rgrid), regular grid basis (gvecs) and values (rgrid).
   """
   from itertools import product
+  gdtype = gvecs.dtype
+  sdtype = skm.dtype
 
   ndim = gvecs.shape[1]
   if ndim != 3:
@@ -495,10 +497,10 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
     np.linspace(gmin[1], gmax[1], ng[1]),
     np.linspace(gmin[2], gmax[2], ng[2]),
   )
-  rgvecs = np.array([spos for spos in grid_gvecs_iter])
+  rgvecs = np.array([spos for spos in grid_gvecs_iter], dtype=gdtype)
 
   # initialize regular grid
-  rgrid = np.empty(ng)
+  rgrid = np.empty(ng, dtype=sdtype)
   filled = np.zeros(ng, dtype=bool)  # keep track of filled grid points
   rgrid.fill(fill_value)
 
@@ -577,6 +579,7 @@ def get_hess_mat(hess):
 def freec(iorb, midx):
   """ PW coefficients for the ith free fermion orbital
   e.g. freec(0, np.argsort(gmags))
+  see usage in get_free_cmat
 
   Args:
     iorb (int): orbital index
@@ -587,6 +590,24 @@ def freec(iorb, midx):
   ci = np.zeros(len(midx))
   ci[midx[iorb]] = 1.0
   return ci
+
+
+def get_free_cmat(norb, gvecs):
+  """ get coefficient matrix for ground state of norb fermions in gvecs PWs
+
+  Args:
+    norb (int): number of occupied orbitals (= # of fermions)
+    gvecs (np.array): PW basis as integer vectors (i.e. in rec. lat. basis)
+  Return:
+    np.array: cmat, coefficient matrix (norb, npw)
+  """
+  npw = len(gvecs)
+  gmags = np.linalg.norm(gvecs, axis=1)
+  midx = np.argsort(gmags)
+  cmat = np.zeros([norb, npw])
+  for iorb in range(norb):
+    cmat[iorb, :] = freec(iorb, midx)
+  return cmat
 
 
 def get_gvecs(nsh):
@@ -601,6 +622,9 @@ def get_gvecs(nsh):
   com = gvecs.mean(axis=0)
   gvecs -= com.astype(int)
   return gvecs
+
+
+# ================ routines for any determinant in PW basis  ================
 
 
 def select(gvecs0, gvecs):
@@ -618,3 +642,63 @@ def select(gvecs0, gvecs):
   gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
   idx = np.ravel_multi_index((gvecs0-gmin).T, ng)
   return idx
+
+
+def get_mijq(gvecs, cmat, gvecs0):
+  """ calculate 1RDMs needed to construct S(k)
+
+  Args:
+    gvecs (np.array): integer vectors specifying the PW basis
+    cmat (np.array): orbital coefficients as rows (norb, npw)
+    gvecs0 (np.array): requested momentum vectors
+  Return:
+    np.array: mijq (nq, norb*norb)
+  """
+  dtype = cmat.dtype
+  norb, npw = cmat.shape
+  if npw != len(gvecs):
+    raise RuntimeError('wrong basis for coefficient matrix')
+
+  # select unshifted grid
+  idx0 = select(gvecs0, gvecs)
+
+  mijq = np.zeros([len(gvecs0), norb*norb], dtype=dtype)
+  # for each qvec, select a shifted grid
+  for iq, qvec in enumerate(gvecs0):
+    idx = select(gvecs0+qvec, gvecs)
+    mij = np.zeros([norb, norb], dtype=dtype)
+    for iorb in range(norb):
+      for jorb in range(norb):
+        mij[iorb][jorb] = np.dot(cmat[iorb, idx0].conj(), cmat[jorb, idx])
+    mijq[iq, :] = mij.ravel()
+  return mijq
+
+
+def get_sk(mijq):
+  """ calculate structure factor from a list of 1RDMs in PW basis
+  must reshape mijq into a list of matrices instead of a list of vectors
+  Example:
+    mijq = get_mijq(gvecs, cmat, gvecs0)
+    norb, npw = cmat.shape
+    ng = len(gvecs0)
+    skm0 = get_sk(mijq.reshape(ng, norb, norb))
+
+    ax.plot(np.linalg.norm(gvecs0, axis=1), skm0, 'x')
+
+  Args:
+    mijq (np.array): 1-body reduced density matrices, having shape (nq, no, no)
+  Return:
+    np.array: static structure factor, one at each qvec
+  """
+  nq, norb1, norb2 = mijq.shape
+  if norb1 != norb2:
+    raise RuntimeError('mij is not a square matrix')
+  norb = norb1
+  skm0 = []
+  for iq in range(len(mijq)):
+    mij = mijq[iq].reshape(norb, norb)
+    term1 = np.abs(np.diag(mij).sum())
+    term2 = (mij.conj()*mij).sum().real
+    skval = 1.+(term1-term2)/norb
+    skm0.append(skval)
+  return np.array(skm0)
