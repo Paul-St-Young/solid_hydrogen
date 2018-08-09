@@ -124,13 +124,13 @@ def remove_com(pos):
 def mirror_xyz(pos):
   from itertools import product
   natom, ndim = pos.shape
-  new_pos = np.zeros([natom*2**ndim,ndim])
+  new_pos = np.zeros([natom*2**ndim, ndim], dtype=pos.dtype)
 
   iflip = 0
-  for dim_mult in product([-1,1],repeat=ndim):
+  for dim_mult in product([-1, 1], repeat=ndim):
     pos1 = pos.copy()
-    for idim, mult in zip(xrange(ndim),dim_mult):
-      pos1[:,idim] *= mult
+    for idim, mult in zip(xrange(ndim), dim_mult):
+      pos1[:, idim] *= mult
     new_pos[natom*iflip:natom*(iflip+1)] = pos1
     iflip += 1
   # end for
@@ -627,30 +627,57 @@ def get_gvecs(nsh):
 # ================ routines for any determinant in PW basis  ================
 
 
+def select_from_rgrid(gvecs, rgvecs):
+  """ select a subset of integer vectors from a regular grid
+  Example:
+    idx = select_from_rgrid(gvecs0, rgvecs)
+    assert np.allclose(gvecs0, rgvecs[idx])
+
+  Args:
+    gvecs  (np.array): subset of integer vectors
+    rgvecs (np.array): regular grid of integer vectors
+  Return:
+    np.array: a list of indices
+  """
+  gmin, gmax, ng = get_regular_grid_dimensions(rgvecs)
+  idx3d = (gvecs-gmin).T
+  idx3d = np.around(idx3d).astype(int)
+  idx = np.ravel_multi_index(idx3d, ng)
+  return idx
+
+
 def select(gvecs0, gvecs):
   """ select a subset of gvectors (gvecs0) from the full set gvecs
   Example:
-    idx = select(gvecs0, gvecs)
-    assert np.allclose(gvecs0, gvecs[idx])
+    sel = select(gvecs0, gvecs)
+    assert np.allclose(gvecs0, gvecs[sel])
 
   Args:
     gvecs0 (np.array): subset of integer vectors
     gvecs (np.array): full set of integer vectors
   Return:
-    np.array: the list of indices selecting gvecs0 out of gvecs
+    np.array: a list of indices
   """
   gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
-  idx = np.ravel_multi_index((gvecs0-gmin).T, ng)
-  return idx
+  idx0 = select_from_rgrid(gvecs0, gvecs)
+
+  idx = select_from_rgrid(gvecs, gvecs)
+  myidx = np.zeros(len(idx0), dtype=int)
+  for label, i in enumerate(idx0):
+    j = np.where(idx==i)[0][0]
+    myidx[label] = j
+  return myidx
 
 
-def get_mijq(gvecs, cmat, gvecs0):
+def get_mijq(gvecs, cmat, gvecs0, gvecs_regular=False):
   """ calculate 1RDMs needed to construct S(k)
 
   Args:
     gvecs (np.array): integer vectors specifying the PW basis
     cmat (np.array): orbital coefficients as rows (norb, npw)
     gvecs0 (np.array): requested momentum vectors
+    gvecs_regular (bool, optional): gvecs fill a regular grid, default False
+     code is 10x faster if gvecs fill a regular grid (memory permitting)
   Return:
     np.array: mijq (nq, norb*norb)
   """
@@ -658,6 +685,9 @@ def get_mijq(gvecs, cmat, gvecs0):
   norb, npw = cmat.shape
   if npw != len(gvecs):
     raise RuntimeError('wrong basis for coefficient matrix')
+
+  if gvecs_regular:
+    select = select_from_rgrid
 
   # select unshifted grid
   idx0 = select(gvecs0, gvecs)
