@@ -686,16 +686,17 @@ def get_mijq(gvecs, cmat, gvecs0, gvecs_regular=False):
   if npw != len(gvecs):
     raise RuntimeError('wrong basis for coefficient matrix')
 
+  sel_func = select
   if gvecs_regular:
-    select = select_from_rgrid
+    sel_func = select_from_rgrid
 
   # select unshifted grid
-  idx0 = select(gvecs0, gvecs)
+  idx0 = sel_func(gvecs0, gvecs)
 
   mijq = np.zeros([len(gvecs0), norb*norb], dtype=dtype)
   # for each qvec, select a shifted grid
   for iq, qvec in enumerate(gvecs0):
-    idx = select(gvecs0+qvec, gvecs)
+    idx = sel_func(gvecs0+qvec, gvecs)
     mij = np.zeros([norb, norb], dtype=dtype)
     for iorb in range(norb):
       for jorb in range(norb):
