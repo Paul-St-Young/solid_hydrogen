@@ -677,7 +677,6 @@ def get_mijq(gvecs, cmat, gvecs0, gvecs_regular=False):
     cmat (np.array): orbital coefficients as rows (norb, npw)
     gvecs0 (np.array): requested momentum vectors
     gvecs_regular (bool, optional): gvecs fill a regular grid, default False
-     code is 10x faster if gvecs fill a regular grid (memory permitting)
   Return:
     np.array: mijq (nq, norb*norb)
   """
