@@ -260,6 +260,14 @@ def gaskell_rpa_sk(k, rs, kf):
   sk = hfsk_val*(1+16.*np.pi*rho*hfsk_val**2/k**4)**(-0.5)
   return sk
 
+def slater_jrpa_sk(kvecs, detsk, rho):
+  kmags = np.linalg.norm(kvecs, axis=1)
+  ek = 0.5*kmags**2
+  vk = 4*np.pi/kmags**2
+  ak = 2*rho*vk/ek  # 16\pi\rho/k^4
+  sk = (1./detsk**2+ak)**(-0.5)
+  return sk
+
 
 def mixed_rpa_sk(k, rs, sk0, ktf):
   rho = 3./(4*np.pi*rs**3)
