@@ -570,12 +570,12 @@ def get_hess_mat(hess):
 
 def freec(iorb, midx):
   """ PW coefficients for the ith free fermion orbital
-  e.g. freec(0, np.argsort(gmags))
+  e.g. freec(0, np.argsort(kmags))
   see usage in get_free_cmat
 
   Args:
     iorb (int): orbital index
-    midx (np.array): the list of indices that sort the gvectors
+    midx (np.array): the list of indices that sort the kvectors
   Return:
     np.array: PW coefficients
   """
@@ -584,18 +584,20 @@ def freec(iorb, midx):
   return ci
 
 
-def get_free_cmat(norb, gvecs):
+def get_free_cmat(norb, gvecs, raxes=np.eye(3)):
   """ get coefficient matrix for ground state of norb fermions in gvecs PWs
 
   Args:
     norb (int): number of occupied orbitals (= # of fermions)
     gvecs (np.array): PW basis as integer vectors (i.e. in rec. lat. basis)
+    raxes (np.array): reciprocal lattice vectors
   Return:
     np.array: cmat, coefficient matrix (norb, npw)
   """
   npw = len(gvecs)
-  gmags = np.linalg.norm(gvecs, axis=1)
-  midx = np.argsort(gmags)
+  kvecs = np.dot(gvecs, raxes)
+  kmags = np.linalg.norm(kvecs, axis=1)
+  midx = np.argsort(kmags)
   cmat = np.zeros([norb, npw])
   for iorb in range(norb):
     cmat[iorb, :] = freec(iorb, midx)
@@ -724,3 +726,22 @@ def get_sk(mijq):
     skval = 1.+(term1-term2)/norb
     skm0.append(skval)
   return np.array(skm0)
+
+def get_free_sk(gvecs0, raxes, norb):
+  """ calculate structure factor of free fermions
+
+  Args:
+    gvecs0 (np.array): integer vectors specifying PW basis in rec. lat. units
+    raxes (np.array): reciprocal lattice
+    norb (int): number of occupied orbitals
+  Return:
+    np.array: static structure factor, one at each gvec
+  """
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs0)
+  nsh = ng.max()
+  gvecs = get_gvecs(nsh)
+  cmat = get_free_cmat(norb, gvecs, raxes=raxes)
+  mijq = get_mijq(gvecs, cmat, gvecs0)
+  nq = len(gvecs0)
+  skm = get_sk(mijq.reshape(nq, norb, norb))
+  return skm
