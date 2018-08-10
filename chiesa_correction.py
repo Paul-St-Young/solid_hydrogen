@@ -138,16 +138,8 @@ def mirror_xyz(pos):
   return new_pos
 
 
-def get_kshells(nk, raxes, atol = 1e-8):
-  ukvecs = mirror_xyz( cubic_pos(nk) )
-
-  # remove non-unique
-  ukvecs = np.unique(ukvecs, axis=0)
-
-  # throw out k vector at zero
-  sel    = np.linalg.norm(ukvecs, axis=1) < atol
-  ukvecs = ukvecs[~sel]
-
+def get_kshells(nsh, raxes):
+  ukvecs = remove_com( cubic_pos(nsh*2+1) )
   kvecs  = np.dot(ukvecs, raxes)
   return kvecs
 
