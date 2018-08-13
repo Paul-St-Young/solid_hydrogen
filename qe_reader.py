@@ -852,6 +852,13 @@ def parse_scf_conv(scf_out):
   return data
 
 
+def get_efermi(fout):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(fout)
+  efermi = ascii_out.name_sep_val(mm, 'the Fermi energy', sep='is')
+  return efermi
+
+
 def get_gc_occ(mat, efermi):
   """ get grand canonical occupation vector
 
@@ -919,6 +926,20 @@ def read_cell(scf_in, ndim=3):
     'axes': mat
   }
   return data
+
+def read_out_cell(scf_out, ndim=3):
+  axes = np.zeros([ndim, ndim])
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(scf_out)
+  idx = mm.find('crystal axes')
+  mm.seek(idx)
+  mm.readline()
+  for idim in range(ndim):
+    line = mm.readline()
+    right = line.split('=')[-1]
+    text = ascii_out.lr_mark(right, '(', ')')
+    axes[idim, :] = map(float, text.split())
+  return axes
 
 
 def get_occupation_numbers(nscf_out, nmax=1024):
