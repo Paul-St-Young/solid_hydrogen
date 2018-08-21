@@ -307,8 +307,24 @@ def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
   from jastrow import create_jastrow_from_param
   juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
   jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
-  fusr = lambda r: 0.5*( juu.evaluate_v(r) + jud.evaluate_v(r) )
-  return fusr
+  def f(r):  # QMCPACK formula: simple average
+    return 0.5*(juu.evaluate_v(r)+jud.evaluate_v(r))
+  return f
+
+
+def get_fusr(node, rcut):
+  # read spline knots
+  cuu_name = 'uu'
+  uu_node = node.find('.//coefficients[@id="%s"]'%cuu_name)
+  uu_coeff = np.array(uu_node.text.split(), dtype=float)
+
+  cud_name = 'ud'
+  ud_node = node.find('.//coefficients[@id="%s"]'%cud_name)
+  ud_coeff = np.array(ud_node.text.split(), dtype=float)
+
+  # construct e-e Usr(r)
+  j2sr = fusr(rcut, uu_coeff, ud_coeff)
+  return j2sr
 
 
 def evaluate_ft_usr(myk, node, rcut):
@@ -323,19 +339,8 @@ def evaluate_ft_usr(myk, node, rcut):
   """
   from scipy.integrate import quad
 
-  # read spline knots
-  cuu_name = 'uu'
-  cud_name = 'ud'
-
-  uu_node = node.find('.//coefficients[@id="%s"]'%cuu_name)
-  uu_coeff = np.array(uu_node.text.split(), dtype=float)
-
-  ud_node = node.find('.//coefficients[@id="%s"]'%cud_name)
-  ud_coeff = np.array(ud_node.text.split(), dtype=float)
-
-  # construct e-e Usr(r)
-  j2sr = fusr(rcut, uu_coeff, ud_coeff)
-
+  # get Usr(r)
+  j2sr = get_fusr(node, rcut)
 
   # perform spherical FT
   integrand = lambda r, k: r*np.sin(k*r)/k* j2sr(r)
