@@ -291,6 +291,23 @@ def ceperley_rpa_uk(k, rs):
   return uk
 
 
+def bspline(coeff, cusp, rcut):
+  """ wrap over Mark's Python equivalent of BsplineFunctor in QMCPACK
+
+  Args:
+    rcut (float): real-space cutoff
+    coeff (list): a list of floats as Bspline knots
+    cusp (float, optional): up-down cusp, default -0.50
+  Return:
+    callable: short-range Jastrow potential
+  """
+  from jastrow import create_jastrow_from_param
+  bsp = create_jastrow_from_param(coeff, cusp, rcut)
+  def func(r):
+    return bsp.evaluate_v(r)
+  return func
+
+
 def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
   """ construct short-range Jastrow potential function
   using Bspline knots in QMCPACK
@@ -304,12 +321,11 @@ def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
   Return:
     callable: short-range Jastrow potential
   """
-  from jastrow import create_jastrow_from_param
-  juu = create_jastrow_from_param(uu_coeff, uu_cusp, rcut)
-  jud = create_jastrow_from_param(ud_coeff, ud_cusp, rcut)
-  def f(r):  # QMCPACK formula: simple average
-    return 0.5*(juu.evaluate_v(r)+jud.evaluate_v(r))
-  return f
+  juu = bspline(uu_coeff, uu_cusp, rcut)
+  jud = bspline(ud_coeff, ud_cusp, rcut)
+  def func(r):  # QMCPACK formula: simple average
+    return 0.5*(juu(r)+jud(r))
+  return func
 
 
 def get_fusr(node, rcut):
@@ -326,22 +342,17 @@ def get_fusr(node, rcut):
   j2sr = fusr(rcut, uu_coeff, ud_coeff)
   return j2sr
 
-
-def evaluate_ft_usr(myk, node, rcut):
+def evaluate_ft(myk, j2sr, rcut):
   """ return FT[Usr] at given k magnitudes
   assume Bspline Jastrow for 'uu' and 'ud' are in QMCPACK xml input format
   contained in 'node'
 
   Args:
     myk (list): a list of k vector magnitudes to evaluate FT[Usr] on
-    node (lxml.etree.Element): xml node, probably <jastrow>
+    j2sr (callable): U(r)
     rcut (float): coordinate-space cutoff radius
   """
   from scipy.integrate import quad
-
-  # get Usr(r)
-  j2sr = get_fusr(node, rcut)
-
   # perform spherical FT
   integrand = lambda r, k: r*np.sin(k*r)/k* j2sr(r)
   intval = lambda k: quad(lambda r:integrand(r, k), 0, rcut)[0]
