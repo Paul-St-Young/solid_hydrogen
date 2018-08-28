@@ -656,9 +656,7 @@ def select(gvecs0, gvecs):
   Return:
     np.array: a list of indices
   """
-  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
   idx0 = select_from_rgrid(gvecs0, gvecs)
-
   idx = select_from_rgrid(gvecs, gvecs)
   myidx = np.zeros(len(idx0), dtype=int)
   for label, i in enumerate(idx0):
@@ -693,6 +691,7 @@ def get_mijq(gvecs, cmat, gvecs0, gvecs_regular=False):
   mijq = np.zeros([len(gvecs0), norb*norb], dtype=dtype)
   # for each qvec, select a shifted grid
   for iq, qvec in enumerate(gvecs0):
+    # !!!! idx and idx0 should be determined for each qvec !!!!
     idx = sel_func(gvecs0+qvec, gvecs)
     mij = np.zeros([norb, norb], dtype=dtype)
     for iorb in range(norb):
@@ -725,7 +724,8 @@ def get_sk(mijq):
   skm0 = []
   for iq in range(len(mijq)):
     mij = mijq[iq].reshape(norb, norb)
-    term1 = np.abs(np.diag(mij).sum())
+    msum = np.diag(mij).sum()
+    term1 = (msum.conj()*msum).real
     term2 = (mij.conj()*mij).sum().real
     skval = 1.+(term1-term2)/norb
     skm0.append(skval)
