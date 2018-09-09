@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import numpy as np
-import pandas as pd
 
 def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     """ calculate the pair correlation function of a snapshot of a crystal structure given the 'axes' of the simulation cell and the positions ('pos') of atoms inside the cell.
@@ -197,6 +196,7 @@ def get_dimers(sep_max,axes,pos,sep_min=0.0):
 # def get_dimers
 
 if __name__ == '__main__':
+    import pandas as pd
     import argparse
     parser = argparse.ArgumentParser(description='calculate g(r) and S(k) from a database of crystal structures')
     parser.add_argument('config_json', type=str, help='json file containing axes and pos of atomic configurations')
