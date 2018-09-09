@@ -445,6 +445,18 @@ def get_regular_grid_dimensions(gvecs):
   return gmin, gmax, ng
 
 
+def get_regular_grid(gmin, gmax, ng, dtype):
+  from itertools import product
+  grid_gvecs_iter = product(
+    np.linspace(gmin[0], gmax[0], ng[0]),
+    np.linspace(gmin[1], gmax[1], ng[1]),
+    np.linspace(gmin[2], gmax[2], ng[2]),
+  )
+  rgvecs = np.array([spos for spos in grid_gvecs_iter],
+    dtype=dtype)
+  return rgvecs
+
+
 def get_index3d(gvec, gmin, dg):
   idx3d = np.around( (gvec - gmin)/dg )
   return idx3d.astype(int)
@@ -477,7 +489,6 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
   Return:
     tuple: (gvecs, rgrid), regular grid basis (gvecs) and values (rgrid).
   """
-  from itertools import product
   gdtype = gvecs.dtype
   sdtype = skm.dtype
 
@@ -488,12 +499,7 @@ def fill_regular_grid(gvecs, skm, fill_value=np.nan):
   dg = (gmax-gmin)/(ng-1)
 
   # construct grid points
-  grid_gvecs_iter = product(
-    np.linspace(gmin[0], gmax[0], ng[0]),
-    np.linspace(gmin[1], gmax[1], ng[1]),
-    np.linspace(gmin[2], gmax[2], ng[2]),
-  )
-  rgvecs = np.array([spos for spos in grid_gvecs_iter], dtype=gdtype)
+  rgvecs = get_regular_grid(gmin, gmax, ng, dtype=gdtype)
 
   # initialize regular grid
   rgrid = np.empty(ng, dtype=sdtype)
