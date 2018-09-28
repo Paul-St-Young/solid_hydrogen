@@ -960,3 +960,15 @@ def get_occupation_numbers(nscf_out, nmax=1024):
     next_line = mm.readline()
     occl.append(occ)
   return np.array(occl)
+
+def read_weights(scf_out):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(nscf_out)
+  idx = ascii_out.all_lines_with_tag(mm, 'wk =')
+  lines = ascii_out.all_lines_at_idx(mm, idx)
+  weights = []
+  for line in lines:
+    wt = float(line.strip('\n').split('wk =')[-1])
+    weights.append(wt)
+  mm.close()
+  return np.array(weights)
