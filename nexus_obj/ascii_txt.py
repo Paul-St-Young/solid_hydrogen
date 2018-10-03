@@ -116,7 +116,7 @@ def golub_qsub_file(fname, hours=4, title='title', nmpi=1
   header = """#!/bin/bash
 #PBS -N %s
 #PBS -l walltime=0%d:00:00
-#PBS -l nodes=%d:%s
+#PBS -l nodes=%d%s
 #PBS -q %s
 
 #PBS -j oe
