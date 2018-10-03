@@ -20,6 +20,7 @@ def dsk_out(fout,kvecs,mdsk,edsk):
     line = '%12.8f  %12.8f  %12.8f  %10.6f  %10.6f\n' % (kvec[0],kvec[1],kvec[2],dskm,dske)
     fp.write(line)
   # end for
+  fp.flush()
   fp.close()
   return True
 
@@ -103,8 +104,9 @@ BIN=~/soft/intel_kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
   return text
 # end def eos_qsub_file
 
-def golub_qsub_file(fname, hours=4, title='title', nmpi=2
-  ,fout='out' ,ferr='err' ,queue='secondary' ,node_spec='ppn=16'):
+def golub_qsub_file(fname, hours=4, title='title', nmpi=1
+  , fout='out', ferr='err', queue='secondary', node_spec=',flags=allprocs'
+  , qbin='~/soft/kylin_qmcpack/qmcpack_cpu_comp'):
   if type(fname) is not str:
     raise TypeError('Golub accepts one input at a time, %s should be str'%type(fname))
   # end if
@@ -120,14 +122,14 @@ def golub_qsub_file(fname, hours=4, title='title', nmpi=2
 #PBS -j oe
 #PBS -k n
 cd ${PBS_O_WORKDIR}
-export OMP_NUM_THREADS=8
 
-BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
+BIN=%s\n\n""" % (
   title,
   hours,
-  nmpi/2,
+  nmpi,
   node_spec,
-  queue
+  queue,
+  qbin
   )
   
   move_cmd = 'cd '+rundir
