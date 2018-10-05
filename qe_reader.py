@@ -963,7 +963,7 @@ def get_occupation_numbers(nscf_out, nmax=1024):
 
 def read_weights(scf_out):
   from qharv.reel import ascii_out
-  mm = ascii_out.read(nscf_out)
+  mm = ascii_out.read(scf_out)
   idx = ascii_out.all_lines_with_tag(mm, 'wk =')
   lines = ascii_out.all_lines_at_idx(mm, idx)
   weights = []
