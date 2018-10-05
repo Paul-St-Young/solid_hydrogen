@@ -755,3 +755,35 @@ def get_free_sk(gvecs0, raxes, norb):
   nq = len(gvecs0)
   skm = get_sk(mijq.reshape(nq, norb, norb))
   return skm
+
+def align_kvectors(kvecs0, kvecs1, raxes):
+  """ extract and sort the mutual kvectors between two sets
+
+  Args:
+    kvecs0 (np.array): first set of kvectors, shape (nk0, ndim)
+    kvecs1 (np.array): second set of kvectors, shape (nk1, ndim)
+    raxes (np.array): reciprocal lattice, shape (ndim, ndim)
+  Return:
+    (np.array, np.array): (comm0, comm1), indices for the common kvectors
+  """
+  # obtain integer vectors
+  inv_raxes = np.linalg.inv(raxes)
+  gvecs0 = np.round(np.dot(kvecs0, inv_raxes)).astype(int)
+  gvecs1 = np.round(np.dot(kvecs1, inv_raxes)).astype(int)
+  # obtain a regular grid, which is large enough to hold both sets
+  gmin0, gmax0, ng0 = get_regular_grid_dimensions(gvecs0)
+  gmin1, gmax1, ng1 = get_regular_grid_dimensions(gvecs1)
+  gmin = np.min([gmin0, gmin1], axis=0)
+  gmax = np.max([gmax0, gmax1], axis=0)
+  ng = gmax-gmin+1
+  # put both sets on the same regular grid
+  def get_idx1d(gvecs, gmin, ng):
+    idx3d = (gvecs-gmin).T
+    idx1d = np.ravel_multi_index(idx3d, ng)
+    return idx1d
+  idx1d0 = get_idx1d(gvecs0, gmin, ng)
+  idx1d1 = get_idx1d(gvecs1, gmin, ng)
+
+  # get indices for mutual kvectors
+  inter1d, comm0, comm1 =  np.intersect1d(idx1d0, idx1d1, return_indices=True)
+  return comm0, comm1
