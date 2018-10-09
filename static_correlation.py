@@ -73,6 +73,38 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
 # end def
 
 
+def shavg(kvecs, dskm, dske, zoom=100.):
+  """ Shell average S(k), including error bar
+  hint: if your S(k) data has no error, then pass in dske=np.zeros(nk).
+
+  Args:
+    kvecs (np.array): kvectors, shape (nk, ndim)
+    sk (np.array): S(k), shape (nk,)
+    zoom (float, optional): control resolution of kshells,
+     higher zoom will result in more kshells, default is 100.
+  Return:
+    (np.array, np.array, np.array): (uk, uskm, uske), shell-averaged k, S(k)
+     mean and S(k) error
+  """
+  # determine kshells by rounding kvecs
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  kints = np.round(kmags*zoom).astype(int)
+  # pick unique kshells according to integers
+  unique_kints = np.unique(kints)
+  nsh = len(unique_kints)
+  # loop over each shell and average
+  uk = np.zeros(nsh)
+  uskm = np.zeros(nsh)
+  uske = np.zeros(nsh)
+  for ish in range(nsh):
+    kint = unique_kints[ish]  # shell integer label
+    sel = kints == kint       # select this shell
+    uk[ish] = np.mean(kmags[sel])
+    uskm[ish] = np.mean(dskm[sel])
+    uske[ish] = np.sqrt(np.sum(dske[sel]**2))/len(dske[sel])
+  return uk, uskm, uske
+
+
 def shell_average(kmags,vals,smear_fac=100):
     """ spherical average value over k vector magnutudes 
     multiple elements of vals may have the same kmag
