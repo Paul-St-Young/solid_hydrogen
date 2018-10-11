@@ -15,15 +15,14 @@ def isotropic_jk2(jk2_dat, **kwargs):
   Returns:
     np.array, np.array: unique k-vector magnitudes, shell-averaged Jk2
   """
-  import static_correlation as sc                                               
-  data  = np.loadtxt(jk2_dat)                                                   
-  kvecs = data[:,:3]                                                            
-  jk2m  = -data[:,3]  # conform to finite temperature DM sign convention        
-  assert np.allclose(data[:,4],0)  # imaginary part of Jk2 is zero              
-  kmags = np.linalg.norm(kvecs,axis=1)                                          
-                                                                                
+  import static_correlation as sc
+  data  = np.loadtxt(jk2_dat)
+  kvecs = data[:,:3]
+  jk2m  = -data[:,3]  # conform to finite temperature DM sign convention
+  assert np.allclose(data[:,4],0)  # imaginary part of Jk2 is zero
+  kmags = np.linalg.norm(kvecs,axis=1)
   unique_k, unique_jk2 = sc.shell_avg_sofk(kvecs, jk2m, **kwargs)
-  return unique_k, unique_jk2                                                   
+  return unique_k, unique_jk2
 # end def isotropic_jk2
 
 
