@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 # =========================== get long-range U(k) =========================== 
 
 
@@ -95,7 +96,6 @@ def drum_uk(k, wp, kf):
 
 # ================== basic routines for klist  ==================
 def cubic_pos(nx):
-  from itertools import product
   pos  = np.array([
     spos for spos in product(xrange(nx), repeat=3)
     ], dtype=int)
@@ -122,7 +122,6 @@ def remove_com(pos):
 
 
 def mirror_xyz(pos):
-  from itertools import product
   natom, ndim = pos.shape
   new_pos = np.zeros([natom*2**ndim, ndim], dtype=pos.dtype)
 
@@ -446,7 +445,6 @@ def get_regular_grid_dimensions(gvecs):
 
 
 def get_regular_grid(gmin, gmax, ng, dtype):
-  from itertools import product
   grid_gvecs_iter = product(
     np.linspace(gmin[0], gmax[0], ng[0]),
     np.linspace(gmin[1], gmax[1], ng[1]),
@@ -787,3 +785,59 @@ def align_kvectors(kvecs0, kvecs1, raxes):
   # get indices for mutual kvectors
   inter1d, comm0, comm1 =  np.intersect1d(idx1d0, idx1d1, return_indices=True)
   return comm0, comm1
+
+def calc_detsk(qvecs, raxes, gvecs, cmat, frac, verbose):
+  """ Calculate S(k) from Kohn-Sham determinant
+
+  Args:
+    qvecs (np.array): integer array of shape (nq, ndim)
+    raxes (np.array): reciprocal lattice vectors
+    cmat (np.array): complex array of shape (norb, npw)
+    frac (float): fraction of PW cutoff
+    verbose (bool): output progress
+  Return:
+    np.array: sk0
+  """
+  # decide PW cutoff
+  kvecs = np.dot(gvecs, raxes)
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  ecut = max(kmags)*frac
+  # reduce max ecut because kvecs may not be spherical
+
+  nq = len(qvecs)
+  norb, npw = cmat.shape
+
+  if verbose:
+    import progressbar
+    bar = progressbar.ProgressBar(max_value=nq)
+
+  mij = np.zeros([norb, norb], dtype=complex)
+  skm = np.zeros(nq)
+  for iq, qvec in enumerate(qvecs):
+    if verbose: bar.update(iq)
+    # step 1: calculate mij at q
+    # get largest gvector grid that can be shifted
+    kvecs1 = np.dot(gvecs+qvec, raxes)
+    kmags1 = np.linalg.norm(kvecs1, axis=-1)
+    gsel0 = kmags1 < ecut
+    gvecs0 = gvecs[gsel0]
+    # get shifted grid
+    gvecs1 = gvecs0+qvec
+    # get aligned indices of un-shifted and shifted grids
+    idx0 = select(gvecs0, gvecs)
+    idx1 = select(gvecs1, gvecs)
+    # construct mij
+    for iorb, jorb in product(range(norb), repeat=2):
+      mij[iorb][jorb] = np.dot(
+        cmat[iorb, idx0].conj(),
+        cmat[jorb, idx1]
+      )
+
+    # step 2: calculate Sq
+    msum = np.diag(mij).sum()
+    term1 = (msum.conj()*msum).real
+    term2 = (mij.conj()*mij).sum().real
+    skval = 1.+(term1-term2)/norb
+    skm[iq] = skval
+  # end for
+  return skm
