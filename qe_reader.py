@@ -972,3 +972,70 @@ def read_weights(scf_out):
     weights.append(wt)
   mm.close()
   return np.array(weights)
+
+def read_sym_ops(scf_out, ndim=3):
+  """ read symmetry operators
+
+  Args:
+    scf_out (str): QE output file
+    ndim (int, optional): number of spatial dimensions, default is 3
+  Return:
+    list: all symmetry operators, each is represented as a dictionary
+      isym is index, name is description, vec is shift, mat is rotation
+  """
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(scf_out)
+
+  # find starting location of symmetry operator output
+  idx = mm.find('Sym. Ops.')
+  if idx == -1:
+    msg = 'no symmetry operations printed in %s. Is verbosity high?' % scf_out
+    raise RuntimeError(msg)
+  # rewind to beginning of line
+  idx0 = mm.rfind('\n', 0, idx)
+  mm.seek(idx0+1)
+  header = mm.readline()
+  nsym = int(header.split()[0])
+
+  # check the number of symmetry outputs
+  idxl = ascii_out.all_lines_with_tag(mm, 'isym = ')
+  if len(idxl) != nsym:
+    raise RuntimeError('found %d symm. expected %d' % (len(idxl), nsym))
+
+  # parse symmetry operators
+  symops = []
+  for idx in idxl:
+    mm.seek(idx)
+
+    # read symmetry index and name: isym, name
+    line0 = mm.readline()
+    text0 = line0.split('=')[1]
+    tokens0 = text0.split()
+    isym = int(tokens0[0])
+    name = ' '.join(tokens0[1:])
+
+    # read translation vector: vec
+    vec = [0]*ndim
+    if 'cart. axis' in name:
+      vect = ascii_out.lr_mark(line0, '[', ']')
+      vec[:] = map(float, vect.split(','))
+
+    # read rotation matrix: mat
+    mat = []
+    idx = mm.find('cryst.')
+    mm.readline()  # skip empty line
+    for idim in range(ndim):
+      line = mm.readline()
+      if 'cryst.' in line:
+        line = line.split('=')[1]
+      text = ascii_out.lr_mark(line, '(', ')')
+      mat.append(map(float, text.split()))
+    entry = {
+      'isym': isym,
+      'name': name,
+      'vec': vec,
+      'mat': mat
+    }
+    symops.append(entry)
+  mm.close()
+  return symops
