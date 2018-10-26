@@ -258,6 +258,15 @@ def mixed_rpa_sk(k, rs, sk0, ktf):
   return sk0*( 2./(ak**0.5+ak1**0.5) )
 
 
+def screened_rpa_sk(finek, rs, kf, ktf):
+  sk0 = hfsk(finek, kf)
+  rho = 3./(4*np.pi*rs**3)
+  vk = 4*np.pi/(finek**2+ktf**2)
+  ek = 0.5*finek**2
+  sk = (sk0**(-2)+2*rho*vk/ek)**(-0.5)
+  return sk
+
+
 def ceperley_rpa_uk(k, rs):
 
   # build pieces
@@ -267,6 +276,12 @@ def ceperley_rpa_uk(k, rs):
   # put pieces together
   uk = vol* 0.5*(-1+(1+ak)**0.5)
   return uk
+
+
+def gammak(uk, skm, rs):
+  wp = np.sqrt(3./rs**3)
+  gkm = 2*wp*skm/uk**2
+  return gkm
 
 
 def bspline(coeff, cusp, rcut):
