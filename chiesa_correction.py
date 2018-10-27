@@ -267,6 +267,15 @@ def screened_rpa_sk(finek, rs, kf, ktf):
   return sk
 
 
+def mass_rpa_sk(finek, rs, kf, mass):
+  sk0 = hfsk(finek, kf)
+  rho = 3./(4*np.pi*rs**3)
+  vk = 4*np.pi/finek**2
+  ek = 0.5*mass*finek**2
+  sk = (sk0**(-2)+2*rho*vk/ek)**(-0.5)
+  return sk
+
+
 def ceperley_rpa_uk(k, rs):
 
   # build pieces
