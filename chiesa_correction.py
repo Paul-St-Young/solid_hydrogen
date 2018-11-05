@@ -73,6 +73,8 @@ def get_uk(jk2_dat,ftur_dat):
   return totk, uk                                                               
 # end def
 
+def chiesa_rpa_sk(k, alpha):
+  return 1.-np.exp(-alpha*k**2)
 
 chiesa_rpa_uk = lambda k,a,b:4*np.pi*a*(k**(-2)-(k**2+b**(-1))**(-1))
 drum_rpa_uk   = lambda k,A,B:4*np.pi*(A/k**2+B/k)
@@ -94,9 +96,9 @@ def drum_uk(k, wp, kf):
   return A/k**2+B/k
 
 # ================== basic routines for klist  ==================
-def cubic_pos(nx):
+def cubic_pos(nx, ndim=3):
   pos  = np.array([
-    spos for spos in product(xrange(nx), repeat=3)
+    spos for spos in product(xrange(nx), repeat=ndim)
     ], dtype=int)
   return pos
 
