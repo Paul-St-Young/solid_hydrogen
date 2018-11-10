@@ -277,6 +277,12 @@ def mass_rpa_sk(finek, rs, kf, mass):
   sk = (sk0**(-2)+2*rho*vk/ek)**(-0.5)
   return sk
 
+def sk2uk(myk, mysk, rs):
+  kf = heg_kfermi(rs)
+  sk0 = hfsk(myk, kf)
+  rho = 3./(4*np.pi*rs**3)
+  return (mysk**(-1)-sk0**(-1))/(2*rho)
+
 
 def ceperley_rpa_uk(k, rs):
 
