@@ -96,11 +96,11 @@ def drum_uk(k, wp, kf):
   return A/k**2+B/k
 
 # ================== basic routines for klist  ==================
-def cubic_pos(nx, ndim=3):
-  pos  = np.array([
-    spos for spos in product(xrange(nx), repeat=ndim)
-    ], dtype=int)
-  return pos
+def cubic_pos(nx, ndim=3, indexing='ij'):
+  nlist = np.arange(nx)
+  xyz = np.meshgrid(*[nlist]*ndim, indexing=indexing)
+  pos = np.stack(xyz, axis=-1)
+  return pos.reshape(-1, ndim)
 
 
 def shifted_mp_grid(nx):
