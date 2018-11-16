@@ -298,7 +298,7 @@ def ceperley_rpa_uk(k, rs):
 def gammak(uk, skm, rs):
   wp = np.sqrt(3./rs**3)
   gkm = 2*wp*skm/uk**2
-  return gkm
+  return gkm**2
 
 
 def bspline(coeff, cusp, rcut):
@@ -660,7 +660,7 @@ def get_gvecs(nsh):
 # ================ routines for any determinant in PW basis  ================
 
 
-def select_from_rgrid(gvecs, rgvecs):
+def select_from_rgrid(gvecs, gmin, ng):
   """ select a subset of integer vectors from a regular grid
   Example:
     idx = select_from_rgrid(gvecs0, rgvecs)
@@ -668,11 +668,11 @@ def select_from_rgrid(gvecs, rgvecs):
 
   Args:
     gvecs  (np.array): subset of integer vectors
-    rgvecs (np.array): regular grid of integer vectors
+    gmin (np.array): regular grid minima along each dimension
+    ng (np.array): regular grid size along each dimension
   Return:
     np.array: a list of indices
   """
-  gmin, gmax, ng = get_regular_grid_dimensions(rgvecs)
   idx3d = (gvecs-gmin).T
   idx3d = np.around(idx3d).astype(int)
   idx = np.ravel_multi_index(idx3d, ng)
@@ -691,8 +691,9 @@ def select(gvecs0, gvecs):
   Return:
     np.array: a list of indices
   """
-  idx0 = select_from_rgrid(gvecs0, gvecs)
-  idx = select_from_rgrid(gvecs, gvecs)
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
+  idx0 = select_from_rgrid(gvecs0, gmin, ng)
+  idx = select_from_rgrid(gvecs, gmin, ng)
   myidx = np.zeros(len(idx0), dtype=int)
   for label, i in enumerate(idx0):
     j = np.where(idx==i)[0][0]
@@ -785,20 +786,7 @@ def get_free_sk(gvecs0, raxes, norb):
   skm = get_sk(mijq.reshape(nq, norb, norb))
   return skm
 
-def align_kvectors(kvecs0, kvecs1, raxes):
-  """ extract and sort the mutual kvectors between two sets
-
-  Args:
-    kvecs0 (np.array): first set of kvectors, shape (nk0, ndim)
-    kvecs1 (np.array): second set of kvectors, shape (nk1, ndim)
-    raxes (np.array): reciprocal lattice, shape (ndim, ndim)
-  Return:
-    (np.array, np.array): (comm0, comm1), indices for the common kvectors
-  """
-  # obtain integer vectors
-  inv_raxes = np.linalg.inv(raxes)
-  gvecs0 = np.round(np.dot(kvecs0, inv_raxes)).astype(int)
-  gvecs1 = np.round(np.dot(kvecs1, inv_raxes)).astype(int)
+def align_gvectors(gvecs0, gvecs1):
   # obtain a regular grid, which is large enough to hold both sets
   gmin0, gmax0, ng0 = get_regular_grid_dimensions(gvecs0)
   gmin1, gmax1, ng1 = get_regular_grid_dimensions(gvecs1)
@@ -815,6 +803,23 @@ def align_kvectors(kvecs0, kvecs1, raxes):
 
   # get indices for mutual kvectors
   inter1d, comm0, comm1 =  np.intersect1d(idx1d0, idx1d1, return_indices=True)
+  return comm0, comm1
+
+def align_kvectors(kvecs0, kvecs1, raxes):
+  """ extract and sort the mutual kvectors between two sets
+
+  Args:
+    kvecs0 (np.array): first set of kvectors, shape (nk0, ndim)
+    kvecs1 (np.array): second set of kvectors, shape (nk1, ndim)
+    raxes (np.array): reciprocal lattice, shape (ndim, ndim)
+  Return:
+    (np.array, np.array): (comm0, comm1), indices for the common kvectors
+  """
+  # obtain integer vectors
+  inv_raxes = np.linalg.inv(raxes)
+  gvecs0 = np.round(np.dot(kvecs0, inv_raxes)).astype(int)
+  gvecs1 = np.round(np.dot(kvecs1, inv_raxes)).astype(int)
+  comm0, comm1 = align_gvectors(gvecs0, gvecs1)
   return comm0, comm1
 
 def calc_detsk(qvecs, raxes, gvecs, cmat, frac, verbose):
