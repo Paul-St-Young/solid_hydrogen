@@ -1039,3 +1039,18 @@ def read_sym_ops(scf_out, ndim=3):
     symops.append(entry)
   mm.close()
   return symops
+
+def get_weights(nscf_out):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(nscf_out)
+  idx = ascii_out.all_lines_with_tag(mm, 'wk =')
+  lines = ascii_out.all_lines_at_idx(mm, idx)
+  weights = []
+  for line in lines:
+    wt = float(line.strip('\n').split('wk =')[-1])
+    weights.append(wt)
+  mm.close()
+  wtot = sum(weights)
+  if not np.isclose(wtot, 2.0):
+    raise RuntimeError('wrong weight sum')
+  return np.array(weights)
