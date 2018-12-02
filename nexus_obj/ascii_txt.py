@@ -145,7 +145,8 @@ BIN=%s\n\n""" % (
 # end def golub_qsub_file
 
 
-def bw_qsub_file(fnames,nmpi=64,title='title',hours=2,queue='normal'):
+def bw_qsub_file(fnames,nmpi=64,title='title',hours=2,queue='normal',
+  qbin='~/soft/kylin_qmcpack/qmcpack_cpu_comp'):
   qs = ['low','normal','high']
   if queue not in qs:
     raise RuntimeError('unknown queue %s; choose from'%queue+str(qs))
@@ -161,12 +162,14 @@ module load cray-hdf5-parallel libxml2
 
 cd ${PBS_O_WORKDIR}
 export OMP_NUM_THREADS=8
+date
 
-BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
+BIN=%s\n\n""" % (
   title,
   hours,
   len(fnames)*nmpi/4,
-  queue
+  queue,
+  qbin
   )
 
   body = 'cwd=`pwd`\n'
@@ -177,7 +180,7 @@ BIN=~/soft/kylin_qmcpack/qmcpack_cpu_comp\n\n""" % (
     run_cmd  = 'aprun -n %d -d 8 -S 1 $BIN '%nmpi + fname + ' > out 2> err&'
     body += '\n'.join([move_cmd,run_cmd,'cd $cwd']) + '\n'
   # end for fname
-  body += '\nwait'
+  body += '\nwait\ndate'
 
   text = header + body
   return text
