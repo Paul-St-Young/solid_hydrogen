@@ -60,11 +60,9 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     reclat = struct.lattice.reciprocal_lattice
     
     if legal_kvecs is None:
-      import itertools
-      cube_pts = np.array( [a for a in itertools.product(
-          range(nkmax),repeat=3)] ) # 3 dimensions
-      legal_kvecs = np.dot(cube_pts,reclat.matrix)
-    # end if
+      import chiesa_correction as chc
+      cube_pts = chc.cubic_pos(nkmax)
+      legal_kvecs = np.dot(cube_pts[1:], reclat.matrix)
     
     sk_arr = np.array([(rho(kvec)*rho(-kvec)).real/len(pos) 
         for kvec in legal_kvecs])
