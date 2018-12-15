@@ -1068,3 +1068,30 @@ def get_gc_occ(bands, efermi):
     norbl.append(norb)
   norbs = np.array(norbl)
   return norbs
+
+def get_tgrid_raxes(nscf_in, ndim=3):
+  from qharv.reel import ascii_out
+  from qharv.inspect import axes_pos
+  mm = ascii_out.read(nscf_in)
+  idx = mm.find('K_POINTS automatic')
+  mm.seek(idx)
+  mm.readline()
+  kline = mm.readline()
+  mm.close()
+
+  nums = map(int, kline.split())
+  tgrid = np.array(nums[:3])
+  tshift = np.array(nums[3:])
+
+  mm = ascii_out.read(nscf_in)
+  idx = mm.find('CELL_PARAMETERS')
+  mm.seek(idx)
+  mm.readline()
+  cell = []
+  for idim in range(ndim):
+    line = mm.readline()
+    nums = map(float, line.split())
+    cell.append(nums)
+  axes = np.array(cell)
+  raxes = axes_pos.raxes(axes)
+  return tgrid, raxes
