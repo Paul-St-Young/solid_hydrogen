@@ -878,8 +878,10 @@ def calc_detsk(qvecs, raxes, gvecs, cmat, frac, verbose):
   # end for
   return skm
 
-def get_usrk(uk, doc):
+def get_usrk(uk, fxml):
+  from qharv.seed import xml
   from qharv.inspect import axes_pos
+  doc = xml.read(fxml)
   axes = xml.get_axes(doc)
   rcut = axes_pos.rwsc(axes)
   fusr = get_fusr(doc, rcut)
