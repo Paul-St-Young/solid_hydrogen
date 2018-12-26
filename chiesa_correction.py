@@ -887,3 +887,22 @@ def get_usrk(uk, fxml):
   fusr = get_fusr(doc, rcut)
   usrk = evaluate_ft(uk, fusr, rcut)
   return usrk
+
+def rpa_ur_coeff(xr, rs, rcut, same):
+  rho = 3./(4*np.pi*rs**3)
+  wp = np.sqrt(4*np.pi*rho)
+  alpha = np.sqrt(wp)
+  if same:
+    alpha /= np.sqrt(2)
+  damper = np.exp(-(2.*xr/rcut)**2)
+  urpa = 1./(2*wp*xr)*(1.-np.exp(-alpha*xr))
+  return urpa*damper
+
+def rpa_jur(rs, rcut, nr):
+  dr = rcut/nr
+  xr = .02 + dr*np.arange(nr)
+  uuc = rpa_ur_coeff(xr, rs, rcut, True)
+  uud = rpa_ur_coeff(xr, rs, rcut, False)
+  juu = bspline(uuc, -0.25, rcut)
+  jud = bspline(uud, -0.5, rcut)
+  return juu, jud
