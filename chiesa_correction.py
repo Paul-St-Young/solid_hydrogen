@@ -910,8 +910,10 @@ def rpa_jur(rs, rcut, nr, **kwargs):
   jud = bspline(udc, -0.5, rcut)
   return juu, jud
 
-def heg_jas(rs, axes, nr, nsh0=5):
+def heg_jas(rs, axes, nr, nsh0=5, kc=None):
   kf = heg_kfermi(rs)  # assume unpolarized
+  if kc is None:
+    kc = kf
   from qharv.inspect import axes_pos
   rcut = axes_pos.rwsc(axes)
   # step 1: build short-range Jastrow
@@ -921,8 +923,8 @@ def heg_jas(rs, axes, nr, nsh0=5):
   raxes = axes_pos.raxes(axes)
   kvecs = get_kshells(nsh0, raxes)
   kmags = np.linalg.norm(kvecs, axis=-1)
-  sel = (0<kmags) & (kmags<kf)
-  ukmags = kmags[sel]
+  sel = (0<kmags) & (kmags<kc)
+  ukmags = np.unique(kmags[sel])
   # step 3: get Ulr
   urpa = gaskell_rpa_uk(ukmags, rs, kf)
   usrk = evaluate_ft(ukmags, j2sr, rcut)
