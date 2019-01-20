@@ -144,12 +144,11 @@ def get_kshells(nsh, raxes):
   return kvecs
 
 
-def get_jk_kvecs(fout):
+def get_jk_kvecs(fout,
+  header = 'kSpace coefficient groups',
+  trailer = 'QMCHamiltonian::addOperator'):
   """ parse QMCPACK output for kSpace Jastrow kvecs """
   from qharv.reel import ascii_out
-
-  header  = 'kSpace coefficent groups'
-  trailer = 'QMCHamiltonian::addOperator'
 
   mm   = ascii_out.read(fout)
   text = ascii_out.block_text(mm, header, trailer)
@@ -898,11 +897,33 @@ def rpa_ur_coeff(xr, rs, rcut, same):
   urpa = 1./(2*wp*xr)*(1.-np.exp(-alpha*xr))
   return urpa*damper
 
-def rpa_jur(rs, rcut, nr):
+def get_rpa_coeff(rs, rcut, nr, epsr=0.01):
   dr = rcut/nr
-  xr = .02 + dr*np.arange(nr)
+  xr = epsr + dr*np.arange(nr)
   uuc = rpa_ur_coeff(xr, rs, rcut, True)
-  uud = rpa_ur_coeff(xr, rs, rcut, False)
+  udc = rpa_ur_coeff(xr, rs, rcut, False)
+  return uuc, udc
+
+def rpa_jur(rs, rcut, nr, **kwargs):
+  uuc, udc = get_rpa_coeff(rs, rcut, nr, **kwargs)
   juu = bspline(uuc, -0.25, rcut)
-  jud = bspline(uud, -0.5, rcut)
+  jud = bspline(udc, -0.5, rcut)
   return juu, jud
+
+def heg_jas(rs, axes, nr, nsh0=5):
+  from qharv.inspect import axes_pos
+  rcut = axes_pos.rwsc(axes)
+  # step 1: build short-range Jastrow
+  uuc, udc = get_rpa_coeff(rs, rcut, nr)
+  fusr = fusr(rcut, uuc, udc)
+  # step 2: find unique kmags
+  raxes = axes_pos.raxes(axes)
+  kvecs = get_kshells(nsh0, raxes)
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  sel = (0<kmags) & (kmags<kf)
+  ukmags = kmags[sel]
+  # step 3: get Ulr
+  urpa = gaskell_rpa_uk(ukmags, rs, kf)
+  usrk = evaluate_ft(ukmags, fusr, rcut)
+  ulrk = usrk-urpa
+  return ukmags, ulrk, uuc, udc
