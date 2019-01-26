@@ -70,6 +70,16 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     return legal_kvecs, sk_arr
 # end def
 
+def get_kshells(kmags, zoom):
+  kints = np.round(kmags*zoom).astype(int)
+  unique_kints = np.unique(kints)
+  nsh = len(unique_kints)
+  sels = []
+  for ish in range(nsh):
+    kint = unique_kints[ish]  # shell integer label
+    sel = kints == kint       # select this shell
+    sels.append(sel)
+  return sels
 
 def shavg(kvecs, dskm, dske, zoom=100.):
   """ Shell average S(k), including error bar
@@ -86,17 +96,13 @@ def shavg(kvecs, dskm, dske, zoom=100.):
   """
   # determine kshells by rounding kvecs
   kmags = np.linalg.norm(kvecs, axis=-1)
-  kints = np.round(kmags*zoom).astype(int)
-  # pick unique kshells according to integers
-  unique_kints = np.unique(kints)
-  nsh = len(unique_kints)
+  sels = get_kshells(kmags, zoom)
+  nsh = len(sels)
   # loop over each shell and average
   uk = np.zeros(nsh)
   uskm = np.zeros(nsh)
   uske = np.zeros(nsh)
-  for ish in range(nsh):
-    kint = unique_kints[ish]  # shell integer label
-    sel = kints == kint       # select this shell
+  for ish, sel in enumerate(sels):
     uk[ish] = np.mean(kmags[sel])
     uskm[ish] = np.mean(dskm[sel])
     uske[ish] = np.sqrt(np.sum(dske[sel]**2))/len(dske[sel])
