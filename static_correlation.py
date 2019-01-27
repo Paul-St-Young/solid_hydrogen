@@ -70,7 +70,7 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     return legal_kvecs, sk_arr
 # end def
 
-def get_kshells(kmags, zoom):
+def kshell_sels(kmags, zoom):
   kints = np.round(kmags*zoom).astype(int)
   unique_kints = np.unique(kints)
   nsh = len(unique_kints)
@@ -96,7 +96,7 @@ def shavg(kvecs, dskm, dske, zoom=100.):
   """
   # determine kshells by rounding kvecs
   kmags = np.linalg.norm(kvecs, axis=-1)
-  sels = get_kshells(kmags, zoom)
+  sels = kshell_sels(kmags, zoom)
   nsh = len(sels)
   # loop over each shell and average
   uk = np.zeros(nsh)
