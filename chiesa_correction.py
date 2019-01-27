@@ -910,7 +910,9 @@ def rpa_jur(rs, rcut, nr, **kwargs):
   jud = bspline(udc, -0.5, rcut)
   return juu, jud
 
-def heg_jas(rs, axes, nr, nsh0=5, kc=None):
+def heg_jas(rs, axes, nr, nsh0=5, kc=None, zoom=1e10):
+  # note zoom of 1e10 keeps 10 digits when grouping kshells
+  #  probably too high of a resolution, but this is QMCPACK default
   kf = heg_kfermi(rs)  # assume unpolarized
   if kc is None:
     kc = kf
@@ -924,7 +926,11 @@ def heg_jas(rs, axes, nr, nsh0=5, kc=None):
   kvecs = get_kshells(nsh0, raxes)
   kmags = np.linalg.norm(kvecs, axis=-1)
   sel = (0<kmags) & (kmags<kc)
-  ukmags = np.unique(kmags[sel])
+  import static_correlation as sc
+  #ukmags = np.unique(kmags[sel])  # no tolerance option
+  kmags1 = kmags[sel]
+  sels = sc.kshell_sels(kmags1, zoom)
+  ukmags = np.array([kmags1[s].mean() for s in sels])
   # step 3: get Ulr
   urpa = gaskell_rpa_uk(ukmags, rs, kf)
   usrk = evaluate_ft(ukmags, j2sr, rcut)
