@@ -936,3 +936,15 @@ def heg_jas(rs, axes, nr, nsh0=5, kc=None, zoom=1e10):
   usrk = evaluate_ft(ukmags, j2sr, rcut)
   ulrk = usrk-urpa
   return ukmags, ulrk, uuc, udc
+
+def get_norb(twist, raxes, kf, nsh0=10):
+  kvecs = get_kshells(nsh0, raxes)
+  # add twist
+  gvecs = np.around(np.dot(kvecs, np.linalg.inv(raxes)))
+  gvecs += twist
+  kvecs = np.dot(gvecs, raxes)
+  # enforce Fermi surface
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  sel = kmags < kf
+  nup = len(kmags[sel])
+  return nup
