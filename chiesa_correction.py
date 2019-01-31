@@ -946,7 +946,11 @@ def get_gc_kvecs(twist, raxes, kf, nsh0):
   # enforce Fermi surface
   kmags = np.linalg.norm(kvecs, axis=-1)
   sel = kmags < kf
-  return kvecs[sel]
+  kvecs1 = kvecs[sel]
+  kmags1 = kmags[sel]
+  # sort kvectors
+  idx = np.argsort(kmags1)
+  return kvecs1[idx]
 
 def get_norb(twist, raxes, kf, nsh0=10):
   kvecs = get_kvecs(twist, raxes, kf, nsh0)
