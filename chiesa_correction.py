@@ -977,13 +977,19 @@ class IsotropicMomentumDistributionFSC:
     return uk*(1-sk)-self._rho*uk*sk
   def get_kf(self):
     return self._kf
-  def init_missing_qvecs(self, blat, mx):
+  def init_missing_qvecs(self, raxes, mx):
     """Assume cubic cell, get integration grid within missing volume"""
-    dqx = blat/mx
-    qvecs = dqx*cubic_pos(mx)
+    ## cubic box
+    #dqx = blat/mx
+    #qvecs = dqx*cubic_pos(mx)
+    #self._intnorm = dqx**3/(2*np.pi)**3
+    # non-cubic box
+    from qharv.inspect.axes_pos import volume
+    fvecs = 1./mx*cubic_pos(mx)
+    qvecs = np.dot(fvecs, raxes)
     qvecs -= qvecs.mean(axis=0)
+    self._intnorm = volume(raxes)/mx**3/(2*np.pi)**3
     self._qvecs = qvecs
-    self._intnorm = dqx**3/(2*np.pi)**3
     self._init_fsc = True
     return qvecs
   def choose_kvecs(self, nx, zoom=100.):
