@@ -957,3 +957,58 @@ def get_norb(twist, raxes, kf, nsh0=10):
   kmags = np.linalg.norm(kvecs, axis=-1)
   nup = len(kmags)
   return nup
+
+class IsotropicMomentumDistributionFSC:
+  def __init__(self, rs, fsk=None):
+    self._rs = rs
+    self._kf = heg_kfermi(rs)
+    self._rho = 3./(4*np.pi*rs**3)
+    self._init_fsc = False
+    if fsk is None:  # use Gaskell RPA S(k) if no model S(k) is given
+      self._fsk = self.gaskell_fsk
+    else:
+      print('using user-defined S(k)')
+      self._fsk = fsk
+  def gaskell_fsk(self, k):
+    return gaskell_rpa_sk(k, self._rs, self._kf)
+  def delta(self, k):
+    sk = self._fsk(k)
+    uk = sk2uk(k, sk, self._rs)
+    return uk*(1-sk)-self._rho*uk*sk
+  def get_kf(self):
+    return self._kf
+  def init_missing_qvecs(self, blat, mx):
+    """Assume cubic cell, get integration grid within missing volume"""
+    dqx = blat/mx
+    qvecs = dqx*cubic_pos(mx)
+    qvecs -= qvecs.mean(axis=0)
+    self._qvecs = qvecs
+    self._intnorm = dqx**3/(2*np.pi)**3
+    self._init_fsc = True
+    return qvecs
+  def choose_kvecs(self, nx, zoom=100.):
+    """Choose grid to evaluate n(k) on """
+    kvecs = 2*self._kf/nx*cubic_pos(nx)
+    # choose one point from each kshell
+    kmags = np.linalg.norm(kvecs, axis=-1)
+    import static_correlation as sc
+    sels = sc.kshell_sels(kmags, zoom)
+    kidx = []
+    for sel in sels:
+      idx = np.where(sel)[0][0]
+      kidx.append(idx)
+    return kvecs[kidx]
+  def evaluate_fsc(self, fnk, kvecs):
+    if not self._init_fsc:
+      raise RuntimeError('must initialize first')
+    qmags = np.linalg.norm(self._qvecs, axis=-1)
+    def fnk1(kvecs):
+      kmags = np.linalg.norm(kvecs, axis=-1)
+      return fnk(kmags)
+    def nkfsc(kvec):
+      dnkval = fnk1(self._qvecs+kvec[np.newaxis, :]) - \
+               fnk1(kvec[np.newaxis, :])
+      intval = self._intnorm*(self.delta(qmags)*dnkval).sum()
+      return intval
+    dnk = [nkfsc(kvec) for kvec in kvecs]
+    return dnk
