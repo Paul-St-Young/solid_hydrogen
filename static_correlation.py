@@ -16,11 +16,11 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
       gofr_norm (float,optional): normalization factor for g(r), default is to recalculate.
     Returns:
       (np.array,np.array,float): (r,g(r),normalization) """
-    import pymatgen as mg
-    elem = ['H']*len(pos)
-    struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
-    dtable = struct.distance_matrix
-    nptcl  = struct.num_sites
+    from ase.geometry import get_distances
+    from qharv.inspect.axes_pos import volume
+    cell_volume = volume(axes)
+    nptcl  = len(pos)
+    dtable = get_distances(pos, cell=axes, pbc=True)[1]
 
     # upper triagular distance matrix (i.e. unique pair distances)
     i_triu = np.triu_indices(nptcl,m=nptcl,k=1)
@@ -32,7 +32,7 @@ def gofr_snapshot(axes,pos,rmax,rmin=0,nbin=40,gofr_norm=None):
     
     if gofr_norm is None:
         # gofr_norm = 4*np.pi*myx**2.*dx * nptcl*(nptcl-1)/2./struct.volume
-        gofr_norm = 4*np.pi*myx**2.*dx *nptcl**2./struct.volume/2.
+        gofr_norm = 4*np.pi*myx**2.*dx *nptcl**2./cell_volume/2.
     # end if
     myy = counts/gofr_norm
     
@@ -51,18 +51,15 @@ def sofk_snapshot(axes,pos,nkmax=5,legal_kvecs=None):
     Returns:
       (np.array,np.array): (kvecs,S(k))
     """
-    import pymatgen as mg
+    from qharv.inspect.axes_pos import raxes
     
     rho = lambda kvec: np.exp(1j* np.dot(pos,kvec) ).sum()
-    elem = ['H']*len(pos)
-
-    struct = mg.Structure(axes,elem,pos,coords_are_cartesian=True)
-    reclat = struct.lattice.reciprocal_lattice
+    reclat = raxes(axes)
     
     if legal_kvecs is None:
       import chiesa_correction as chc
       cube_pts = chc.cubic_pos(nkmax)
-      legal_kvecs = np.dot(cube_pts[1:], reclat.matrix)
+      legal_kvecs = np.dot(cube_pts[1:], reclat)
     
     sk_arr = np.array([(rho(kvec)*rho(-kvec)).real/len(pos) 
         for kvec in legal_kvecs])
