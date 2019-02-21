@@ -1018,6 +1018,29 @@ class IsotropicMomentumDistributionFSC:
       return intval
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
+  def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
+    nsh=4, nbig=4, show_progress=True):
+    def fnk1(kvecs):
+      kmags = np.linalg.norm(kvecs, axis=-1)
+      return fnk(kmags)
+    dnk = []
+    if show_progress:
+      from progressbar import ProgressBar
+      bar = ProgressBar(maxval=len(kvecs))
+    for ik, kvec in enumerate(kvecs):
+      def dnk1(qvecs):
+        qmags = np.linalg.norm(qvecs, axis=-1)
+        dnkval = fnk1(qvecs+kvec[np.newaxis, :]) -\
+                 fnk1(kvec[np.newaxis, :])
+        delta = self.delta(qmags)
+        return delta*dnkval
+      # do sum in small cell
+      nk0 = evaluate_ksum(dnk1, raxes, kmax, nsh)
+      # redo sum in big cell
+      nk1 = evaluate_ksum(dnk1, raxes/nbig, kmax, nsh*nbig)
+      dnk.append(nk1-nk0)
+      bar.update(ik)
+    return np.array(dnk)
 
 def ewald_vklr(xk, alpha):
   x = xk/(2.*alpha)
@@ -1034,6 +1057,6 @@ def evaluate_ksum(fy, raxes, kmax, nsh):
   kvecs = kvecs[sel]
   kmags = kmags[sel]
   # evaluate function on kvectors
-  yvals = [fy(kvec) for kvec in kvecs]
+  yvals = fy(kvecs)
   sumval = sumnorm*np.sum(yvals)
   return sumval
