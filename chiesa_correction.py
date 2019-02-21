@@ -1019,11 +1019,16 @@ class IsotropicMomentumDistributionFSC:
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
   def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
-    nsh=4, nbig=4, show_progress=True):
+    nsh=4, nbig=4, show_progress=True, extrap = True):
     def fnk1(kvecs):
       kmags = np.linalg.norm(kvecs, axis=-1)
       return fnk(kmags)
     dnk = []
+    if extrap:
+      from qharv.sieve.scalar_df import poly_extrap_to_x0
+      from qharv.inspect import axes_pos
+      vol0 = (2*np.pi)**3/axes_pos.volume(raxes)
+      vol1 = vol0*nbig**3
     if show_progress:
       from progressbar import ProgressBar
       bar = ProgressBar(maxval=len(kvecs))
@@ -1038,7 +1043,11 @@ class IsotropicMomentumDistributionFSC:
       nk0 = evaluate_ksum(dnk1, raxes, kmax, nsh)
       # redo sum in big cell
       nk1 = evaluate_ksum(dnk1, raxes/nbig, kmax, nsh*nbig)
-      dnk.append(nk1-nk0)
+      if extrap:
+        dnk1, dnk1e = poly_extrap_to_x0([1./vol0, 1./vol1], [nk0, nk1], [1e-6, 1e-6], 1)
+      else:
+        dnk1 = nk1-nk0
+      dnk.append(dnk1)
       bar.update(ik)
     return np.array(dnk)
 
