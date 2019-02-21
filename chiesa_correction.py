@@ -1018,3 +1018,21 @@ class IsotropicMomentumDistributionFSC:
       return intval
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
+
+def ewald_vklr(xk, alpha):
+  x = xk/(2.*alpha)
+  return 4*np.pi/x**2*np.exp(-x**2)
+
+def evaluate_ksum(fy, raxes, kmax, nsh):
+  rvol = axes_pos.volume(raxes)
+  sumnorm = rvol/(2*np.pi)**3
+  # get kvectors within cutoff
+  kvecs = chc.get_kshells(nsh, raxes)
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  sel = (1e-4<kmags) & (kmags<kmax)
+  kvecs = kvecs[sel]
+  kmags = kmags[sel]
+  # evaluate function on kvectors
+  yvals = [fy(kvec) for kvec in kvecs]
+  sumval = sumnorm*np.sum(yvals)
+  return sumval
