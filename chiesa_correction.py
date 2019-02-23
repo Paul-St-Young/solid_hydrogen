@@ -978,9 +978,9 @@ class IsotropicMomentumDistributionFSC:
     return uk*(1-sk)-self._rho*uk**2*sk
   def rpa_delta(self, k):
     wp = (3./self._rs**3)**0.5
-    sk = k**2/(2*wp)
-    uk = 4*np.pi/(wp*k**2)
-    return uk*(1-sk)-self._rho*uk**2*sk
+    alpha = 4*np.pi/wp
+    beta = alpha/wp
+    return 0.5*(alpha/k**2-beta)
   def get_kf(self):
     return self._kf
   def init_missing_qvecs(self, raxes, mx):
