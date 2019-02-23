@@ -188,8 +188,9 @@ def hfsk(karr, kf):
   Return:
     float: S0(k, kf)
   """
-  skm = 3*karr/(4*kf)-karr**3/(16*kf**3)
-  sel = np.where(karr>=2*kf)
+  kmags = abs(karr)
+  skm = 3*kmags/(4*kf)-kmags**3/(16*kf**3)
+  sel = np.where(kmags>=2*kf)
   skm[sel] = 1.0
   return skm
 
@@ -974,7 +975,12 @@ class IsotropicMomentumDistributionFSC:
   def delta(self, k):
     sk = self._fsk(k)
     uk = sk2uk(k, sk, self._rs)
-    return uk*(1-sk)-self._rho*uk*sk
+    return uk*(1-sk)-self._rho*uk**2*sk
+  def rpa_delta(self, k):
+    wp = (3./self._rs**3)**0.5
+    sk = k**2/(2*wp)
+    uk = 4*np.pi/(wp*k**2)
+    return uk*(1-sk)-self._rho*uk**2*sk
   def get_kf(self):
     return self._kf
   def init_missing_qvecs(self, raxes, mx):
@@ -1019,7 +1025,7 @@ class IsotropicMomentumDistributionFSC:
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
   def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
-    nsh=4, nbig=4, show_progress=True, extrap = True):
+    nsh=4, nbig=4, show_progress=True, extrap=True, alpha=-0.25):
     def fnk1(kvecs):
       kmags = np.linalg.norm(kvecs, axis=-1)
       return fnk(kmags)
@@ -1044,7 +1050,10 @@ class IsotropicMomentumDistributionFSC:
       # redo sum in big cell
       nk1 = evaluate_ksum(dnk1, raxes/nbig, kmax, nsh*nbig)
       if extrap:
-        dnk1, dnk1e = poly_extrap_to_x0([1./vol0, 1./vol1], [nk0, nk1], [1e-6, 1e-6], 1)
+        myx = [vol0**alpha, vol1**alpha]
+        myym = [nk0, nk1]
+        myye = [1e-6, 1e-6]
+        dnk1, dnk1e = poly_extrap_to_x0(myx, myym, myye, 1)
       else:
         dnk1 = nk1-nk0
       dnk.append(dnk1)
