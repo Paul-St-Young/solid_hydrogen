@@ -1010,13 +1010,16 @@ class IsotropicMomentumDistributionFSC:
       idx = np.where(sel)[0][0]
       kidx.append(idx)
     return kvecs[kidx]
-  def evaluate_fsc(self, fnk, kvecs):
+  def evaluate_fsc(self, fnk, kvecs, fnk_is_3d=False):
     if not self._init_fsc:
       raise RuntimeError('must initialize first')
     qmags = np.linalg.norm(self._qvecs, axis=-1)
-    def fnk1(kvecs):
-      kmags = np.linalg.norm(kvecs, axis=-1)
-      return fnk(kmags)
+    if fnk_is_3d:
+      fnk1 = fnk
+    else:
+      def fnk1(kvecs):
+        kmags = np.linalg.norm(kvecs, axis=-1)
+        return fnk(kmags)
     def nkfsc(kvec):
       dnkval = fnk1(self._qvecs+kvec[np.newaxis, :]) - \
                fnk1(kvec[np.newaxis, :])
