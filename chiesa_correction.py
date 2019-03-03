@@ -1025,7 +1025,7 @@ class IsotropicMomentumDistributionFSC:
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
   def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
-    nsh=4, nbig=4, show_progress=True, extrap=True, alpha=-0.25):
+    nsh=4, nbig=4, show_progress=True, extrap=True, alpha=-1./3):
     def fnk1(kvecs):
       kmags = np.linalg.norm(kvecs, axis=-1)
       return fnk(kmags)
