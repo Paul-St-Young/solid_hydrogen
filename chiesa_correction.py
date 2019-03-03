@@ -1025,7 +1025,8 @@ class IsotropicMomentumDistributionFSC:
     dnk = [nkfsc(kvec) for kvec in kvecs]
     return dnk
   def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
-    nsh=4, nbig=4, show_progress=True, extrap=True, alpha=-1./3):
+    nsh=4, nbig=4, show_progress=True, extrap=True, alpha=None):
+    nk, ndim = kvecs.shape
     def fnk1(kvecs):
       kmags = np.linalg.norm(kvecs, axis=-1)
       return fnk(kmags)
@@ -1037,7 +1038,7 @@ class IsotropicMomentumDistributionFSC:
       vol1 = vol0*nbig**3
     if show_progress:
       from progressbar import ProgressBar
-      bar = ProgressBar(maxval=len(kvecs))
+      bar = ProgressBar(maxval=nk)
     for ik, kvec in enumerate(kvecs):
       def dnk1(qvecs):
         qmags = np.linalg.norm(qvecs, axis=-1)
@@ -1050,6 +1051,13 @@ class IsotropicMomentumDistributionFSC:
       # redo sum in big cell
       nk1 = evaluate_ksum(dnk1, raxes/nbig, kmax, nsh*nbig)
       if extrap:
+        if alpha is None:
+          if ndim == 3:
+            alpha = -1./3
+          elif ndim == 2:
+            alpha = -1./4
+          else:
+            raise RuntimeError('unknown dimension %d' % ndim)
         myx = [vol0**alpha, vol1**alpha]
         myym = [nk0, nk1]
         myye = [1e-6, 1e-6]
