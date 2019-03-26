@@ -1028,7 +1028,7 @@ def read_sym_ops(scf_out, ndim=3):
   mm.close()
   return symops
 
-def get_weights(nscf_out, remove_copy=False):
+def get_weights(nscf_out, remove_copy=False, atol=1e-10):
   from qharv.reel import ascii_out
   mm = ascii_out.read(nscf_out)
   idx = ascii_out.all_lines_with_tag(mm, 'wk =')
@@ -1042,8 +1042,8 @@ def get_weights(nscf_out, remove_copy=False):
   if remove_copy:
     weights = weights[:nt/2]
   wtot = sum(weights)
-  if not np.isclose(wtot, 2.0):
-    raise RuntimeError('wrong weight sum')
+  if not np.isclose(wtot, 2.0, atol=atol):
+    raise RuntimeError('wrong weight sum %3.2f; expected 2.0' % wtot)
   return np.array(weights)
 
 def get_gc_occ(bands, efermi):
