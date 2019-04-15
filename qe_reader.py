@@ -724,7 +724,7 @@ def parse_bands_out(bout, max_evline=1024):
 # end def parse_bands_out
 
 
-def parse_nscf_bands(nscf_out, span=7):
+def parse_nscf_bands(nscf_out, span=7, trailer='occupation numbers'):
   data = {}  # build a dictionary as return value
   def scanf_7f(line, n):
     """ implement scanf("%7.*f") """
@@ -779,8 +779,8 @@ def parse_nscf_bands(nscf_out, span=7):
     kvecs.append(kvec)
     #  then read body
     body = mm[mm.tell():idx1].strip('\n')
-    if 'occupation numbers' in body:
-      idx2 = mm.find('occupation numbers')
+    if trailer in body:
+      idx2 = mm.find(trailer)
       body = mm[mm.tell():idx2].strip('\n')
     row = parse_float_body(body)
     mat.append(row)
