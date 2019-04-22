@@ -1089,3 +1089,12 @@ def evaluate_ksum(fy, raxes, kmax, nsh):
   yvals = fy(kvecs)
   sumval = sumnorm*np.sum(yvals)
   return sumval
+
+def evaluate_ksum1d(fy1d, raxes, kcut, kmax, dk):
+  from qharv.inspect import axes_pos
+  rvol = axes_pos.volume(raxes)
+  kmags = np.arange(kcut, kmax, dk)
+  sumnorm = (4*np.pi*kmags**2*dk)*rvol/(2*np.pi)**3
+  yvals = fy1d(kmags)*sumnorm
+  sumval = np.sum(yvals)
+  return sumval
