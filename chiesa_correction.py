@@ -879,6 +879,7 @@ def calc_detsk(qvecs, raxes, gvecs, cmat, frac, verbose):
   return skm
 
 def get_usrk(uk, fxml):
+  """Get short-range part of trial Jastrow pair potential."""
   from qharv.seed import xml
   from qharv.inspect import axes_pos
   doc = xml.read(fxml)
@@ -887,6 +888,15 @@ def get_usrk(uk, fxml):
   fusr = get_fusr(doc, rcut)
   usrk = evaluate_ft(uk, fusr, rcut)
   return usrk
+
+def get_ulrk(uk, fxml):
+  """Get long-range part of trial Jastrow pair potential."""
+  from qharv.seed import xml
+  doc = xml.read(fxml)
+  jnode = doc.find('.//jastrow[@type="kSpace"]')
+  cnode = jnode.find('.//correlation[@type="Two-Body"]').find('.//coefficients')
+  ulrk = xml.text2arr(cnode.text)
+  return -ulrk
 
 def rpa_ur_coeff(xr, rs, rcut, same):
   rho = 3./(4*np.pi*rs**3)
