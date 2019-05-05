@@ -755,9 +755,7 @@ def parse_nscf_bands(nscf_out, span=7, trailer='occupation numbers'):
   data['nkpt'] = nkpt
 
   # estimate the end of the last band
-  idxa = np.array(idxl)
-  idx_sep = idxa[1:] - idxa[:-1]
-  idx1 = idx_sep.max() + idxl[-1] - len(bhead)
+  idx1 = ascii_out.all_lines_with_tag(mm, trailer)[-1]
 
   # trick to use no if statement in the loop
   idxl = idxl + [idx1]
