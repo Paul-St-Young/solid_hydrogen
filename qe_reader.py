@@ -787,6 +787,17 @@ def parse_nscf_bands(nscf_out, span=7, trailer='occupation numbers'):
   data['bands'] = np.array(mat)
   return data
 
+def parse_kline(line, ik=None):
+  from qharv.reel import ascii_out
+  assert 'k(' in line
+  ikt, kvect, wkt = line.split('=')
+  myik = int(ascii_out.lr_mark(ikt, '(', ')'))
+  if ik is not None:  # check k index
+    assert ik == myik-1  # fortran 1-based indexing
+  wk = float(wkt)
+  klist = ascii_out.lr_mark(kvect, '(', ')').split()
+  kvec = np.array(klist, dtype=float)
+  return kvec, wk
 
 def read_kpoints(scf_out):
   from qharv.reel import ascii_out
@@ -813,17 +824,31 @@ def read_kpoints(scf_out):
   data = np.zeros([nk, 4])  # ik, kx, ky, kz, wk
   for ik in range(nk):
     line = mm.readline()
-    assert 'k(' in line
-    ikt, kvect, wkt = line.split('=')
-    myik = int(ascii_out.lr_mark(ikt, '(', ')'))
-    assert ik == myik-1  # fortran 1-based indexing
-    wk = float(wkt)
-    klist = ascii_out.lr_mark(kvect, '(', ')').split()
-    kvec = np.array(klist, dtype=float)
+    kvec, wk = parse_kline(line, ik=ik)
     data[ik, :3] = kvec*blat
     data[ik, 3] = wk
   return data
 
+def read_kfracs(scf_out):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(scf_out)
+  # get number of kpoints
+  idx = mm.find('number of k points')
+  mm.seek(idx)
+  line = mm.readline()
+  nk = int(line.split('=')[1].split()[0])
+  # find first line
+  idx = mm.find('cryst. coord.')
+  mm.seek(idx)
+  mm.readline()
+  # read kpoints and weights
+  data = np.zeros([nk, 4])
+  for ik in range(nk):
+    line = mm.readline()
+    kvec, wk = parse_kline(line)
+    data[ik, :3] = kvec
+    data[ik, 3] = wk
+  return data
 
 def parse_scf_conv(scf_out):
   from qharv.reel import ascii_out
