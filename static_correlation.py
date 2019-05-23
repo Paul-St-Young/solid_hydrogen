@@ -180,6 +180,16 @@ def gr2compressibility(grx,gry,rho):
     return 1.+val
 # end def
 
+def csk1d(fh5, nequil):
+  from qharv.reel import stat_h5
+  fp = stat_h5.read(fh5)
+  kvecs, dskm, dske = stat_h5.dsk_from_csk(fp, 'csk', nequil)
+  fp.close()
+  dskm1 = dskm.sum(axis=0)
+  dske1 = (dske**2).sum(axis=0)**0.5
+  uk, uskm, uske = shavg(kvecs, dskm1, dske1)
+  return uk, uskm, uske
+
 def plot_sofk(ax,legal_kvecs,sk_arr):
     ax.set_xlabel('k (1/bohr)')
     ax.set_ylabel('S(k)')
