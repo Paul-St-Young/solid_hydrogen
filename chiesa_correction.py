@@ -786,6 +786,19 @@ def get_free_sk(gvecs0, raxes, norb):
   skm = get_sk(mijq.reshape(nq, norb, norb))
   return skm
 
+def get_idx1d(gvecs, gmin, ng):
+  idx3d = (gvecs-gmin).T
+  idx1d = np.ravel_multi_index(idx3d, ng)
+  return idx1d
+
+def get_ridx(gvecs):
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
+  idx1d = get_idx1d(gvecs, gmin, ng)
+  igvecs = np.arange(len(gvecs))
+  ridx = -np.ones(np.prod(ng), dtype=int)
+  ridx[idx1d] = igvecs
+  return ridx
+
 def align_gvectors(gvecs0, gvecs1):
   # obtain a regular grid, which is large enough to hold both sets
   gmin0, gmax0, ng0 = get_regular_grid_dimensions(gvecs0)
@@ -794,10 +807,6 @@ def align_gvectors(gvecs0, gvecs1):
   gmax = np.max([gmax0, gmax1], axis=0)
   ng = gmax-gmin+1
   # put both sets on the same regular grid
-  def get_idx1d(gvecs, gmin, ng):
-    idx3d = (gvecs-gmin).T
-    idx1d = np.ravel_multi_index(idx3d, ng)
-    return idx1d
   idx1d0 = get_idx1d(gvecs0, gmin, ng)
   idx1d1 = get_idx1d(gvecs1, gmin, ng)
 
