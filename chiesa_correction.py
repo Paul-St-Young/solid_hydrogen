@@ -300,6 +300,13 @@ def gammak(uk, skm, rs):
   gkm = 2*wp*skm/uk**2
   return gkm**2
 
+def gk2me(uk, skm, ske, rs):
+  wp = np.sqrt(3./rs**3)
+  a = 2*wp/uk**2
+  gkm = a*skm
+  gk2m = gkm**2
+  gk2e = 2*a**2*skm*ske
+  return gk2m, gk2e
 
 def bspline(coeff, cusp, rcut):
   """ wrap over Mark's Python equivalent of BsplineFunctor in QMCPACK
