@@ -913,7 +913,7 @@ def calc_ulrk(doc):
   from qharv.seed import xml
   jnode = doc.find('.//jastrow[@type="kSpace"]')
   cnode = jnode.find('.//correlation[@type="Two-Body"]').find('.//coefficients')
-  ulrk = xml.text2arr(cnode.text)
+  ulrk = xml.text2arr(cnode.text.replace('\n', ''))
   return -ulrk
 
 def get_ulrk(uk, fxml):
