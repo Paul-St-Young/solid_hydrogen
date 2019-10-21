@@ -42,7 +42,7 @@ def read_forces(scf_out,ndim=3,which='total'):
     fhandle = open(scf_out,'r+')
     mm = mmap(fhandle.fileno(),0)
     
-    natom = value_by_label_sep_pos(mm,'number of atoms',dtype=int)
+    natom = name_sep_val(mm,'number of atoms',dtype=int)
 
     # locate force block
     begin_tag = begin_tag_dict[which]
@@ -1094,11 +1094,8 @@ def get_tgrid_tshift(nscf_in):
   tshift = np.array(nums[3:])
   return tgrid, tshift
 
-def get_tgrid_raxes(nscf_in, ndim=3):
+def get_axes(nscf_in, ndim=3):
   from qharv.reel import ascii_out
-  from qharv.inspect import axes_pos
-  tgrid, tshift = get_tgrid_tshift(nscf_in)
-
   mm = ascii_out.read(nscf_in)
   idx = mm.find('CELL_PARAMETERS')
   mm.seek(idx)
@@ -1110,5 +1107,30 @@ def get_tgrid_raxes(nscf_in, ndim=3):
     cell.append(nums)
   mm.close()
   axes = np.array(cell)
+  return axes
+
+def get_tgrid_raxes(nscf_in, ndim=3):
+  from qharv.inspect import axes_pos
+  tgrid, tshift = get_tgrid_tshift(nscf_in)
+  axes = get_axes(nscf_in, ndim=ndim)
   raxes = axes_pos.raxes(axes)
   return tgrid, raxes
+
+def get_elem_pos(nscf_in):
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(nscf_in)
+  natom = ascii_out.name_sep_val(mm, 'nat', '=', dtype=int)
+  idx = mm.find('ATOMIC_POSITIONS')
+  mm.seek(idx)
+  header = mm.readline()
+  eleml = []
+  posl = []
+  for iatom in range(natom):
+    line = mm.readline()
+    tokens = line.split()
+    eleml.append(tokens[0])
+    posl.append(tokens[1:])
+  mm.close()
+  elem = np.array(eleml, dtype=str)
+  pos = np.array(posl, dtype=float)
+  return elem, pos, header
