@@ -33,21 +33,34 @@ def epl_val_err(epl_out):
   Returns:
     pd.DataFrame: df contains columns ['name','val','err']
   """
-  tab = pd.read_table(epl_out,delimiter='=',names=['name','text'])
+  tab = pd.read_csv(epl_out, delimiter='=', names=['name', 'text'])
   tab = tab.dropna()
 
   def text2val(text):
       tokens = text.split('+/-')
       if len(tokens) != 2:
           raise NotImplementedError('unrecognized value '+text)
-      # end if
-      val,err = map(float,tokens)
-      return pd.Series({'val':val,'err':err})
-  # end def text2val
+      val,err = map(float, tokens)
+      return pd.Series({'val':val, 'err':err})
 
-  df = pd.concat( [tab.drop('text',axis=1),tab['text'].apply(text2val)],axis=1 )
+  df = pd.concat([
+    tab.drop('text', axis=1),
+    tab['text'].apply(text2val)],
+  axis=1)
   return df
-# end def epl_val_err
+
+def get_forces(df, natom, prefix='force', ndim=3):
+  yml = []
+  yel = []
+  for iatom in range(natom):
+    for idim in range(ndim):
+      col = '%s_%d_%d' % (prefix, iatom, idim)
+      sel = df.name.apply(lambda x: col in x)
+      y1m = df.loc[sel].val.squeeze()
+      y1e = df.loc[sel].err.squeeze()
+      yml.append(y1m)
+      yel.append(y1e)
+  return np.array(yml), np.array(yel)
 
 def sk_from_fs_out(fs_out):
   """ extract fluctuating S(k) from qmcfinitesize output
