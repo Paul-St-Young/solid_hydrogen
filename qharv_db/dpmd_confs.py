@@ -34,7 +34,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     # read cubic box
     box = boxes[iconf]
     lbox = box[0]
-    assert np.allclose(lbox*np.eye(3).ravel(), box)
+    ell = np.diag(box.reshape(ndim, ndim))
     # read energy
     em = eall[iconf]
     # read virial
@@ -44,6 +44,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     # read forces
     for1 = fora[iconf]
     # convert to bohr
+    ell = [l/bohr for l in ell]
     lbox /= bohr
     pos1 = np.array(pos1)/bohr
     for1 = np.array(for1)*bohr  # !!!! check this
@@ -57,6 +58,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     rs = ((3*vol)/(4*np.pi))**(1./3)
     entry = {'rs': float(rs), 'natom': int(natom), 'iconf': int(iconf),
              'lbox': float(lbox), 'energy': float(em),
+             'box': ell,
              'virial': vmat.tolist(),
              'positions': pos.tolist(),
              'forces': forces.tolist()}
