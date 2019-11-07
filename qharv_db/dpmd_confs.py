@@ -19,6 +19,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
   posa = np.loadtxt(fpos)
   ffor = mole.find('*_force.raw', path)
   fora = np.loadtxt(ffor)
+  ha = 1./27.211386245988
   bohr = 0.5291772
   mnconf = len(eall)
   if confl is None:
@@ -36,7 +37,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     lbox = box[0]
     ell = np.diag(box.reshape(ndim, ndim))
     # read energy
-    em = eall[iconf]
+    em = eall[iconf]*ha
     # read virial
     vmat = vall[iconf]
     # read particle positions
@@ -47,8 +48,8 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     ell = [l/bohr for l in ell]
     lbox /= bohr
     pos1 = np.array(pos1)/bohr
-    for1 = np.array(for1)*bohr  # !!!! check this
-    vmat = np.array(vmat).reshape(ndim, ndim)*bohr**3
+    for1 = np.array(for1)*bohr*ha
+    vmat = np.array(vmat).reshape(ndim, ndim)*bohr**3*ha
     # calculate rs
     natom = len(pos1)/ndim
     assert len(for1) == natom*ndim
