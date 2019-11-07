@@ -55,7 +55,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     assert len(for1) == natom*ndim
     pos = pos1.reshape(natom, ndim)
     forces = for1.reshape(natom, ndim)
-    vol = lbox**3/natom
+    vol = np.prod(ell)/natom
     rs = ((3*vol)/(4*np.pi))**(1./3)
     entry = {'rs': float(rs), 'natom': int(natom), 'iconf': int(iconf),
              'lbox': float(lbox), 'energy': float(em),
