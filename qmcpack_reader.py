@@ -49,6 +49,16 @@ def epl_val_err(epl_out):
   axis=1)
   return df
 
+def epldf_to_entry(df):
+  names = [name.strip() for name in df.name.values]
+  ymean = ['%s_mean' % name for name in names]
+  yerror = ['%s_error' % name for name in names]
+  names1 = np.concatenate([ymean, yerror])
+  means = df.val.values
+  errs = df.err.values
+  entry = pd.Series(np.concatenate([means, errs]), names1)
+  return entry
+
 def get_forces(df, natom, prefix='force', ndim=3):
   yml = []
   yel = []
