@@ -339,6 +339,18 @@ def rs2rho(rs, nprot=1):
   rho *= 1e3  # kg to g
   return rho * cm3
 
+def hug(em, pm, rs, e0, p0, rs0):
+  mye = em/ha  # convert eV to ha
+  myp = pm/gpa # convert GPa to ha/bohr^3
+  vol = rs2vol(rs)
+  mye0 = e0/ha
+  myp0 = p0/gpa
+  vol0 = rs2vol(rs0)
+  de = mye-mye0
+  dv = vol-vol0
+  dp = myp-myp0
+  return de+0.5*dv*dp
+
 def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
   """ add Cp as top xlabel when actual xlabel is 1/Cp.
    Cp is the proton orbital gaussian exponent.  """
