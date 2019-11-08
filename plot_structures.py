@@ -39,6 +39,7 @@ bohr = 0.52917721067e-10 # m
 ha   = 27.21138602       # ev
 joule= 6.241509126e18    # ev
 
+gpa = 29421
 gpa = ha/joule/bohr**3./1e9
 mev = ha*1000.
 
@@ -313,6 +314,30 @@ def vol2rs(vol):
     return (3.*vol/(4*np.pi))**(1./3)
 def rs2vol(rs):
     return 4*np.pi/3*rs**3.
+
+def rho2rs(rho, nprot=1):
+  """ convert density (g/cm3) to rs """
+  amu = 1.6605390666e-27  # kg
+  mh = 1.00784*amu
+  bohr = 0.529177210903
+  cm3 = (10**8/bohr)**3  # cm^3 to bohr^3
+
+  nh = rho*1e-3/mh/nprot
+  vol = cm3/nh
+  rs = vol2rs(vol)
+  return rs
+
+def rs2rho(rs, nprot=1):
+  """ convert rs to density (g/cm3) """
+  amu = 1.6605390666e-27  # kg
+  mh = 1.00784*amu
+  bohr = 0.529177210903
+  cm3 = (10**8/bohr)**3  # cm^3 to bohr^3
+
+  vol = rs2vol(rs)
+  rho = nprot*mh/vol
+  rho *= 1e3  # kg to g
+  return rho * cm3
 
 def add_cp_top(ax,xlabel='C$_p$ (bohr$^-2$)'):
   """ add Cp as top xlabel when actual xlabel is 1/Cp.
