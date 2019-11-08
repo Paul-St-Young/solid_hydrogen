@@ -89,6 +89,18 @@ def get_prefix_from_path(path, proj_dir, sep='_'):
     if seg not in ['.', '..']]).strip(sep)
   return prefix
 
+def meta_from_path(path):
+  tokens = path.split('/')
+  subdir = tokens[-3]
+  confdir = tokens[-2]
+  tt, rst = subdir.split('-')
+  nt, ict = confdir.split('-')
+  temp = int(tt.replace('t', ''))
+  rs = float(rst.replace('rs', ''))
+  natom = int(nt.replace('h', ''))
+  iconf = int(ict.replace('i', ''))
+  meta = {'temp': temp, 'rs': rs, 'natom': natom, 'iconf': iconf}
+  return meta
 
 # ====================== level 1: parse input =======================
 
