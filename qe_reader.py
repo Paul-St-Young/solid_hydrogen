@@ -386,7 +386,8 @@ def input_structure(scf_in,put_in_box=True):
         mm = mmap(f.fileno(),0)
     # end with
 
-    ntyp = value_by_label_sep_pos(mm,'ntyp',dtype=int)
+    from qharv.reel.ascii_out import name_sep_val
+    ntyp = name_sep_val(mm, 'ntyp', dtype=int)
     if ntyp != 1:
         raise NotImplementedError('only support 1 type of atom for now')
     # end if
