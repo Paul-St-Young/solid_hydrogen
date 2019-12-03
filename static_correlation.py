@@ -78,6 +78,15 @@ def kshell_sels(kmags, zoom):
     sels.append(sel)
   return sels
 
+def index_shells(kmags, ndig):
+  kround = kmags.round(ndig)
+  uk = np.unique(kround)
+  idx = np.zeros(len(kmags), dtype=int)
+  for ish, k1 in enumerate(uk):
+    sel = kround == k1
+    idx[sel] = ish
+  return idx
+
 def shavg(kvecs, dskm, dske, zoom=100.):
   """ Shell average S(k), including error bar
   hint: if your S(k) data has no error, then pass in dske=np.zeros(nk).
