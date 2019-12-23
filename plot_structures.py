@@ -315,7 +315,7 @@ def vol2rs(vol):
 def rs2vol(rs):
     return 4*np.pi/3*rs**3.
 
-def rho2rs(rho, nprot=1):
+def rho2rs(rho, nprot):
   """ convert density (g/cm3) to rs """
   amu = 1.6605390666e-27  # kg
   mh = 1.00784*amu
@@ -327,7 +327,7 @@ def rho2rs(rho, nprot=1):
   rs = vol2rs(vol)
   return rs
 
-def rs2rho(rs, nprot=1):
+def rs2rho(rs, nprot):
   """ convert rs to density (g/cm3) """
   amu = 1.6605390666e-27  # kg
   mh = 1.00784*amu
