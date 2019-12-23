@@ -69,20 +69,3 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
 def get_prefix(temp=1500, rs=1.51, natom=96):
   prefix = 'rs%3.2fT%dN%d' % (rs, temp, natom)
   return prefix
-
-def meta_from_path(path0):
-  ipbe = path0.find('pbe')
-  if ipbe < 0:
-    raise RuntimeError('unknown path %s' % path0)
-  path = path0[ipbe:]
-  tokens = path.split('/')
-  ttrst = tokens[1]
-  ntict = tokens[2]
-  tt, rst = ttrst.split('-')
-  nt, ict = ntict.split('-')
-  temp = int(tt.replace('t', ''))
-  rs = float(rst.replace('rs', ''))
-  natom = int(nt.replace('h', ''))
-  iconf = int(ict.replace('i', ''))
-  entry = {'temp': temp, 'rs': rs, 'natom': natom, 'iconf': iconf}
-  return entry

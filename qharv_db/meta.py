@@ -82,25 +82,28 @@ def find_all_groups_and_series(folderl):
   gsdf = pd.DataFrame(gsdata).sort_values('group')
   return gsdf
 
-
 def get_prefix_from_path(path, proj_dir, sep='_'):
   task_dir = path.replace(proj_dir, '')
   prefix = sep.join([seg for seg in task_dir.split('/')
     if seg not in ['.', '..']]).strip(sep)
   return prefix
 
-def meta_from_path(path):
+def meta_from_path(path0):
+  ipbe = path0.find('pbe')
+  if ipbe < 0:
+    raise RuntimeError('unknown path %s' % path0)
+  path = path0[ipbe:]
   tokens = path.split('/')
-  subdir = tokens[-3]
-  confdir = tokens[-2]
-  tt, rst = subdir.split('-')
-  nt, ict = confdir.split('-')
+  ttrst = tokens[1]
+  ntict = tokens[2]
+  tt, rst = ttrst.split('-')
+  nt, ict = ntict.split('-')
   temp = int(tt.replace('t', ''))
   rs = float(rst.replace('rs', ''))
   natom = int(nt.replace('h', ''))
   iconf = int(ict.replace('i', ''))
-  meta = {'temp': temp, 'rs': rs, 'natom': natom, 'iconf': iconf}
-  return meta
+  entry = {'temp': temp, 'rs': rs, 'natom': natom, 'iconf': iconf}
+  return entry
 
 # ====================== level 1: parse input =======================
 
