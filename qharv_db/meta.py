@@ -124,3 +124,20 @@ def get_density(doc):
   rho = natom/volume
   rs = (3./(4*np.pi*rho))**(1./3)
   return {'rs':rs, 'volume':volume, 'rho':rho}
+
+# =================== level 2: read QMC database ====================
+
+def get_force_columns(cols, name='force'):
+  fcols = [c.replace('_mean', '') for c in cols
+           if c.startswith(name) and c != '%s_mean' % name
+           and c.endswith('_mean')]
+  # sort columns
+  def iatom_idim(c):
+    tokens = c.split('_')
+    iatom = int(tokens[-2])
+    idim = int(tokens[-1])
+    return {'iatom': iatom, 'idim': idim}
+  fdf = pd.DataFrame([iatom_idim(c) for c in fcols], dtype=int)
+  fdf['force'] = fcols
+  fcols = fdf.sort_values(['iatom', 'idim']).force.values
+  return fcols
