@@ -139,5 +139,5 @@ def get_force_columns(cols, name='force'):
     return {'iatom': iatom, 'idim': idim}
   fdf = pd.DataFrame([iatom_idim(c) for c in fcols], dtype=int)
   fdf['force'] = fcols
-  fcols = fdf.sort_values(['iatom', 'idim']).force.values
+  fcols = fdf.sort_values(['iatom', 'idim']).force.values.tolist()
   return fcols
