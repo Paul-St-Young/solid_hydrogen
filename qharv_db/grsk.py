@@ -1,8 +1,48 @@
 import numpy as np
 
+def disp_in_box(drij, box):
+  """ Enforce minimum image convention (MIC) on displacement vectors.
+
+  Args:
+    drij (np.array): ri - rj for all pairs of particles rij
+    box (np.array): side lengths of orthombic box
+  Return:
+    np.array: displacement vectors under MIC.
+  """
+  ndim = drij.shape[-1]
+  try:
+    ndim1 = len(box)  # except if box is float
+  except TypeError as err:
+    #nint = np.around(drij/box)
+    #return drij-box*nint
+    raise err
+  assert ndim1 == ndim
+  for idim in range(ndim):
+    nint = np.around(drij[:, :, idim]/box[idim])
+    drij[:, :, idim] -= box[idim]*nint
+  return drij
+
+def displacement_table(pos, box, mic=True):
+  """ Calculate displacements ri-rj between all pairs of particles.
+
+  Args:
+    pos (np.array): particle positions
+    box (float): side lengths of box
+    mic (bool, optional): enforce minimum image convention (MIC)
+  Return:
+    np.array: drij, a table of displacement vectors
+     shape (natom, natom, ndim)
+  """
+  drij = pos[:, np.newaxis] - pos[np.newaxis]
+  if mic:
+    disp_in_box(drij, box)
+  return drij
+
 def gofv(myr, drij, vec):
   """ grid vector quantity over pair separation
   calculate drij[i, j] dot vec[i] and count for each bin
+
+  see usage in grid_force_difference
 
   Args:
     myr (np.array): bin edges for pair separation (nbin,)
@@ -31,7 +71,8 @@ def gofv(myr, drij, vec):
       deno = rij[i, j]
       ir = int((deno-rmin)//dr)  # bin index
       if (0 <= ir) and (ir < nr):
-        nume = np.dot(drij[i, j], vec[i])
+        rhat = -drij[i, j]  # drij is dr_i - dr_j NOT ri->rj
+        nume = np.dot(rhat, vec[i])
         val = nume/deno
         ysum[ir] += val
         counts[ir] += 1
@@ -108,3 +149,26 @@ def ysum_ysq_count(ysum, ysq, counts):
   ye2 = (y2-ym**2)/(counts[sel]-1)
   ye = ye2**0.5
   return sel, ym, ye
+
+def grid_force_difference(myr, boxl, posl, vecl):
+  nr = len(myr)
+  ysum = np.zeros(nr)
+  ysq = np.zeros(nr)
+  counts = np.zeros(nr, dtype=int)
+  csq = np.zeros(nr, dtype=int)
+  for box, pos, vec in zip(boxl, posl, vecl):
+    drij = displacement_table(pos, box)
+    y1, c1 = gofv(myr, drij, vec)
+    ysum += y1
+    ysq += y1**2
+    counts += c1
+    csq += c1**2
+  nconf = len(boxl)
+  natom = len(posl[0])
+  sel, ym, ye = ysum_ysq_count(ysum, ysq, counts)
+  myx = myr[sel]
+  sel, cm, ce = ysum_ysq_count(counts, csq, nconf*np.ones(len(myr)))
+  nvec = gofr_norm(myr, natom, np.prod(box))
+  grm = nvec*cm
+  gre = nvec*ce
+  return myx, ym, ye, grm, gre
