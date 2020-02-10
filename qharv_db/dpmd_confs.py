@@ -4,7 +4,7 @@ def get_path(ref_dir, temp=1500, rs=1.51, natom=96):
   path = '%s/T%d/RS%3.2fN%d' % (ref_dir, temp, rs, natom)
   return path
 
-def get_confs(path, confl=None, ndim=3, verbose=True):
+def get_confs(path, confl=None, ndim=3, verbose=True, au=True):
   from qharv.reel import mole
   if verbose:
     msg = 'reading conf.s from %s' % path
@@ -13,14 +13,25 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
   boxes = np.loadtxt(fbox)
   fene = mole.find('*_energy.raw', path)
   eall = np.loadtxt(fene)
-  fvir = mole.find('*_virial.raw', path)
-  vall = np.loadtxt(fvir)
+  virial = False
+  try:
+    fvir = mole.find('*_virial.raw', path)
+    vall = np.loadtxt(fvir)
+    virial = True
+  except RuntimeError as err:
+    if 'expect' in str(err):
+      pass
+    else:
+      raise err
   fpos = mole.find('*_coord.raw', path)
   posa = np.loadtxt(fpos)
   ffor = mole.find('*_force.raw', path)
   fora = np.loadtxt(ffor)
   ha = 1./27.211386245988
   bohr = 0.5291772
+  if not au:
+    ha = 1.
+    bohr = 1.
   mnconf = len(eall)
   if confl is None:
     confl = range(mnconf)
@@ -38,8 +49,6 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     ell = np.diag(box.reshape(ndim, ndim))
     # read energy
     em = eall[iconf]*ha
-    # read virial
-    vmat = vall[iconf]
     # read particle positions
     pos1 = posa[iconf]
     # read forces
@@ -49,7 +58,6 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     lbox /= bohr
     pos1 = np.array(pos1)/bohr
     for1 = np.array(for1)*bohr*ha
-    vmat = np.array(vmat).reshape(ndim, ndim)*bohr**3*ha
     # calculate rs
     natom = int(len(pos1)/ndim)
     assert len(for1) == natom*ndim
@@ -60,9 +68,13 @@ def get_confs(path, confl=None, ndim=3, verbose=True):
     entry = {'rs': float(rs), 'natom': int(natom), 'iconf': int(iconf),
              'lbox': float(lbox), 'energy': float(em),
              'box': ell,
-             'virial': vmat.tolist(),
              'positions': pos.tolist(),
              'forces': forces.tolist()}
+    if virial:
+      # read virial
+      vmat = vall[iconf]
+      vmat = np.array(vmat).reshape(ndim, ndim)*bohr**3*ha
+      entry['virial'] = vmat.tolist()
     data.append(entry)
   return data
 
