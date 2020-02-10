@@ -1105,6 +1105,20 @@ class IsotropicMomentumDistributionFSC:
       bar.update(ik)
     return np.array(dnk)
 
+def calc_nk1d_fsc(uk, unkm, nelec, rs=3.25, mx=8):
+  from qharv.inspect import axes_pos
+  from solith.li_nofk.expt_jofp import flip_and_clamp
+  from solith.dft_calc.bcc_crystal import get_cubic_axes
+  from chiesa_correction import IsotropicMomentumDistributionFSC
+  axes = get_cubic_axes(rs, nelec)
+  raxes = axes_pos.raxes(axes)
+  fsc = IsotropicMomentumDistributionFSC(rs)
+  fsc.init_missing_qvecs(raxes, mx)
+  fnk = flip_and_clamp(uk, unkm, kind='linear')
+  kvs = np.array([[k, 0, 0] for k in uk])
+  dnk_fsc = fsc.evaluate_fsc(fnk, kvs)
+  return np.array(dnk_fsc)
+
 def ewald_vklr(xk, alpha):
   x = xk/(2.*alpha)
   return 4*np.pi/x**2*np.exp(-x**2)
