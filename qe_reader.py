@@ -85,6 +85,16 @@ def read_forces(scf_out,ndim=3,which='total'):
 
 def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
     """ read the eigenvalues and occupations of DFT orbitals at every available kpoint in an non-scf output produced by pwscf """ 
+    from qharv.reel import ascii_out
+    span = 7
+    def scanf_7f(line, n):
+      """ implement scanf("%7.*f") """
+      numl = []
+      for i in range(n):
+        token = line[span*i:span*(i+1)]
+        num = float(token)
+        numl.append(num)
+      return numl
 
     fhandle = open(nscf_outfile,'r+')
     mm = mmap(fhandle.fileno(),0)
@@ -98,6 +108,7 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
     nk = int( nk_line.strip(nk_prefix).split()[0] )
 
     # skip to the end of band structure calculation
+    idx = mm.find('End of self-consistent calculation')
     idx = mm.find('End of band structure calculation')
     mm.seek(idx)
 
@@ -108,7 +119,8 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
         idx = mm.find(kpt_prefix)
         mm.seek(idx)
         kpt_line = mm.readline()
-        kpt = map(float,kpt_line.strip(kpt_prefix).split()[:3])
+        kxkykz = ascii_out.lr_mark(kpt_line, '=', '(')
+        kpt = scanf_7f(kxkykz, 3)
 
         mm.readline() # skip empty line
         eval_arr = np.array([])
@@ -124,7 +136,7 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
         mm.seek(idx)
         mm.readline() # skip current line
         occ_arr = np.array([])
-        for iline in range(4):
+        for iline in range(100):
             tokens = mm.readline().split()
             if len(tokens)==0:
                 break
@@ -569,36 +581,6 @@ def relax_output(fout):
   # end for i
   return data
 # end def relax_output
-
-def axes_elem_pos(infile_str,tmp_floc='./tmp.in'):
-  """ return structure from pw.x input
-  Args:
-    infile_str (str): string representation of input file
-    tmp_floc (str,optional): temporary file, default './tmp.in'
-  Returns:
-    dict: with entries ['axes','axes_unit','pos','pos_unit','elem']
-  """
-  from qeutil.readers import read_in_file
-  with open(tmp_floc,'w') as f: f.write(infile_str)
-  obj = read_in_file(tmp_floc)
-
-  # get axes
-  axes_unit = obj['CELL_PARAMETERS']['attrib']
-  axes = obj['CELL_PARAMETERS']['cell']
-
-  # get pos
-  pos_unit = obj['ATOMIC_POSITIONS']['attrib']
-  atoms = obj['ATOMIC_POSITIONS']['atoms']
-  pos   = [atom['pos'] for atom in atoms]
-
-  # get elem
-  elem  = [atom['symbol'] for atom in atoms]
-  
-  entry = {'axes':axes,'axes_unit':axes_unit
-          ,'pos':pos,'pos_unit':pos_unit
-          ,'elem':elem}
-  return entry
-# end def axes_elem_pos
 
 def get_axsf_normal_mode(faxsf,imode):
   """ extract the first normal mode labeled by 'PRIMCOORD {imode:d}' 
