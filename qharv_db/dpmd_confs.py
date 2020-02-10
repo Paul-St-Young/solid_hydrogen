@@ -81,3 +81,38 @@ def get_confs(path, confl=None, ndim=3, verbose=True, au=True):
 def get_prefix(temp=1500, rs=1.51, natom=96):
   prefix = 'rs%3.2fT%dN%d' % (rs, temp, natom)
   return prefix
+
+def text_row(row, per_atom=True):
+  from qharv.inspect import box_pos
+  ntype = 1  # !!!! hard-code for now
+  itype = 0
+  box = np.array(row['box'])
+  pos = np.array(row['positions'])
+  natom = len(pos)
+  # write header
+  header = '#N %d %d\n' % (natom, ntype)
+  ndim = len(box)
+  vec = np.zeros(ndim)
+  for idim, lbox in enumerate(box):
+    name = {0: 'X', 1: 'Y', 2: 'Z'}[idim]
+    vec[idim] = lbox
+    header += '#%s %.16e %.16e %.16e\n' % (name, vec[0], vec[1], vec[2])
+  # add energy
+  energy = row['energy']
+  if per_atom:
+    energy /= natom
+  header += '#E %.16e\n' % energy
+  header += '#F\n'
+  # put positions in box for PBC
+  pos = box_pos.pos_in_box(pos, box)
+  forces = np.array(row['forces'])
+  # write position and forces
+  body = ''
+  line_fmt = '%d ' % itype + '%.16e %.16e %.16e %.16e %.16e %.16e\n'
+  vec = np.zeros(2*ndim)
+  for p, f in zip(pos, forces):
+    vec[:ndim] = p
+    vec[ndim:] = f
+    line = line_fmt % tuple(vec)
+    body += line
+  return header + body
