@@ -126,7 +126,7 @@ def shell_average(kmags,vals,smear_fac=100):
     Returns:
       tuple: (unique_kmags, unique_vals), shell-averaged kvector magnitudes and function values.
     """
-    kids  = map(int,map(round,kmags*smear_fac))
+    kids  = list(map(int, map(round, kmags*smear_fac)))
 
     # pick unique kshells according to index
     unique_kid   = np.unique(kids)
