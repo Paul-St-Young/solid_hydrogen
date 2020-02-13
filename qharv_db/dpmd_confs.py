@@ -116,3 +116,63 @@ def text_row(row, per_atom=True):
     line = line_fmt % tuple(vec)
     body += line
   return header + body
+
+def xyz_snapshot(row, has_energy=False, has_forces=False, has_virial=False):
+  """Write one snapshot in extended xyz format
+
+  Args:
+    row (dict): snapshot information, must have ['axes', 'positions']
+    has_energy (bool): row has 'energy' column, default False
+    has_forces (bool): row has 'forces' column, default False
+    has_virial (bool): row has 'virial' column, default False
+  Return:
+    str: one frame in extended xyz format
+  """
+  ndim = 3
+  fmt_map = {
+    'energy': '%24.14f',
+    'positions': '%12.6f',
+    'virial': '%12.6f'
+  }
+  # get data
+  axes = np.array(row['axes'])
+  pos = np.array(row['positions'])
+  natom = len(pos)
+  if 'energy' in row:
+    has_energy = True
+  if 'forces' in row:
+    has_forces = True
+  if 'virial' in row:
+    has_virial = True
+  if has_forces:
+    fvs = np.array(row['forces'])
+  # write header
+  text = '%d\n' % natom
+  afmt = '%12.8f '
+  aline_fmt = 'Lattice="' + afmt*ndim**2 + '"'
+  text += aline_fmt % tuple(axes.ravel())  # !!!! C or F order?
+  text += ' Properties=species:S:1:pos:R:3'
+  if has_forces:
+    text += ':forces:R:3'
+  if has_energy:
+    energy = row['energy']
+    eline = ' energy="' + fmt_map['energy'] % energy + '"'
+    text += eline
+  if has_virial:  # !!!! C or F order?
+    vir = np.array(row['virial'])
+    vfmt = fmt_map['virial']
+    vline = vfmt*ndim**2 % tuple(vir.ravel())
+    text += ' virial="'+vline+'"'
+  text += ' pbc="T T T"\n'  # termination of header
+  # write body
+  ncol = ndim  # positions, forces
+  if has_forces:
+    ncol += ndim
+  vec = np.zeros(ncol)
+  line_fmt = fmt_map['positions']*ncol + '\n'
+  for iatom in range(natom):
+    vec[:ndim] = pos[iatom]
+    vec[ndim:ndim+ndim] = fvs[iatom]
+    line = 'H ' + line_fmt % tuple(vec)
+    text += line
+  return text
