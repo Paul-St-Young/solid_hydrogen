@@ -665,7 +665,7 @@ def parse_output(floc):
   assert len(au_stressl) == 1
   au_stress = au_stressl[0]
   entry['pressure'] = np.diag(au_stress).mean()/2.  # Ry to ha
-  entry['stress'] = au_stress
+  entry['stress'] = au_stress/2.  # Ry to ha
 
   return entry
 # end def parse_output
