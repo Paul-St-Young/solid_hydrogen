@@ -132,7 +132,7 @@ def xyz_snapshot(row, has_energy=False, has_forces=False, has_virial=False):
   fmt_map = {
     'energy': '%24.14f',
     'positions': '%12.6f',
-    'virial': '%12.6f'
+    'virial': '%20.6f'
   }
   # get data
   axes = np.array(row['axes'])
@@ -172,7 +172,29 @@ def xyz_snapshot(row, has_energy=False, has_forces=False, has_virial=False):
   line_fmt = fmt_map['positions']*ncol + '\n'
   for iatom in range(natom):
     vec[:ndim] = pos[iatom]
-    vec[ndim:ndim+ndim] = fvs[iatom]
+    if has_forces:
+      vec[ndim:ndim+ndim] = fvs[iatom]
     line = 'H ' + line_fmt % tuple(vec)
     text += line
   return text
+
+def get_ovconfs(pl, confl=None):
+  """ Extract configurations from dump file
+
+  Example:
+    >>> pl = import_file('dump.1')  # read LAMMPS dump file
+    >>> boxl, posl = get_ovconfs(pl)
+  """
+  if confl is None:
+    nframe = pl.source.num_frames
+    confl = np.arange(nframe)
+  boxl = []
+  posl = []
+  for iconf in confl:
+    ovdata = pl.compute(iconf)
+    axes = np.array(ovdata.cell.matrix)
+    pos = np.array(ovdata.particles.positions.array)
+    box = np.diag(axes)
+    boxl.append(box)
+    posl.append(pos)
+  return boxl, posl
