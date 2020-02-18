@@ -198,3 +198,27 @@ def get_ovconfs(pl, confl=None):
     boxl.append(box)
     posl.append(pos)
   return boxl, posl
+
+def get_extxyz_confs(fxyz, confl=None):
+  """ Extract configurations from extended xyz file
+
+  Args:
+    fxyz (str): concatenated xyz snapshots
+    confl (list, optional): 0-based indexing for configurations
+  Return:
+    list: traj, a list of ase.Atoms objects
+
+  Example:
+    >>> traj = get_extxyz_confs('my.xyz', [0, -1])  # first and last
+  """
+  from ase.io import read
+  # add "virial" to calculators
+  from ase.calculators import calculator
+  calculator.all_properties.append('virial')
+
+  traj0 = read(fxyz, ':')
+  nframe = len(traj0)
+  if confl is None:
+    confl = range(nframe)
+  traj = [traj0[iconf] for iconf in confl]
+  return traj
