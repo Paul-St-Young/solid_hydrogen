@@ -127,17 +127,19 @@ def get_density(doc):
 
 # =================== level 2: read QMC database ====================
 
-def get_force_columns(cols, name='force'):
+def get_force_columns(cols, name='force', idx_dim=-1):
   fcols = [c.replace('_mean', '') for c in cols
            if c.startswith(name) and c != '%s_mean' % name
            and c.endswith('_mean')]
   # sort columns
   def iatom_idim(c):
     tokens = c.split('_')
-    iatom = int(tokens[-2])
-    idim = int(tokens[-1])
+    iatom = int(tokens[idx_dim-1])
+    idim = int(tokens[idx_dim])
     return {'iatom': iatom, 'idim': idim}
   fdf = pd.DataFrame([iatom_idim(c) for c in fcols], dtype=int)
+  fdf.iatom = fdf.iatom.astype(int)
+  fdf.idim = fdf.idim.astype(int)
   fdf['force'] = fcols
   fcols = fdf.sort_values(['iatom', 'idim']).force.values.tolist()
   return fcols
