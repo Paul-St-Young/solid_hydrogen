@@ -172,3 +172,39 @@ def grid_force_difference(myr, boxl, posl, vecl):
   grm = nvec*cm
   gre = nvec*ce
   return myx, ym, ye, grm, gre
+
+def h2com(pos, box, rmax=np.inf, pair_all=True):
+  from qharv.inspect import box_pos, axes_pos
+  natom = len(pos)
+  drij = box_pos.displacement_table(pos, box)
+  rij = np.linalg.norm(drij, axis=-1)
+  pairs = axes_pos.find_dimers(rij, rmax)
+  nmol = len(pairs)
+  if pair_all:
+    assert nmol == natom//2
+  com = pos[pairs[:, 0]] - 0.5*drij[pairs[:, 0], pairs[:, 1]]
+  return com
+
+def rhok(kvecs, pos):
+  if kvecs.ndim == 1:
+    kvecs = kvecs[np.newaxis, :]
+  # dot the last axis of kvecs and pos
+  exponentials = np.exp(-1j*np.inner(kvecs, pos))
+  # sum over position index
+  rhok = np.sum(exponentials, axis=-1)
+  return rhok
+
+def Sk(kvecs, pos):
+  natom = pos.shape[-2]
+  rho = rhok(kvecs, pos)
+  sk = rho*rho.conj()/natom
+  if sk.ndim >= 2:
+    sk = sk.mean(axis=-1)
+  return sk.real
+
+def legal_kvecs(axes, nsh):
+  from qharv.inspect import axes_pos
+  raxes = axes_pos.raxes(axes)
+  gvecs = axes_pos.cubic_pos(nsh)[1:]
+  kvecs = np.dot(gvecs, raxes)
+  return kvecs
