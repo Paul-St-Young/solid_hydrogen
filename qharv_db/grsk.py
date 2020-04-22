@@ -112,6 +112,22 @@ def gofr_norm(myr, natom, volume):
   nvec = 1./(rho*vnorm)
   return nvec
 
+def yl_ysql(yl, ysql):
+  """ calculate mean and error given a list of val and sq
+
+  Args:
+    yl (list): list of values, (nentry,)
+    ysql (list): list of squares, (nentry,)
+  Return:
+    (np.array, np.array): (ym, ye),
+      (mean, error)
+  """
+  ym = np.mean(yl, axis=0)
+  # calculate stddev
+  y2m = np.mean(ysql, axis=0)
+  ye = np.sqrt((y2m-ym**2)/(len(yl)-1))
+  return ym, ye
+
 def ysum_ysq_count(ysum, ysq, counts):
   """ calculate mean and error given accumulated sum of val and sq
 
