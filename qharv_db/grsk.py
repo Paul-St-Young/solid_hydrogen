@@ -198,6 +198,8 @@ def h2com(pos, box, rmax=np.inf, pair_all=True):
   nmol = len(pairs)
   if pair_all:
     assert nmol == natom//2
+  if len(pairs) < 1:
+    return []
   com = pos[pairs[:, 0]] - 0.5*drij[pairs[:, 0], pairs[:, 1]]
   return com
 
