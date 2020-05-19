@@ -220,9 +220,11 @@ def Sk(kvecs, pos):
     sk = sk.mean(axis=-1)
   return sk.real
 
-def legal_kvecs(axes, nsh):
+def legal_kvecs(axes, nsh, eps=1e-8):
   from qharv.inspect import axes_pos
   raxes = axes_pos.raxes(axes)
-  gvecs = axes_pos.cubic_pos(nsh)[1:]
+  gvecs = axes_pos.cubic_pos(2*nsh+1)-nsh
   kvecs = np.dot(gvecs, raxes)
-  return kvecs
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  sel = (kmags>eps) & (kvecs[:, 2]>=0)
+  return kvecs[sel]
