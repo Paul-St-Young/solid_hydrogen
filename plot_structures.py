@@ -35,12 +35,14 @@ space_group_id = {
   'i41amd':141,
 }
 
-bohr = 0.52917721067e-10 # m
-ha   = 27.21138602       # ev
+# CODATA 2018
+#bohr = 0.52917721067e-10 # m
+bohr = 0.529177210903  # A
+ha   = 27.211386245988   # ev
 joule= 6.241509126e18    # ev
 
 gpa = 29421
-gpa = ha/joule/bohr**3./1e9
+gpa = ha/joule/(bohr*1e-10)**3./1e9
 mev = ha*1000.
 
 
@@ -319,7 +321,6 @@ def rho2rs(rho, nprot):
   """ convert density (g/cm3) to rs """
   amu = 1.6605390666e-27  # kg
   mh = 1.00784*amu
-  bohr = 0.529177210903
   cm3 = (10**8/bohr)**3  # cm^3 to bohr^3
 
   nh = rho*1e-3/mh/nprot
@@ -331,7 +332,6 @@ def rs2rho(rs, nprot):
   """ convert rs to density (g/cm3) """
   amu = 1.6605390666e-27  # kg
   mh = 1.00784*amu
-  bohr = 0.529177210903
   cm3 = (10**8/bohr)**3  # cm^3 to bohr^3
 
   vol = rs2vol(rs)
