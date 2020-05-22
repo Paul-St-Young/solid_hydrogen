@@ -481,3 +481,18 @@ def add_unit_columns(df):
   """
   df['Pressure_gpa_mean'] = df['Pressure_mean']*gpa
   df['Pressure_gpa_error'] = df['Pressure_error']*gpa
+
+def add_sname_legend(ax, snames, extra_style=None,
+  marker=False, **kwargs):
+  from qharv.plantation import kyrt
+  if extra_style is None:
+    extra_style = {}
+  styles = []
+  for sname in snames:
+    style = extra_style.copy()
+    style.update({'c': struct_colors[sname]})
+    if marker:
+      style.update({'marker': struct_markers[sname]})
+    styles.append(style)
+  leg = kyrt.create_legend(ax, styles, snames, **kwargs)
+  ax.add_artist(leg)
