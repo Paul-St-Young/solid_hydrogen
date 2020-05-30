@@ -32,6 +32,13 @@ def eos_no_error(volpp,epp,order):
   return popt,perr
 # end def
 
+def fpeos(popt):
+  order = len(popt)-1
+  feos = lambda volpp: models[order](volpp, *popt)
+  peos = lambda volpp:pmodels[order](volpp, *popt)
+  return feos, peos
+# end def
+
 def fpeos_no_error(volpp,eppm,order):
   """ energy and pressure v.s. volume functions
   Args:
@@ -40,10 +47,8 @@ def fpeos_no_error(volpp,eppm,order):
   Returns:
     tuple: (feos,peos), each a function a volpp
   """
-  popt,perr = eos_no_error(volpp,eppm,order)                           
-  feos = lambda volpp:models[order]( volpp,*popt)                                   
-  peos = lambda volpp:pmodels[order](volpp,*popt)                                   
-  return feos,peos                                                              
+  popt, perr = eos_no_error(volpp, eppm, order)
+  return fpeos(popt)
 # end def
 
 def eos_with_error(volpp,eppm,eppe,order):
@@ -62,10 +67,8 @@ def fpeos_with_error(volpp,eppm,eppe,order):
   Returns:
     tuple: (feos,peos), each a function a volpp
   """
-  popt,perr = eos_with_error(volpp,eppm,eppe,order)                           
-  feos = lambda volpp:models[order]( volpp,*popt)                                   
-  peos = lambda volpp:pmodels[order](volpp,*popt)                                   
-  return feos,peos                                                              
+  popt, perr = eos_with_error(volpp, eppm, eppe, order)
+  return fpeos(popt)
 # end def
 
 def eos(df,sel,volpp_name,epp_name,order,with_error=False):
