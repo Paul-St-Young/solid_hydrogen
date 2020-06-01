@@ -39,6 +39,36 @@ def get_pcdirs(
     folder_list = f.read().split('\n')[:-1]
   return proj_dir, folder_list
 
+def sra_label(subdir, sep='-'):
+  tokens = subdir.split(sep)
+  sname  = tokens[0]
+  rst    = tokens[1]
+  cat    = tokens[2]
+  rs = float(rst.replace('rs', ''))
+  ca = float(cat.replace('ca', ''))
+  return {'sname':sname, 'rs':rs, 'ca':ca}
+
+def get_task_dir(subdir):
+  sra = sra_label(subdir)
+  sname = sra['sname']
+  rs = sra['rs']
+  task_dir_map = {
+    'c2c': '56-c2c-dft-geo/ecut50-k8',
+    'cmca4': '57-cmca4-dft-geo/ecut50-k8',
+    'cmca12': '58-cmca12-dft-geo/ecut50-k8',
+    'i41amd': '44-i4-twist/ecut50-k8'
+  }
+  if rs < 1.21:
+    task_dir_map = {
+      'c2c': '79-c2c-dft-geo/ecut50-k8',
+      'cmca4': '78-cmca4-dft-geo/ecut50-k8',
+      'i41amd': '77-i4-twist/ecut50-k8',
+      'cmca12': None
+    }
+  if (sname == 'cmca4') & (rs < 1.19):
+    task_dir_map['cmca4'] = '86-cmca4-kgrid12-geo/ecut50-k8'
+  task_dir = task_dir_map[sname]
+  return task_dir
 
 def collect_first_input(folderl):
   """ collect input text into a database
