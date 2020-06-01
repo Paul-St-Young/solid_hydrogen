@@ -7,9 +7,9 @@ def read_first_energy(scf_out):
     with open(scf_out,'r+') as f:
         mm = mmap(f.fileno(),0)
     # end with
-    idx = mm.find('!')
+    idx = mm.find(b'!')
     mm.seek(idx)
-    eline = mm.readline()
+    eline = mm.readline().decode()
     energy = float( eline.split()[-2] )
     return energy
 # end def
@@ -304,7 +304,9 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
                 pos = np.dot(pos,axes)
               all_pos[istruct,iatom,:] = pos
             except:
-              print 'failed to read (istruct,iatom)=(%d,%d)' % (istruct,iatom)
+              msg = 'failed to read (istruct, iatom)=(%d, %d)' %\
+                (istruct,iatom)
+              print(msg)
             # end try
         # end for iatom
         
@@ -374,7 +376,9 @@ def md_traces(md_out,nstep=2000):
         # end if
     # end for istep
     if istep >= nstep-1:
-        print "WARNING: %d structures found, nstep may need to be increased" %istep
+        msg = "WARNING: %d/%d structures found," % (istep, nstep)
+        msg += " nstep may need to be increased"
+        print(msg)
     # end if
     fhandle.close()
     return data
@@ -450,9 +454,9 @@ def input_structure(scf_in,put_in_box=True):
         pass # expect to see an empty line
     # end try
     if put_in_box:
-	atpos = {'pos_unit':unit,'pos':pos_in_box(np.array(pos),np.array(axes)).tolist()}
+      atpos = {'pos_unit':unit,'pos':pos_in_box(np.array(pos),np.array(axes)).tolist()}
     else:
-	atpos = {'pos_unit':unit,'pos':pos}
+      atpos = {'pos_unit':unit,'pos':pos}
     # end if
 
     entry = {'infile':scf_in}
@@ -476,10 +480,10 @@ def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4
   # end with
   au_mat_list   = []
   kbar_mat_list = []
-  stress_starts = all_lines_with_tag(mm,stress_tag.encode(),nstruct_max)
+  stress_starts = all_lines_with_tag(mm,stress_tag,nstruct_max)
   for idx in stress_starts:
     mm.seek(idx)
-    header = mm.readline()
+    header = mm.readline().decode()
     tokens = header.split()
     # make sure we are about to read the correct block of text
     assert tokens[2].strip('()') == 'Ry/bohr**3'
@@ -1081,13 +1085,13 @@ def get_tgrid_tshift(nscf_in):
 def get_axes(nscf_in, ndim=3):
   from qharv.reel import ascii_out
   mm = ascii_out.read(nscf_in)
-  idx = mm.find('CELL_PARAMETERS')
+  idx = mm.find(b'CELL_PARAMETERS')
   mm.seek(idx)
   mm.readline()
   cell = []
   for idim in range(ndim):
-    line = mm.readline()
-    nums = map(float, line.split())
+    line = mm.readline().decode()
+    nums = list(map(float, line.split()))
     cell.append(nums)
   mm.close()
   axes = np.array(cell)
@@ -1104,9 +1108,9 @@ def get_elem_pos(nscf_in):
   from qharv.reel import ascii_out
   mm = ascii_out.read(nscf_in)
   natom = ascii_out.name_sep_val(mm, 'nat', '=', dtype=int)
-  idx = mm.find('ATOMIC_POSITIONS')
+  idx = mm.find(b'ATOMIC_POSITIONS')
   mm.seek(idx)
-  header = mm.readline()
+  header = mm.readline().decode()
   eleml = []
   posl = []
   for iatom in range(natom):
