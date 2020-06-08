@@ -250,6 +250,16 @@ def get_eos_df(df,order,volpp_name='volpp',epp_name='Epp',with_error=False):
   eos_df = pd.DataFrame(data)
   return eos_df
 
+def read_fpeos(fyml, sname):
+  import yaml
+  import equation_of_state as eos
+  with open(fyml, 'r') as f:
+    data = yaml.load(f, Loader=yaml.FullLoader)
+  edf = pd.DataFrame(data)
+  sel = edf.sname == sname
+  popt = edf.loc[sel, 'popt'].squeeze()
+  feos, peos = eos.fpeos(popt)
+  return feos, peos
 
 def get_fpeos(eosdf, sname):
   esel = eosdf['sname'] == sname
