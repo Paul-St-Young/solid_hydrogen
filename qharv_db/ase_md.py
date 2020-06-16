@@ -52,3 +52,16 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
 
   s2 = Atoms('H%d' % len(pos1), cell=axes, positions=pos1, pbc=1)
   return s2
+
+def load_traj(ftraj, traj_fmt=None, istart=0, iend=-1, nevery=1, check=True):
+  from ase import io
+  if traj_fmt is None:
+    if ftraj.endswith('.nc'):
+      traj_fmt = 'netcdftrajectory'
+  traj = io.read(ftraj, slice(istart, iend, nevery), format=traj_fmt)
+  if (len(traj) < 1) and check:
+    ntot = len(io.read(ftraj, ':', format=traj_fmt))
+    msg = '%d/%d snapshots read using:\n' % (len(traj), ntot)
+    msg += ' slice(%d, %d, %d)' % (istart, iend, nevery)
+    raise RuntimeError(msg)
+  return traj
