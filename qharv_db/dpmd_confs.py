@@ -224,7 +224,7 @@ def get_extxyz_confs(fxyz, confl=None):
   traj = [traj0[iconf] for iconf in confl]
   return traj
 
-def write_lammps_dump(fout, fxyz):
+def write_lammps_dump(fout, fxyz, charge=False):
   import os
   if os.path.isfile(fout):
     raise RuntimeError('%s exists' % fout)
@@ -232,4 +232,10 @@ def write_lammps_dump(fout, fxyz):
   pl = import_file(fxyz)
   columns = ["Particle Identifier", "Particle Type",
     "Position.X", "Position.Y", "Position.Z"]
+  if charge:
+    cname = 'Charge'
+    columns += [cname]
+    def add_charge(frame, data):
+      data.particles_.create_property(cname, data=data.particles['initial_charges'])
+    pl.modifiers.append(add_charge)
   export_file(pl, fout, 'lammps/dump', columns=columns, multiple_frames=True)
