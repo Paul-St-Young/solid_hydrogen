@@ -48,6 +48,7 @@ def get_confs(path, confl=None, ndim=3, verbose=True, au=True):
     lbox = box[0]
     ell = np.diag(box.reshape(ndim, ndim))
     # read energy
+    #em = np.sum(eall[iconf])*ha
     em = eall[iconf]*ha
     # read particle positions
     pos1 = posa[iconf]
@@ -222,3 +223,13 @@ def get_extxyz_confs(fxyz, confl=None):
     confl = range(nframe)
   traj = [traj0[iconf] for iconf in confl]
   return traj
+
+def write_lammps_dump(fout, fxyz):
+  import os
+  if os.path.isfile(fout):
+    raise RuntimeError('%s exists' % fout)
+  from ovito.io import import_file, export_file
+  pl = import_file(fxyz)
+  columns = ["Particle Identifier", "Particle Type",
+    "Position.X", "Position.Y", "Position.Z"]
+  export_file(pl, fout, 'lammps/dump', columns=columns, multiple_frames=True)
