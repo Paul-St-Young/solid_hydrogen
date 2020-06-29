@@ -224,14 +224,15 @@ def get_extxyz_confs(fxyz, confl=None):
   traj = [traj0[iconf] for iconf in confl]
   return traj
 
-def write_lammps_dump(fout, fxyz, charge=False):
+def write_lammps_dump(fout, fxyz, charge=False, columns=None):
   import os
   if os.path.isfile(fout):
     raise RuntimeError('%s exists' % fout)
   from ovito.io import import_file, export_file
   pl = import_file(fxyz)
-  columns = ["Particle Identifier", "Particle Type",
-    "Position.X", "Position.Y", "Position.Z"]
+  if columns is None:
+    columns = ["Particle Identifier", "Particle Type",
+      "Position.X", "Position.Y", "Position.Z"]
   if charge:
     cname = 'Charge'
     columns += [cname]
@@ -239,3 +240,29 @@ def write_lammps_dump(fout, fxyz, charge=False):
       data.particles_.create_property(cname, data=data.particles['initial_charges'])
     pl.modifiers.append(add_charge)
   export_file(pl, fout, 'lammps/dump', columns=columns, multiple_frames=True)
+
+def get_particle_results(dc):
+  results = {}
+  props = dc.particle_properties
+  for p in props.properties:
+    results[p.name] = props[p.name].array
+  return results
+
+def read_lammps_dump(fdump):
+  from ovito.io import import_file
+  from ase.calculators.singlepoint import SinglePointCalculator
+  pl = import_file(fdump) # pipe line
+  nframe = pl.source.num_frames
+  traj = []
+  for iframe in range(nframe):
+    dc = pl.compute(iframe) # data collection
+    atoms = dc.to_ase_atoms()
+    # any results to add?
+    results = get_particle_results(dc)
+    if 'Charge' in results:  # add charges
+      atoms.set_initial_charges(results['Charge'])
+    if 'Force' in results:  # add forces
+      calc = SinglePointCalculator(atoms, forces=results['Force'])
+      atoms.set_calculator(calc)
+    traj.append(atoms)
+  return traj
