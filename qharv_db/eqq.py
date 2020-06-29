@@ -14,6 +14,15 @@ def make_one_component(atoms, pos, charges):
   atoms1.wrap()
   return atoms1
 
+def index_molecules(ncom):
+  ncharge = 4  # 4 chages per molecule
+  idxl = []
+  for imol in range(ncom):
+    idx1 = np.arange(4)*ncom + imol
+    idxl.append(idx1)
+  idx = np.concatenate(idxl)
+  return idx
+
 def fixeps_quadrupole(atoms, params, rmax=1.5):
   from qharv.inspect import axes_pos
   # get parameters
@@ -30,9 +39,7 @@ def fixeps_quadrupole(atoms, params, rmax=1.5):
   nplus = int(round(ncharge/2))
   charges = np.array([e]*nplus + [-e]*nplus)
   # reorder to + + - -, one molecule at a time
-  idx0 = list(range(0, ncharge, 2))
-  idx1 = list(range(1, ncharge, 2))
-  idx = idx0+idx1
+  idx = index_molecules(len(com))
   # make new Atoms
   atoms1 = make_one_component(atoms, pos[idx], charges[idx])
   return atoms1
@@ -54,13 +61,12 @@ def fixa_quadrupole(atoms, params, rb_max=1.5):
   p1 = com + r0/2.*ahats
   m1 = com + rb[:, None]/2.*ahats
   pos = np.array(p0.tolist() + p1.tolist() + m0.tolist() + m1.tolist())
+  ncom = len(com)
   ncharge = len(pos)
   nplus = int(round(ncharge/2))
   charges = np.array([e]*nplus + [-e]*nplus)
   # reorder to + + - -, one molecule at a time
-  idx0 = list(range(0, ncharge, 2))
-  idx1 = list(range(1, ncharge, 2))
-  idx = idx0+idx1
+  idx = index_molecules(len(com))
   # make new Atoms
   atoms1 = make_one_component(atoms, pos[idx], charges[idx])
   return atoms1
