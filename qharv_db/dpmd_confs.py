@@ -266,3 +266,11 @@ def read_lammps_dump(fdump):
       atoms.set_calculator(calc)
     traj.append(atoms)
   return traj
+
+def read_lammps_log(flog):
+  from qharv.reel import ascii_out, scalar_dat
+  mm = ascii_out.read(flog)
+  text = ascii_out.block_text(mm, 'Per MPI rank memory', 'Loop time')
+  mm.close()
+  df = scalar_dat.parse('# ' + text)
+  return df
