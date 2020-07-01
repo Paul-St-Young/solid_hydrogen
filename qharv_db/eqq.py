@@ -1,5 +1,36 @@
 import numpy as np
 
+def create_h4(case, rsep, rbs=None, orig=None):
+  import numpy as np
+  nmol = 2
+  ndim = 3
+  if rbs is None:
+    rbs = [1.4, 1.4]  # bond lengths
+  case_map = {  # 0: x, 1: y, 2: z
+    'A': (2, 2),  # linear
+    'C': (0, 2),  # planar
+    'F': (0, 0),  # rectangular
+    'H': (0, 1),  # staggered
+  }
+  orient = case_map[case]
+  # put down center of mass
+  com = np.zeros([nmol, ndim])
+  com[0, 2] = -rsep/2.
+  com[1, 2] =  rsep/2.
+  # setup orientations
+  bond = np.zeros([nmol, ndim])
+  for imol, idim in enumerate(orient):
+    bond[imol, idim] = rbs[imol]
+  # create protons for each molecule
+  posl = []
+  for imol in range(nmol):
+    posl.append(com[imol] + bond[imol]/2.)
+    posl.append(com[imol] - bond[imol]/2.)
+  pos = np.array(posl)
+  if orig is None:
+    orig = np.zeros(3)
+  return com+orig, pos+orig
+
 def make_one_component(atoms, pos, charges):
   from ase import Atoms
   elem = ['H']*len(pos)
