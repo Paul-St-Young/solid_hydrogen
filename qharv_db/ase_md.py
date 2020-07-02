@@ -5,6 +5,8 @@ def npt_prefix(dt, pgpa, temp):
   prefix += '-p%d-t%04d' % (pgpa, temp)
   return prefix
 
+# ====================== level 1: structure =======================
+
 def hcp_prim_cell(a, ca):
   from ase import Atoms
   c = a*ca
@@ -65,3 +67,19 @@ def load_traj(ftraj, traj_fmt=None, istart=0, iend=-1, nevery=1, check=True):
     msg += ' slice(%d, %d, %d)' % (istart, iend, nevery)
     raise RuntimeError(msg)
   return traj
+
+# ====================== level 1: dynamics =======================
+
+def init_velocities(atoms, temp):
+  """Initialize atom velocities according to Maxwell-Bolzmann,
+   then zero total linear and angular momenta.
+
+  Args:
+    atoms (ase.Atoms): initial configuration
+    temp (float): temperature in Kelvin
+  """
+  from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+  from ase.md.velocitydistribution import Stationary, ZeroRotation
+  MaxwellBoltzmannDistribution(atoms, temp*units.kB)
+  Stationary(atoms)
+  ZeroRotation(atoms)
