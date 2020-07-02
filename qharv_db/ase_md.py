@@ -111,3 +111,52 @@ def hcp_ac(pgpa):
   a = fa(pgpa)
   c = a*fca(pgpa)
   return a, c
+
+def drum_eos(vb):
+  """Static-lattice DMC energy of C2/c-24 (KZK) fit over 60 ~ 270 GPa.
+
+  Args:
+    vb (np.array): volume per proton in bohr^3
+  Return:
+    np.array: energy per proton in ha
+  """
+  # fit from mat/drum_data/scripts/lowp_eos.py
+  popt = np.array([
+    2.7230701840642966, 0.5237100076747062, -0.6042128881368943
+  ])
+  eha = np.poly1d(popt)(1./vb)
+  return eha
+
+def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
+  """Compressibility of solid hydrogen
+
+  Args:
+    pgpa (float): pressure in GPa
+    rsmin (float, optional): highest-density to refit, default 1.31
+    rsmax (float, optional): lowest-density to refit, default 1.8
+    drs (float, optional): density grid, default 5e-3
+    norder (float, optional): polynomial order for EOS refit
+  Return:
+    float: bgpa, compressibility in GPa
+  """
+  rss = np.arange(rsmax, rsmin, -drs)
+  vol = 4*np.pi/3*rss**3  # Bohr^3
+  eha = drum_eos(vol)
+  # fit EOS
+  popt = np.polyfit(vol, eha, norder)
+  # find volume at target pressure
+  p1 = np.polyder(popt, 1)
+  gpa = 29421  # ha/B^3 -> GPa
+  def peos(v):
+    return -np.poly1d(p1)(v)*gpa
+  from scipy.optimize import minimize_scalar
+  sol = minimize_scalar(lambda v: (peos(v)-pgpa)**2)
+  myv = sol.x
+  assert np.isclose(peos(myv), pgpa)
+  # check rs range
+  myrs = (3*myv/(4*np.pi))**(1./3)
+  assert (rsmin < myrs) & (myrs < rsmax)
+  # calculate bulk modulus at this pressure
+  p2 = np.polyder(popt, 2)
+  bgpa = myv*np.poly1d(p2)(myv)*gpa
+  return bgpa
