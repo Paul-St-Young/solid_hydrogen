@@ -77,6 +77,7 @@ def init_velocities(atoms, temp):
     atoms (ase.Atoms): initial configuration
     temp (float): temperature in Kelvin
   """
+  from ase import units
   from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
   from ase.md.velocitydistribution import Stationary, ZeroRotation
   MaxwellBoltzmannDistribution(atoms, temp*units.kB)
@@ -111,6 +112,39 @@ def hcp_ac(pgpa):
   a = fa(pgpa)
   c = a*fca(pgpa)
   return a, c
+
+def get_tilematrix(natom):
+  if natom == 16:
+    tmat = np.array([
+      [2, 0, 0],
+      [-1, 2, 0],
+      [0, 0, 1]
+    ])
+  elif natom == 96:
+    tmat = np.array([
+      [ 3, 0, 0],
+      [-2, 4, 0],
+      [ 0, 0, 2]
+    ])
+  elif natom == 128:
+    tmat = np.array([
+      [ 4, 0, 0],
+      [-2, 4, 0],
+      [ 0, 0, 2]
+    ])
+  else:
+    msg = 'no tilematrix for N=%d' % natom
+    raise RuntimeError(msg)
+  return tmat
+
+def mhcpc_supercell(pgpa, natom):
+  from ase.build.supercells import make_supercell
+  a, c = hcp_ac(pgpa)
+  atoms0 = hcp_prim_cell(a, c/a)
+  tmat = get_tilematrix(natom)
+  atoms1 = make_supercell(atoms0, tmat)
+  atoms2 = make_mhcpc(atoms1)
+  return atoms2
 
 def drum_eos(vb):
   """Static-lattice DMC energy of C2/c-24 (KZK) fit over 60 ~ 270 GPa.
