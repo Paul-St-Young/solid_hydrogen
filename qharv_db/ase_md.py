@@ -35,7 +35,6 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
   # make sure cell is diagonal
   assert np.allclose(np.diag(box), axes)
 
-  #iax = 2  # align along z
   posl = []
   for center in pos:
     p1 = center.copy()
@@ -83,3 +82,32 @@ def init_velocities(atoms, temp):
   MaxwellBoltzmannDistribution(atoms, temp*units.kB)
   Stationary(atoms)
   ZeroRotation(atoms)
+
+# ====================== level 2: param. choice =======================
+def hcp_ac(pgpa):
+  # fit from f23a/hcp-prim/fit.py
+  pmin = 20   # GPa
+  pmax = 200  # GPa
+  if (pgpa < pmin) or (pgpa > pmax):
+    msg = 'fit fails below %d GPa or above %d GPa' % (pmin, pmax)
+    raise RuntimeError(msg)
+  pa = np.array([
+    1.814710e-14, -1.871584e-11, 7.877205e-09,
+    -1.748124e-06, 2.230823e-04, -1.779103e-02,
+    2.586276e+00
+  ])
+  fa = np.poly1d(pa)
+  # pc = np.array([
+  #   -6.522742e-12, 6.137292e-09, -2.076912e-06,
+  #   3.370382e-04, -3.041165e-02, 4.238903e+00
+  # ])
+  # fc = np.poly1d(pc)
+  pca = np.array([
+    3.549756e-15, -3.372556e-12, 1.294774e-09,
+    -2.582915e-07, 2.894332e-05, -2.008867e-03,
+    1.662028e+00
+  ])
+  fca = np.poly1d(pca)
+  a = fa(pgpa)
+  c = a*fca(pgpa)
+  return a, c
