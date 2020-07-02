@@ -274,3 +274,15 @@ def read_lammps_log(flog):
   mm.close()
   df = scalar_dat.parse('# ' + text)
   return df
+
+def write_lammps_data(ftxt, atoms, **kwargs):
+  # FAIL: use ase.io.write(ftxt, atoms, format='lammps-data', atom_style='charge')
+  from ovito.io import export_file
+  from ovito.pipeline import StaticSource, Pipeline
+  from ovito.io.ase import ase_to_ovito
+  atoms.set_initial_charges(atoms.get_initial_charges())
+  dc = ase_to_ovito(atoms)
+  #dc.particles.masses = np.ones(len(atoms))
+  #dc.particles_.create_property('masses', data=atoms.get_masses())
+  pl = Pipeline(source=StaticSource(data=dc))
+  export_file(pl, ftxt, 'lammps/data', atom_style='charge')#**kwargs)
