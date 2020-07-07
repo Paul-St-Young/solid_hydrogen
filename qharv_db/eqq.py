@@ -54,13 +54,13 @@ def index_molecules(ncom):
   idx = np.concatenate(idxl)
   return idx
 
-def fixeps_quadrupole(atoms, params, rmax=1.5):
+def fixeps_quadrupole(atoms, params, rb_max=1.5):
   from qharv.inspect import axes_pos
   # get parameters
   e = params['e']
   eps = params['eps']
   # create charges
-  com, avecs = axes_pos.dimer_rep(atoms, rmax)
+  com, avecs = axes_pos.dimer_rep(atoms, rb_max)
   p0 = com - avecs
   p1 = com + avecs
   m0 = com - eps*avecs
@@ -101,3 +101,21 @@ def fixa_quadrupole(atoms, params, rb_max=1.5):
   # make new Atoms
   atoms1 = make_one_component(atoms, pos[idx], charges[idx])
   return atoms1
+
+def mean_sig(fa):
+  nconf, ndim = fa.shape
+  fm = fa.mean(axis=0)
+  fs = np.sqrt(np.sum((fa-fm)**2)/ndim/(nconf-1))
+  return fm, fs
+
+def bootstrap(fa, nsample):
+  nconf = len(fa)
+  confs = np.arange(nconf)
+  fsl = []
+  for isample in range(nsample):
+    iconfs = np.random.choice(confs, size=nconf, replace=True)
+    fm1, fs1 = mean_sig(fa[iconfs])
+    fsl.append(fs1)
+  fsm = np.mean(fsl)
+  fse = np.std(fsl, ddof=1)
+  return fsm, fse
