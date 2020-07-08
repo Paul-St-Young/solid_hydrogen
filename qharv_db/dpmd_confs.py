@@ -250,7 +250,6 @@ def get_particle_results(dc):
 
 def read_lammps_dump(fdump):
   from ovito.io import import_file
-  from ase.calculators.singlepoint import SinglePointCalculator
   pl = import_file(fdump) # pipe line
   nframe = pl.source.num_frames
   traj = []
@@ -262,6 +261,7 @@ def read_lammps_dump(fdump):
     if 'Charge' in results:  # add charges
       atoms.set_initial_charges(results['Charge'])
     if 'Force' in results:  # add forces
+      from ase.calculators.singlepoint import SinglePointCalculator
       calc = SinglePointCalculator(atoms, forces=results['Force'])
       atoms.set_calculator(calc)
     traj.append(atoms)
