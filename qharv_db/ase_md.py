@@ -137,12 +137,16 @@ def get_tilematrix(natom):
     raise RuntimeError(msg)
   return tmat
 
-def mhcpc_supercell(pgpa, natom):
+def hcp_supercell(pgpa, natom):
   from ase.build.supercells import make_supercell
   a, c = hcp_ac(pgpa)
   atoms0 = hcp_prim_cell(a, c/a)
   tmat = get_tilematrix(natom)
   atoms1 = make_supercell(atoms0, tmat)
+  return atoms1
+
+def mhcpc_supercell(pgpa, natom):
+  atoms1 = hcp_supercell(pgpa, natom)
   atoms2 = make_mhcpc(atoms1)
   return atoms2
 
