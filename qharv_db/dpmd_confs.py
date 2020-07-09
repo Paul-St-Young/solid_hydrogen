@@ -224,7 +224,7 @@ def get_extxyz_confs(fxyz, confl=None):
   traj = [traj0[iconf] for iconf in confl]
   return traj
 
-def cache_traj_to_set(set_dir, traj):
+def cache_traj_to_set(set_dir, traj, virial=True):
   import os
   from qharv.plantation.sugar import mkdir
   mkdir(set_dir)
@@ -232,12 +232,14 @@ def cache_traj_to_set(set_dir, traj):
   posl = [a.get_positions().ravel() for a in traj]
   el = [a.get_potential_energy() for a in traj]
   forl = [a.get_forces().ravel() for a in traj]
-  virl = [-a.get_volume()*a.get_stress(voigt=False).ravel()
-          for a in traj]
-  for name, val in zip(
-    ['box', 'coord', 'energy', 'force', 'virial'],
-    [boxl, posl, el, forl, virl]
-  ):
+  names = ['box', 'coord', 'energy', 'force']
+  vals = [boxl, posl, el, forl]
+  if virial:
+    virl = [-a.get_volume()*a.get_stress(voigt=False).ravel()
+            for a in traj]
+    names.append('virial')
+    vals.append(virl)
+  for name, val in zip(names, vals):
     np.save(os.path.join(set_dir, '%s.npy' % name), val)
 
 def write_lammps_dump(fout, fxyz, charge=False, columns=None):
