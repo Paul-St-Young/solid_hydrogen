@@ -7,7 +7,9 @@ def npt_prefix(dt, pgpa, temp):
 
 # ====================== level 1: structure =======================
 
-def hcp_prim_cell(a, ca):
+def hcp_prim_cell(a, ca=None):
+  if ca is None:  # use ideal ratio
+    ca = (8./3)**0.5
   from ase import Atoms
   c = a*ca
   axes = np.array([
