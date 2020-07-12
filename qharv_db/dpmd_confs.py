@@ -285,12 +285,22 @@ def read_lammps_dump(fdump):
     traj.append(atoms)
   return traj
 
-def read_lammps_log(flog):
+def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time',
+  nblock=8):
   from qharv.reel import ascii_out, scalar_dat
   mm = ascii_out.read(flog)
-  text = ascii_out.block_text(mm, 'Per MPI rank memory', 'Loop time')
+  blocks = ascii_out.all_lines_with_tag(mm, header)
+  text = ''
+  for iblock, idx in enumerate(blocks):
+    mm.seek(idx)
+    text1 = ascii_out.block_text(mm, header, trailer)
+    if iblock == 0:  # mark header
+      text += '# ' + text1
+    else:  # skip header
+      iend = text1.find('\n')
+      text += text1[iend+1:]
   mm.close()
-  df = scalar_dat.parse('# ' + text)
+  df = scalar_dat.parse(text)
   return df
 
 def write_lammps_data(ftxt, atoms, **kwargs):
