@@ -242,6 +242,18 @@ def cache_traj_to_set(set_dir, traj, virial=True):
   for name, val in zip(names, vals):
     np.save(os.path.join(set_dir, '%s.npy' % name), val)
 
+def read_set(set_dir, virial=True):
+  import os
+  names = ['box', 'coord', 'energy', 'force']
+  if virial:
+    names.append('virial')
+  vals = []
+  for name in names:
+    fname = os.path.join(set_dir, '%s.npy' % name)
+    arr = np.load(fname)
+    vals.append(arr)
+  return names, vals
+
 def write_lammps_dump(fout, fxyz, charge=False, columns=None):
   import os
   if os.path.isfile(fout):
@@ -266,12 +278,16 @@ def get_particle_results(dc):
     results[p.name] = props[p.name].array
   return results
 
-def read_lammps_dump(fdump):
+def read_lammps_dump(fdump, nequil=None, iframes=None):
   from ovito.io import import_file
   pl = import_file(fdump) # pipe line
   nframe = pl.source.num_frames
   traj = []
-  for iframe in range(nframe):
+  if iframes is None:
+    iframes = range(nframe)
+  if nequil is not None:
+    iframes = iframes[nequil:]
+  for iframe in iframes:
     dc = pl.compute(iframe) # data collection
     atoms = dc.to_ase_atoms()
     # any results to add?
