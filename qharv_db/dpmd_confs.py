@@ -330,3 +330,63 @@ def write_lammps_data(ftxt, atoms, **kwargs):
   #dc.particles_.create_property('masses', data=atoms.get_masses())
   pl = Pipeline(source=StaticSource(data=dc))
   export_file(pl, ftxt, 'lammps/data', atom_style='charge')#**kwargs)
+
+
+# ====================== LAMMPS analysis ======================
+
+def lammps_scalars(flog, nequil, plot=False):
+  from qharv.sieve import scalar_df, mean_df
+  df = read_lammps_log(flog)
+  if plot:
+    names = ['Press', 'Temp', 'TotEng', 'PotEng']
+    nrow = len(names)
+    fig, axl = plt.subplots(nrow, 1, sharex=True)
+    for ax, name in zip(axl, names):
+      myy = df[name]
+      ax.plot(myy)
+      ax.axvline(nequil, c='gray', lw=2, ls='--')
+    plt.show()
+  mdf = scalar_df.mean_error_scalar_df(df.reset_index(), nequil)
+  return mdf
+
+def calc_sofk_nvt(traj, sk_params):
+  from qharv_db.grsk import legal_kvecs, Sk, yl_ysql
+  from static_correlation import shavg
+  # !!!! use initial cell for kvectors
+  axes = traj[0].get_cell()
+  kvecs = legal_kvecs(axes, sk_params['nsh'])
+
+  skl = []
+  for atoms in traj:
+    pos = atoms.get_positions()
+    sk1 = Sk(kvecs, pos)
+    skl.append(sk1)
+  skm, ske = yl_ysql(skl, [sk**2 for sk in skl])
+  uk, uskm, uske = shavg(kvecs, skm, ske)
+  return uk, uskm, uske
+
+def calc_sofk_npt(traj, sk_params):
+  from qharv_db.grsk import legal_kvecs, Sk, yl_ysql
+  from static_correlation import shavg
+  nsh = sk_params['nsh']
+  dk = sk_params['dk']
+  bin_edges = np.arange(sk_params['kmin'], sk_params['kmax'], dk)
+  myk = 0.5*(bin_edges[:-1]+bin_edges[1:])
+  nk = len(myk)
+  kmin = bin_edges.min()
+
+  skl = []
+  for atoms in traj:
+    axes = atoms.get_cell()
+    kvecs = legal_kvecs(axes, nsh)
+    pos = atoms.get_positions()
+    sk1 = Sk(kvecs, pos)
+    # histogram 1D S(k)
+    uk1, usk1, junk = shavg(kvecs, sk1, sk1)
+    idx = ((uk1-kmin)//dk).astype(int)
+    sel = idx < nk
+    msk1 = np.zeros(nk)
+    msk1[idx[sel]] += usk1[sel]
+    skl.append(msk1)
+  uskm, uske = yl_ysql(skl, [sk**2 for sk in skl])
+  return myk, uskm, uske
