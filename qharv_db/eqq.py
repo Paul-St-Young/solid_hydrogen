@@ -119,3 +119,44 @@ def bootstrap(fa, nsample):
   fsm = np.mean(fsl)
   fse = np.std(fsl, ddof=1)
   return fsm, fse
+
+def create_h2(avec=None, com=None, rb=None):
+  from ase import Atoms
+  if avec is None:  # point along z
+    avec = np.array([0, 0, 1])
+  else:
+    amag = np.linalg.norm(avec)
+    if not np.isclose(amag, 1):
+      raise RuntimeError('avec must be a unit vector')
+  if com is None:  # center around origin
+    com = np.zeros(3)
+  if rb is None:  # equilibrium bond length
+    bohr = 0.529177210903  # CODATA 2018
+    rb = 1.4*bohr
+  pos = rb/2*np.array([avec, -avec])
+  atoms = Atoms('H2', positions=com+pos)
+  return atoms
+
+def rotate_h2(atoms, rot, center='COM'):
+  phi, theta, psi = rot.as_euler('zxz', degrees=True)
+  atoms.euler_rotate(phi, theta, psi, center=center)
+
+def h2_random_rotations(mols, seed):
+  from ase import Atoms
+  from scipy.spatial.transform import Rotation
+  # get molecule info
+  nmol = len(mols)
+  axes = mols.get_cell()
+  pbc = mols.get_pbc()
+  # create random rotations
+  np.random.seed(seed)
+  rots = Rotation.random(nmol)
+  # assign rotations
+  posl = []
+  for com, rot in zip(mols.get_positions(), rots):
+    h2 = create_h2(com=com)
+    rotate_h2(h2, rot)
+    posl += h2.get_positions().tolist()
+  pos = np.array(posl)
+  atoms = Atoms('H%d' % len(pos), cell=axes, positions=pos, pbc=pbc)
+  return atoms
