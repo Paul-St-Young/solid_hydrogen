@@ -290,6 +290,10 @@ def read_lammps_dump(fdump, nequil=None, iframes=None):
   for iframe in iframes:
     dc = pl.compute(iframe) # data collection
     atoms = dc.to_ase_atoms()
+    keys_to_delete = [key for key in atoms.arrays.keys()
+      if key not in ['numbers', 'positions']]
+    for key in keys_to_delete:
+      del atoms.arrays[key]
     # any results to add?
     results = get_particle_results(dc)
     if 'Charge' in results:  # add charges
