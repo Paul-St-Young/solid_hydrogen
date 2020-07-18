@@ -49,17 +49,19 @@ def loss_function():
   }
   return loss
 
-def learning_rate(stop_batch):
+def calc_decay_steps(stop_batch, start_lr, stop_lr, decay_rate):
   import numpy as np
-  start_lr = 5e-3
-  stop_lr = 5e-8
-  decay_rate = 0.95
   decay = np.log(stop_lr/start_lr)/np.log(decay_rate)
   decay_steps = int(round(stop_batch/decay))
+  return decay_steps
+
+def learning_rate(stop_batch, start_lr=5e-3, stop_lr=5e-8,
+  decay_rate=0.95):
+  decay_steps = calc_decay_steps(stop_batch)
   lr = {
     'type': 'exp',
-    'start_lr': 5e-3,
-    'stop_lr': 5e-8,
+    'start_lr': start_lr,
+    'stop_lr': stop_lr,
     'decay_steps': decay_steps,
     'decay_rate': decay_rate
   }
