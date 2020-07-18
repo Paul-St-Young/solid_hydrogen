@@ -313,7 +313,7 @@ def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time',
   text = ''
   for iblock, idx in enumerate(blocks):
     mm.seek(idx)
-    text1 = ascii_out.block_text(mm, header, trailer)
+    text1 = ascii_out.block_text(mm, header, trailer, force_tail=True)
     if iblock == 0:  # mark header
       text += '# ' + text1
     else:  # skip header
