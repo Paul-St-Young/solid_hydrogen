@@ -323,6 +323,19 @@ def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time',
   df = scalar_dat.parse(text)
   return df
 
+def pbar_to_seva(pbar):
+  """Convert pressure in bar to stress in eV/A^3"""
+  # CODATA 2018
+  bohr = 0.529177210903   # A
+  ha = 27.211386245988    # ev
+  joule = 6.241509126e18  # ev
+  gpa = ha/joule/(bohr*1e-10)**3./1e9
+  # first bar -> gpa, then gpa -> a.u.
+  stress_au = -pbar/1e4/gpa
+  # finally, a.u. to eV/A^3
+  stress = stress_au*ha/bohr**3
+  return stress
+
 def write_lammps_data(ftxt, atoms, **kwargs):
   # FAIL: use ase.io.write(ftxt, atoms, format='lammps-data', atom_style='charge')
   from ovito.io import export_file
