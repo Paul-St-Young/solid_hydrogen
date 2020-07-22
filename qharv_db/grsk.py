@@ -78,6 +78,11 @@ def gofv(myr, drij, vec):
         counts[ir] += 1
   return ysum, counts
 
+def gofr_bin_edges(rmin, rmax, nr):
+  # create linear grid
+  bin_edges = np.linspace(rmin, rmax, nr)
+  return bin_edges
+
 def gofr_norm(myr, natom, volume):
   """ calculate norm needed to turn counts from gofv to
    pair correlation g(r)
@@ -101,16 +106,31 @@ def gofr_norm(myr, natom, volume):
   dr = myr[1]-myr[0]
   if not np.isclose(myr[2]-myr[1], dr):
     raise RuntimeError('not linear grid')
-  # extend grid by 1
-  myr1 = np.concatenate([myr, [myr[-1]+dr]])
   # calculate volume differences
-  vnorm = np.diff(4*np.pi/3*myr1**ndim)
+  vnorm = np.diff(4*np.pi/3*myr**ndim)
   # calculate density normalization
   npair = natom*(natom-1)/2
   rho = npair/volume
   # assemble norm vector
   nvec = 1./(rho*vnorm)
   return nvec
+
+def gofr_count(myr, dists):
+  # !!!! assume linear grid
+  dr = myr[1]-myr[0]
+  if not np.isclose(myr[2]-myr[1], dr):
+    raise RuntimeError('not linear grid')
+  # initialize memory
+  nr = len(myr)
+  gr = np.zeros(nr-1)
+  # bin distances
+  rmin = myr.min()
+  rmax = myr.max()
+  ir = (dists[(rmin<dists) & (dists<rmax)]-rmin)//dr
+  # histogram
+  ilist, counts = np.unique(ir.astype(int), return_counts=True)
+  gr[ilist] = counts
+  return gr
 
 def yl_ysql(yl, ysql):
   """ calculate mean and error given a list of val and sq
