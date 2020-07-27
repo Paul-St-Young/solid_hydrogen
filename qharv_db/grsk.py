@@ -248,3 +248,20 @@ def legal_kvecs(axes, nsh, eps=1e-8):
   kmags = np.linalg.norm(kvecs, axis=-1)
   sel = (kmags>eps) & (kvecs[:, 2]>=0)
   return kvecs[sel]
+
+def calc_gofr(bin_edges, axesl, posl):
+  from ase.geometry import get_distances
+  grl = []
+  for axes, pos in zip(axesl, posl):
+    # get unique pair separations
+    drij, rij = get_distances(pos, cell=axes, pbc=[1, 1, 1])
+    idx = np.triu_indices(len(rij), k=1)
+    dists = rij[idx]
+    # histogram
+    volume = np.linalg.det(axes)
+    natom = len(pos)
+    gr_norm = gofr_norm(bin_edges, natom, volume)
+    gr1 = gofr_count(bin_edges, dists)*gr_norm
+    grl.append(gr1)
+  grm, gre = yl_ysql(grl, [gr1**2 for gr1 in grl])
+  return grm, gre
