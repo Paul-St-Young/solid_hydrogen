@@ -83,12 +83,12 @@ def gofr_bin_edges(rmin, rmax, nr):
   bin_edges = np.linspace(rmin, rmax, nr)
   return bin_edges
 
-def gofr_norm(myr, natom, volume):
+def gofr_norm(bin_edges, natom, volume):
   """ calculate norm needed to turn counts from gofv to
    pair correlation g(r)
 
   Args:
-    myr (np.array): bin edges for pair separation (nbin,)
+    bin_edges (np.array): bin edges for pair separation (nbin,)
     natom (int): number of atoms in the box
     volume (float): volume of the box
   Return:
@@ -101,13 +101,12 @@ def gofr_norm(myr, natom, volume):
   # !!!! assume 3 dimensions
   ndim = 3
   # !!!! assume linear grid
-  nr = len(myr)
-  rmin = myr[0]
-  dr = myr[1]-myr[0]
-  if not np.isclose(myr[2]-myr[1], dr):
+  dr = bin_edges[1]-bin_edges[0]
+  dr1 = bin_edges[2]-bin_edges[1]
+  if not np.isclose(dr1, dr):
     raise RuntimeError('not linear grid')
   # calculate volume differences
-  vnorm = np.diff(4*np.pi/3*myr**ndim)
+  vnorm = np.diff(4*np.pi/3*bin_edges**ndim)
   # calculate density normalization
   npair = natom*(natom-1)/2
   rho = npair/volume
@@ -115,17 +114,18 @@ def gofr_norm(myr, natom, volume):
   nvec = 1./(rho*vnorm)
   return nvec
 
-def gofr_count(myr, dists):
+def gofr_count(bin_edges, dists):
   # !!!! assume linear grid
-  dr = myr[1]-myr[0]
-  if not np.isclose(myr[2]-myr[1], dr):
+  dr = bin_edges[1]-bin_edges[0]
+  dr1 = bin_edges[2]-bin_edges[1]
+  if not np.isclose(dr1, dr):
     raise RuntimeError('not linear grid')
   # initialize memory
-  nr = len(myr)
-  gr = np.zeros(nr-1)
+  nr = len(bin_edges)-1
+  gr = np.zeros(nr)
   # bin distances
-  rmin = myr.min()
-  rmax = myr.max()
+  rmin = bin_edges.min()
+  rmax = bin_edges.max()
   ir = (dists[(rmin<dists) & (dists<rmax)]-rmin)//dr
   # histogram
   ilist, counts = np.unique(ir.astype(int), return_counts=True)
