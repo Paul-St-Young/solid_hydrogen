@@ -305,8 +305,7 @@ def read_lammps_dump(fdump, nequil=None, iframes=None):
     traj.append(atoms)
   return traj
 
-def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time',
-  nblock=8):
+def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
   from qharv.reel import ascii_out, scalar_dat
   mm = ascii_out.read(flog)
   blocks = ascii_out.all_lines_with_tag(mm, header)
