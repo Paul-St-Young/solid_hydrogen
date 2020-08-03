@@ -9,7 +9,7 @@ def test_lebedev_h2():
   orients, weights = eqq.lebedev_h2()
   iunique = [0, 2, 4, 6, 7, 8, 9]
   for i, j in enumerate(iunique):
-    assert np.allclose(pts[j], orients[i]/np.linalg.norm(orients[i]))
+    assert np.allclose(pts[j], orients[i])
     assert np.allclose(2*wts[j], weights[i])
 
 if __name__ == '__main__':

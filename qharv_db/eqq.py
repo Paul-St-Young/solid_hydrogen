@@ -160,3 +160,21 @@ def h2_random_rotations(mols, seed):
   pos = np.array(posl)
   atoms = Atoms('H%d' % len(pos), cell=axes, positions=pos, pbc=pbc)
   return atoms
+
+def lebedev_h2(npt=7):
+  if npt == 7:
+    orients = np.array([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+      [1, 1, 1],
+      [1, 1, -1],
+      [1, -1, 1],
+      [1, -1, -1]
+    ])
+    weights = np.array([2./15]*3+[3./20]*4)
+  else:
+    raise RuntimeError('no %d-point rule' % npt)
+  omag = np.linalg.norm(orients, axis=-1)
+  assert len(orients) == len(weights)
+  return orients/omag[:, None], weights
