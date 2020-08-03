@@ -44,3 +44,24 @@ def sg1978(rsep, noc9=False):
   sr = np.exp(alpha-beta*rsep-gamma*rsep**2)
   lr = fcut(rsep)*pot
   return sr + lr
+
+def sg_lr(rsep, rstar=8.248276588766563, expo_coeffs=None):
+  if expo_coeffs is None:
+    expo_coeffs = {
+      -6: -12.14,
+      -8: -215.2,
+      -9:  143.1,
+     -10: -4813.9
+    }
+  pot = sum([expo_coeffs[e]*rsep**e for e in expo_coeffs])
+  fr = np.ones(len(rsep))
+  sel = rsep < rstar
+  fr[sel] = np.exp(-(rstar/rsep[sel]-1)**2)
+  return fr*pot
+
+def sg_sr(rsep, params=None):
+  if params is None:
+    params = [1.713, 1.5671, 0.00993]
+  alpha, beta, gamma = params
+  sr = np.exp(alpha-beta*rsep-gamma*rsep**2)
+  return sr
