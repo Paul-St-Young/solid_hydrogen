@@ -177,4 +177,4 @@ def lebedev_h2(npt=7):
     raise RuntimeError('no %d-point rule' % npt)
   omag = np.linalg.norm(orients, axis=-1)
   assert len(orients) == len(weights)
-  return orients/omag[:, None], weights
+  return orients/omag[:, None], weights/sum(weights)
