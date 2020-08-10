@@ -135,7 +135,7 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
     target_json = os.path.join(subdir,json_name)
     if os.path.isfile(target_json) and (not force_refresh):
         if warn:
-            print "skipping %s" % subdir
+            print("skipping %s" % subdir)
         # end if
         return 0 # skip ths file
     # end if
@@ -168,7 +168,7 @@ def extract_jastrows(qmcpack_input,json_name='jas.json',warn=True,force_refresh=
             opt_xml  = os.path.join(subdir,opt_file)
             if not os.path.isfile(opt_xml):
                 if warn:
-                    print "skipping %d in %s" % (all_iopt,subdir)
+                    print("skipping %d in %s" % (all_iopt,subdir))
                 # end if
                 continue
             # end if
