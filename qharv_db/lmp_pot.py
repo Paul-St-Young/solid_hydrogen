@@ -1,10 +1,34 @@
 import numpy as np
 
-def lmp_table_text(rang, eev, forces=None):
+def read_lmp_table(ftable):
+  with open(ftable, 'r') as f:
+    text = f.read()
+  return parse_lmp_table_text(text)
+
+def parse_lmp_table_text(text, nskip=2, iend=-1):
+  lines = text.split('\n')
+  for iline, line in enumerate(lines):
+    if line.strip().startswith('N'):
+      npt = int(line.split()[1])
+      break
+  istart = iline+nskip
+  tab_lines = lines[istart:iend]
+  nline = len(tab_lines)
+  if nline != npt:
+    msg = 'expected %d lines, found %d' % (npt, nline)
+    msg += ' try change nskip and iend?'
+    raise RuntimeError(msg)
+  data = np.array([line.split()[1:] for line in tab_lines], dtype=float)
+  return data
+
+def lmp_table_text(rang, eev, forces=None, finex=None):
   if forces is None:
     from scipy.interpolate import CubicSpline
     ecs = CubicSpline(rang, eev)
     fcs = ecs.derivative()
+    if finex is not None:
+      rang = finex
+      eev = ecs(finex)
     forces = -fcs(rang)
   nr = len(rang)
   text = 'N %d\n\n' % nr
