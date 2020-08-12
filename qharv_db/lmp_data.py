@@ -80,6 +80,15 @@ def text_lammps_data_dimers(atoms, pairs_dict):
   na_type = len(species)
   nb_type = len(pairs_dict)
   nbond = sum([len(pairs) for i, pairs in pairs_dict.items()])
+  mols = np.ones(len(atoms), dtype=int)
+  imol = 1
+  for ipair, pairs in pairs_dict.items():
+    for pair in pairs:
+      i, j = pair
+      mols[i] = imol
+      mols[j] = imol
+      imol += 1
+
   natom = len(atoms)
 
   text = 'LAMMPS data\n\n'
@@ -93,7 +102,7 @@ def text_lammps_data_dimers(atoms, pairs_dict):
   text += cellt
   masst = text_mass(atoms)
   text += masst
-  atomt = text_atoms(atoms)
+  atomt = text_atoms(atoms, mols=mols)
   text += atomt
   bondt = text_bonds(pairs_dict)
   text += bondt
