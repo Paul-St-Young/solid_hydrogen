@@ -89,3 +89,10 @@ def sg_sr(rsep, params=None):
   alpha, beta, gamma = params
   sr = np.exp(alpha-beta*rsep-gamma*rsep**2)
   return sr
+
+def silvera_kw_triplet(r):
+  # I.F. Silvera, RMP 1980. eq. (2.14)
+  term1 = np.exp(0.09678-1.10173*r-0.03945*r**2)
+  pre = np.exp(-(10.04/r-1)**2)
+  term2 = pre*(-6.5/r**6-124./r**8-3285./r**10)
+  return term1+term2
