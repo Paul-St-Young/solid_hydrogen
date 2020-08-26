@@ -5,6 +5,14 @@ def npt_prefix(dt, pgpa, temp):
   prefix += '-p%d-t%04d' % (pgpa, temp)
   return prefix
 
+def parse_npt_prefix(prefix):
+  tst, pt, tt = prefix.split('-')
+  dt = float(tst.replace('ts', ''))/10
+  pgpa = int(pt.replace('p', ''))
+  temp = int(tt.replace('t', ''))
+  meta = {'dt': dt, 'pgpa': pgpa, 'temp': temp}
+  return meta
+
 # ====================== level 1: structure =======================
 
 def hcp_prim_cell(a, ca=None):
