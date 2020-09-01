@@ -6,8 +6,10 @@ units = 'metal'
 line_formats = {
   #         atype mass
   'mass': '\n%3d %.6f',
-  #        id group atype    q     x     y     z
-  'atoms': '\n%5d %5d %3d %.6f %.16e %.16e %.16e',
+  #        id group atype      q    x     y     z
+  'atoms_full': '\n%5d %5d %3d %.6f %.16e %.16e %.16e',
+  #        id atype          q    x     y     z     mux   muy   muz
+  'atoms_dipole': '\n%5d %3d %.6f %.16e %.16e %.16e %.16e %.16e %.16e',
   #        id   btype   i   j
   'bonds': '\n%5d %3d %5d %5d',
 }
@@ -48,20 +50,36 @@ def text_atoms(atoms, mols=None, atom_style='full'):
   p = get_prism(atoms.get_cell())
   species = get_species(atoms)
   # get Atoms info
+  natom = len(atoms)
   symbols = atoms.get_chemical_symbols()
-  charges = atoms.get_initial_charges()
   pos = p.vector_to_lammps(atoms.get_positions(), wrap=True)
-  natom = len(symbols)
+  # additional info for atom_style
+  if atom_style in ['charge', 'full', 'dipole']:
+    charges = atoms.get_initial_charges()
+  if atom_style in ['dipole']:
+    dipoles = atoms.get_dipole_moment()
   if mols is None:  # assign all atoms to the same molecule
     mols = np.ones(natom, dtype=int)
-  line_fmt = line_formats['atoms']
+  # write text
+  line_fmt = line_formats['atoms_%s' % atom_style]
   text = '\n\nAtoms\n'
-  for iatom, tup in enumerate(zip(mols, symbols, charges, pos)):
-    imol, sym, q, r = tup
+  for iatom, tup in enumerate(zip(symbols, pos)):
+    sym, r = tup
+    sym = symbols[iatom]
     s = species.index(sym) + 1
-    q = convert(q, "charge", "ASE", units)
+    if atom_style in ['charge', 'full', 'dipole']:
+      q = charges[iatom]
+      q = convert(q, "charge", "ASE", units)
     r = convert(r, "distance", "ASE", units)
-    text += line_fmt % (iatom+1, imol, s, q, *r)
+    if atom_style in ['molecule', 'full']:
+      imol = mols[iatom]
+      text += line_fmt % (iatom+1, imol, s, q, *r)
+    elif atom_style in ['dipole']:
+      d = dipoles[iatom]
+      text += line_fmt % (iatom+1, s, q, *r, *d)
+    else:
+      msg = 'atom_style %s not yet available' % atom_style
+      raise NotImplementedError(msg)
   return text
 
 def text_bonds(pairs_dict):
