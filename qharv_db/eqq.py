@@ -31,9 +31,11 @@ def create_h4(case, rsep, rbs=None, orig=None):
     orig = np.zeros(3)
   return com+orig, pos+orig
 
-def make_one_component(atoms, pos, charges):
+def make_one_component(atoms, pos, charges=None):
   from ase import Atoms
   elem = ['H']*len(pos)
+  if charges is None:
+    charges = np.zeros(len(elem), dtype=int)
   pbc = atoms.get_pbc()
   cell = None
   if np.any(pbc):
@@ -72,7 +74,7 @@ def fixeps_quadrupole(atoms, params, rb_max=1.5):
   # reorder to + + - -, one molecule at a time
   idx = index_molecules(len(com))
   # make new Atoms
-  atoms1 = make_one_component(atoms, pos[idx], charges[idx])
+  atoms1 = make_one_component(atoms, pos[idx], charges=charges[idx])
   return atoms1
 
 def fixa_quadrupole(atoms, params, rb_max=1.5):
