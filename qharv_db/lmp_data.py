@@ -88,6 +88,77 @@ def text_atoms(atoms, mols=None, atom_style='full'):
       raise NotImplementedError(msg)
   return text
 
+def text_atoms_hybrid(atoms, atom_styles=None, ndig_float=8,
+  extra_data=None):
+  float_fmt = ' %.' + str(ndig_float) + 'e'
+  # base format: id atype   x     y     z
+  line_fmt = '\n%5d %3d' + (float_fmt*3)
+  format_map = {
+    # q, mux, muy, muz
+    'dipole': float_fmt*4,
+    # diameter, radius
+    'sphere': float_fmt*2,
+  }
+  if atom_styles is not None:
+    for atom_style in atom_styles:
+      if atom_style not in format_map:
+        msg = 'please add "%s" atom_style to format_map' % atom_style
+        raise NotImplementedError(msg)
+      line_fmt += ' ' + format_map[atom_style]
+    atom_style = ' '.join(['hybrid']+atom_styles)
+  else:  # no change to line_fmt
+    atom_style = 'atomic'
+  # fill lines similar to text_atoms
+  from ase.calculators.lammpsrun import convert
+  p = get_prism(atoms.get_cell())
+  species = get_species(atoms)
+  # get Atoms info
+  natom = len(atoms)
+  symbols = atoms.get_chemical_symbols()
+  pos = p.vector_to_lammps(atoms.get_positions(), wrap=True)
+  # additional info for atom_style
+  charge_styles = ['charge', 'full', 'dipole']
+  need_charge = [style in atom_style for style in charge_styles]
+  if need_charge:
+    charges = atoms.get_initial_charges()
+  dipole_styles = ['dipole']
+  need_dipole = [style in atom_style for style in dipole_styles]
+  if need_dipole:
+    dipoles = atoms.get_dipole_moment()
+  # write text
+  text = '\n\nAtoms\n'
+  for iatom, tup in enumerate(zip(symbols, pos)):
+    sym, r = tup
+    sym = symbols[iatom]
+    s = species.index(sym) + 1
+    r = convert(r, "distance", "ASE", units)
+    if need_charge:
+      q = charges[iatom]
+      q = convert(q, "charge", "ASE", units)
+    if need_dipole:
+      d = dipoles[iatom]
+    # fill line with data
+    data = [iatom+1, s, *r]
+    if atom_styles is not None:  # add extra data
+      for astyle in atom_styles:
+        if astyle == 'dipole':
+          data += [q, *d]
+        elif astyle == 'sphere':
+          keys = ['sph_dia', 'sph_dens']
+          for key in keys:
+            try:
+              data += [extra_data[key]]
+            except KeyError as err:
+              msg = 'sphere style requires "%s" in extra_data' % keys
+              raise (msg)
+        else:
+          msg = 'please allocate data for atom_style "%s"' % astyle
+          raise NotImplementedError(msg)
+    line = line_fmt % tuple(data)
+    text += line
+  # end for iatom
+  return text
+
 def text_bonds(pairs_dict):
   line_fmt = line_formats['bonds']
   text = '\n\nBonds\n'
@@ -130,4 +201,23 @@ def text_lammps_data_dimers(atoms, pairs_dict):
   text += atomt
   bondt = text_bonds(pairs_dict)
   text += bondt
+  return text
+
+def text_lammps_data_dipole_sphere(atoms, sph_dia, sph_dens):
+  species = get_species(atoms)
+  na_type = len(species)
+  natom = len(atoms)
+
+  text = 'LAMMPS data\n\n'
+  text += '  %5d atoms\n' % natom
+  text += '\n'
+  text += '  %5d atom types\n' % na_type
+  text += '\n'
+  cellt = text_cell(atoms.cell)
+  text += cellt
+  masst = text_mass(atoms)
+  text += masst
+  atomt = text_atoms_hybrid(atoms, atom_styles=['dipole', 'sphere'],
+    extra_data={'sph_dia': sph_dia, 'sph_dens': sph_dens})
+  text += atomt
   return text
