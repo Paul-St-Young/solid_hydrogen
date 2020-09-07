@@ -132,18 +132,20 @@ def gofr_count(bin_edges, dists):
   gr[ilist] = counts
   return gr
 
-def yl_ysql(yl, ysql):
+def yl_ysql(yl, ysql=None):
   """ calculate mean and error given a list of val and sq
 
   Args:
     yl (list): list of values, (nentry,)
-    ysql (list): list of squares, (nentry,)
+    ysql (list, optional): list of squares, (nentry,)
   Return:
     (np.array, np.array): (ym, ye),
       (mean, error)
   """
   ym = np.mean(yl, axis=0)
   # calculate stddev
+  if ysql is None:
+    ysql = [y**2 for y in yl]
   y2m = np.mean(ysql, axis=0)
   ye = np.sqrt((y2m-ym**2)/(len(yl)-1))
   return ym, ye
@@ -263,5 +265,5 @@ def calc_gofr(bin_edges, axesl, posl):
     gr_norm = gofr_norm(bin_edges, natom, volume)
     gr1 = gofr_count(bin_edges, dists)*gr_norm
     grl.append(gr1)
-  grm, gre = yl_ysql(grl, [gr1**2 for gr1 in grl])
+  grm, gre = yl_ysql(grl)
   return grm, gre
