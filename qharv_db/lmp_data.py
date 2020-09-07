@@ -10,6 +10,8 @@ line_formats = {
   'atoms_full': '\n%5d %5d %3d %.6f %.16e %.16e %.16e',
   #        id atype          q    x     y     z     mux   muy   muz
   'atoms_dipole': '\n%5d %3d %.6f %.16e %.16e %.16e %.16e %.16e %.16e',
+  #        id atype                 x     y     z     q    mux   muy   muz diameter density
+  'atoms_dipole_sphere': '\n%5d %3d %.16e %.16e %.16e %.6f %.16e %.16e %.16e %.16e %.16e',
   #        id   btype   i   j
   'bonds': '\n%5d %3d %5d %5d',
 }
@@ -54,9 +56,9 @@ def text_atoms(atoms, mols=None, atom_style='full'):
   symbols = atoms.get_chemical_symbols()
   pos = p.vector_to_lammps(atoms.get_positions(), wrap=True)
   # additional info for atom_style
-  if atom_style in ['charge', 'full', 'dipole']:
+  if atom_style in ['charge', 'full', 'dipole', 'dipole_sphere']:
     charges = atoms.get_initial_charges()
-  if atom_style in ['dipole']:
+  if atom_style in ['dipole', 'dipole_sphere']:
     dipoles = atoms.get_dipole_moment()
   if mols is None:  # assign all atoms to the same molecule
     mols = np.ones(natom, dtype=int)
@@ -67,7 +69,7 @@ def text_atoms(atoms, mols=None, atom_style='full'):
     sym, r = tup
     sym = symbols[iatom]
     s = species.index(sym) + 1
-    if atom_style in ['charge', 'full', 'dipole']:
+    if atom_style in ['charge', 'full', 'dipole', 'dipole_sphere']:
       q = charges[iatom]
       q = convert(q, "charge", "ASE", units)
     r = convert(r, "distance", "ASE", units)
@@ -77,6 +79,10 @@ def text_atoms(atoms, mols=None, atom_style='full'):
     elif atom_style in ['dipole']:
       d = dipoles[iatom]
       text += line_fmt % (iatom+1, s, q, *r, *d)
+    elif atom_style in ['dipole_sphere']:
+      d = dipoles[iatom]
+      line = line_fmt % (iatom+1, s, *r, q, *d, 0., 1.0)
+      text += line
     else:
       msg = 'atom_style %s not yet available' % atom_style
       raise NotImplementedError(msg)
