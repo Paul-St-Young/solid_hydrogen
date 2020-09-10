@@ -95,11 +95,11 @@ def init_velocities(atoms, temp):
   ZeroRotation(atoms)
 
 # ====================== level 2: param. choice =======================
-def hcp_ac(pgpa):
+def hcp_ac(pgpa, force=False):
   # fit from f23a/hcp-prim/fit.py
   pmin = 20   # GPa
   pmax = 200  # GPa
-  if (pgpa < pmin) or (pgpa > pmax):
+  if ((pgpa < pmin) or (pgpa > pmax)) and (not force):
     msg = 'fit fails below %d GPa or above %d GPa' % (pmin, pmax)
     raise RuntimeError(msg)
   pa = np.array([
@@ -147,16 +147,16 @@ def get_tilematrix(natom):
     raise RuntimeError(msg)
   return tmat
 
-def hcp_supercell(pgpa, natom):
+def hcp_supercell(pgpa, natom, force=False):
   from ase.build.supercells import make_supercell
-  a, c = hcp_ac(pgpa)
+  a, c = hcp_ac(pgpa, force=force)
   atoms0 = hcp_prim_cell(a, c/a)
   tmat = get_tilematrix(natom)
   atoms1 = make_supercell(atoms0, tmat)
   return atoms1
 
-def mhcpc_supercell(pgpa, natom):
-  atoms1 = hcp_supercell(pgpa, natom)
+def mhcpc_supercell(pgpa, natom, force=False):
+  atoms1 = hcp_supercell(pgpa, natom, force=force)
   atoms2 = make_mhcpc(atoms1)
   return atoms2
 
@@ -175,6 +175,18 @@ def drum_eos(vb):
   eha = np.poly1d(popt)(1./vb)
   return eha
 
+def drum_peos(rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
+  rss = np.arange(rsmax, rsmin, -drs)
+  vol = 4*np.pi/3*rss**3  # Bohr^3
+  eha = drum_eos(vol)
+  # fit EOS
+  popt = np.polyfit(vol, eha, norder)
+  # find volume at target pressure
+  p1 = np.polyder(popt, 1)
+  def peos(v):
+    return -np.poly1d(p1)(v)
+  return peos
+
 def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   """Compressibility of solid hydrogen
 
@@ -187,20 +199,12 @@ def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   Return:
     float: bgpa, compressibility in GPa
   """
-  rss = np.arange(rsmax, rsmin, -drs)
-  vol = 4*np.pi/3*rss**3  # Bohr^3
-  eha = drum_eos(vol)
-  # fit EOS
-  popt = np.polyfit(vol, eha, norder)
-  # find volume at target pressure
-  p1 = np.polyder(popt, 1)
+  peos = drum_peos(rsmin=rsmin, rsmax=rsmax, drs=drs, norder=norder)
   gpa = 29421  # ha/B^3 -> GPa
-  def peos(v):
-    return -np.poly1d(p1)(v)*gpa
   from scipy.optimize import minimize_scalar
-  sol = minimize_scalar(lambda v: (peos(v)-pgpa)**2)
+  sol = minimize_scalar(lambda v: (peos(v)*gpa-pgpa)**2)
   myv = sol.x
-  assert np.isclose(peos(myv), pgpa)
+  assert np.isclose(peos(myv)*gpa, pgpa)
   # check rs range
   myrs = (3*myv/(4*np.pi))**(1./3)
   assert (rsmin < myrs) & (myrs < rsmax)
