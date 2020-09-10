@@ -306,20 +306,30 @@ def read_lammps_dump(fdump, nequil=None, iframes=None):
   return traj
 
 def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
+  import pandas as pd
   from qharv.reel import ascii_out, scalar_dat
   mm = ascii_out.read(flog)
   blocks = ascii_out.all_lines_with_tag(mm, header)
-  text = ''
+  dfl = []
   for iblock, idx in enumerate(blocks):
     mm.seek(idx)
-    text1 = ascii_out.block_text(mm, header, trailer, force_tail=True)
-    if iblock == 0:  # mark header
-      text += '# ' + text1
-    else:  # skip header
-      iend = text1.find('\n')
-      text += text1[iend+1:]
+    pre = '# '  # !!!! assume first line is header
+    try:
+      text1 = ascii_out.block_text(mm, header, trailer)
+      df1 = scalar_dat.parse(pre+text1).astype(float)
+    except Exception as err0:
+      mm.seek(idx)  # !!!! decorate "stay" does not finish if Exception
+      if type(err0) is ValueError:  # unfinished restart run
+        text1 = ascii_out.block_text(mm, header, trailer='restart')
+        df1 = scalar_dat.parse(pre+text1).astype(float)
+      elif type(err0) is RuntimeError:  # unfinished final run
+        text1 = ascii_out.block_text(mm, header, trailer, force_tail=True)
+        df1 = scalar_dat.parse(pre+text1).astype(float)
+      else:  # give up
+        raise err0
+    dfl.append(df1)
   mm.close()
-  df = scalar_dat.parse(text)
+  df = pd.concat(dfl, sort=False).reset_index(drop=True)
   return df
 
 def pbar_to_seva(pbar):
