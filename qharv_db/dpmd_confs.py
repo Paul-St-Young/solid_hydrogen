@@ -314,19 +314,19 @@ def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
   for iblock, idx in enumerate(blocks):
     mm.seek(idx)
     pre = '# '  # !!!! assume first line is header
-    try:
+    try:  # clean run from start to finish
       text1 = ascii_out.block_text(mm, header, trailer)
       df1 = scalar_dat.parse(pre+text1).astype(float)
-    except Exception as err0:
-      mm.seek(idx)  # !!!! decorate "stay" does not finish if Exception
-      if type(err0) is ValueError:  # unfinished restart run
+    except Exception as err:
+      mm.seek(idx)  # !!!! decorator "stay" does not finish if Exception
+      if type(err) is ValueError:  # unfinished restart run
         text1 = ascii_out.block_text(mm, header, trailer='restart')
         df1 = scalar_dat.parse(pre+text1).astype(float)
-      elif type(err0) is RuntimeError:  # unfinished final run
+      elif type(err) is RuntimeError:  # unfinished final run
         text1 = ascii_out.block_text(mm, header, trailer, force_tail=True)
         df1 = scalar_dat.parse(pre+text1).astype(float)
       else:  # give up
-        raise err0
+        raise err
     dfl.append(df1)
   mm.close()
   df = pd.concat(dfl, sort=False).reset_index(drop=True)
