@@ -299,11 +299,18 @@ def read_lammps_dump(fdump, nequil=None, iframes=None):
     results = get_particle_results(dc)
     if 'Charge' in results:  # add charges
       atoms.set_initial_charges(results['Charge'])
-    if 'Force' in results:  # add forces
-      from ase.calculators.singlepoint import SinglePointCalculator
-      calc = SinglePointCalculator(atoms, forces=results['Force'])
-      atoms.set_calculator(calc)
+    add_results = {}
+    lmp_names = ['Force', 'Dipole Orientation']
+    ase_names = ['forces', 'dipole']
+    for lmp_name, ase_name in zip(lmp_names, ase_names):
+      if lmp_name in results:
+        add_results[ase_name] = results[lmp_name]
     traj.append(atoms)
+    if len(add_results) > 0:
+      from ase.calculators.singlepoint import SinglePointCalculator
+      calc = SinglePointCalculator(atoms)
+      calc.results.update(add_results)
+      atoms.set_calculator(calc)
   return traj
 
 def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
