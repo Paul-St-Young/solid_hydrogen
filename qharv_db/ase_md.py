@@ -183,6 +183,7 @@ def drum_peos(rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   popt = np.polyfit(vol, eha, norder)
   # find volume at target pressure
   p1 = np.polyder(popt, 1)
+
   def peos(v):
     return -np.poly1d(p1)(v)
   return peos
@@ -212,3 +213,47 @@ def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   p2 = np.polyder(popt, 2)
   bgpa = myv*np.poly1d(p2)(myv)*gpa
   return bgpa
+
+# ===================== level 2: gather output ======================
+def parse_ase_log(flog):
+  from qharv.reel import scalar_dat
+  with open(flog, 'r') as f:
+    lines = f.readlines()
+  header = lines[0]
+  body = '\n'.join(lines[1:])
+
+  def parse_cols(header):
+    cols = []
+    tokens = header.split()
+    i = 0
+    for j in range(len(tokens)):
+      if i >= len(tokens):
+        break
+      token = tokens[i]
+      col = token
+      if token == 'stress':
+        col += tokens[i+1]
+        i += 1
+      if not token.startswith('--'):
+        cols.append(col)
+      i += 1
+    return cols
+  cols = parse_cols(header)
+
+  pcols = ['Pxx', 'Pyy', 'Pzz', 'Pxy', 'Pxz', 'Pyz']
+
+  def expand_stress(cols, pcols):
+    cols1 = []
+    for col in cols:
+      if not col.startswith('stress'):
+        cols1.append(col)
+      else:
+        unit = '[' + col.split('[')[-1]
+        for name in pcols:
+          cols1.append(name+unit)
+    return cols1, unit
+  cols1, unit = expand_stress(cols, pcols)
+  df = scalar_dat.parse(body)
+  df.columns = cols1
+  df[[c+unit for c in pcols]] *= -1
+  return df
