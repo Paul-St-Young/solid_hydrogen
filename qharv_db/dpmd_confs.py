@@ -226,7 +226,7 @@ def get_extxyz_confs(fxyz, confl=None):
 
 def cache_traj_to_set(set_dir, traj, virial=True):
   import os
-  from qharv.plantation.sugar import mkdir
+  from qharv.field.sugar import mkdir
   mkdir(set_dir)
   boxl = [a.get_cell().ravel() for a in traj]
   posl = [a.get_positions().ravel() for a in traj]

@@ -484,7 +484,7 @@ def add_unit_columns(df):
 
 def add_sname_legend(ax, snames, extra_style=None,
   marker=False, **kwargs):
-  from qharv.plantation import kyrt
+  from qharv.field import kyrt
   if extra_style is None:
     extra_style = {}
   styles = []
