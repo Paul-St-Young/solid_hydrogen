@@ -54,7 +54,7 @@ def read_forces(scf_out,ndim=3,which='total'):
         raise RuntimeError('cannot locate %s'%begin_tag)
     elif end_idx == -1:
         # maybe verbosity='low'
-        end_idx = mm.find('Total force =')
+        end_idx = mm.find(b'Total force =')
         if end_idx == -1:
             raise RuntimeError('cannot locate %s'%end_tag)
         # end if
@@ -100,7 +100,7 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
     mm = mmap(fhandle.fileno(),0)
 
     # read number of k points
-    nk_prefix = "number of k points="
+    nk_prefix = b"number of k points="
     idx = mm.find(nk_prefix)
     mm.seek(idx)
 
@@ -108,15 +108,15 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
     nk = int( nk_line.strip(nk_prefix).split()[0] )
 
     # skip to the end of band structure calculation
-    idx = mm.find('End of self-consistent calculation')
-    idx = mm.find('End of band structure calculation')
+    idx = mm.find(b'End of self-consistent calculation')
+    idx = mm.find(b'End of band structure calculation')
     mm.seek(idx)
 
     # read the eigenvalues and occupations at each kpoint
     kpt_prefix = "k ="
     data = []
     for ik in range(nk):
-        idx = mm.find(kpt_prefix)
+        idx = mm.find(kpt_prefix.encode())
         mm.seek(idx)
         kpt_line = mm.readline()
         kxkykz = ascii_out.lr_mark(kpt_line, '=', '(')
@@ -132,7 +132,7 @@ def retrieve_occupations(nscf_outfile, max_nbnd_lines=10):
             eval_arr = np.append(eval_arr, map(float,tokens))
         # end for iline
         
-        idx = mm.find('occupation numbers')
+        idx = mm.find(b'occupation numbers')
         mm.seek(idx)
         mm.readline() # skip current line
         occ_arr = np.array([])
@@ -195,7 +195,7 @@ def available_structures(pw_out,nstruct_max=10000,natom_max=1000,ndim=3
     fhandle = open(pw_out,'r+')
     mm = mmap(fhandle.fileno(),0)
 
-    idx = mm.find('lattice parameter')
+    idx = mm.find(b'lattice parameter')
     mm.seek(idx)
     lat_line = mm.readline()
     alat = float( lat_line.split()[-2] )
@@ -410,14 +410,14 @@ def input_structure(scf_in,put_in_box=True):
 
     # read lattice
     mm.seek(0)
-    idx = mm.find('ibrav')
+    idx = mm.find(b'ibrav')
     mm.seek(idx)
     ibrav_line = mm.readline()
     ibrav = int(ibrav_line.split('=')[-1])
     if ibrav != 0:
         raise NotImplementedError('only ibrav = 0 is supported')
     # end if
-    idx = mm.find('CELL_PARAMETERS')
+    idx = mm.find(b'CELL_PARAMETERS')
     mm.seek(idx)
     header = mm.readline()
     unit = header.split()[-1]
@@ -430,12 +430,12 @@ def input_structure(scf_in,put_in_box=True):
 
     # read atomic positions
     mm.seek(0) # rewind
-    idx = mm.find('nat')
+    idx = mm.find(b'nat')
     mm.seek(idx)
     nat_line = mm.readline()
     nat = int(nat_line.split('=')[-1])
 
-    idx = mm.find('ATOMIC_POSITIONS')
+    idx = mm.find(b'ATOMIC_POSITIONS')
     mm.seek(idx)
     header = mm.readline()
     unit = header.split()[-1]
@@ -488,7 +488,7 @@ def read_stress(pw_out,stress_tag = 'total   stress  (Ry/bohr**3)',nstruct_max=4
     # make sure we are about to read the correct block of text
     assert tokens[2].strip('()') == 'Ry/bohr**3'
     assert tokens[3].strip('()') == 'kbar'
-    idx = header.find('P=')
+    idx = header.find(b'P=')
     press = float(header[idx:].strip('P=')) # average pressure in kbar, used for checking only
     au_mat   = [] # pressure in Ry/bohr**3
     kbar_mat = [] # pressure in kbar
@@ -766,7 +766,7 @@ def parse_nscf_bands(nscf_out, span=7, trailer='occupation numbers'):
     #  then read body
     body = mm[mm.tell():idx1].strip('\n')
     if trailer in body:
-      idx2 = mm.find(trailer)
+      idx2 = mm.find(trailer.encode())
       body = mm[mm.tell():idx2].strip('\n')
     row = parse_float_body(body)
     mat.append(row)
@@ -796,7 +796,7 @@ def read_kpoints(scf_out):
   blat = 2*np.pi/alat
 
   # start parsing k points
-  idx = mm.find('number of k points')
+  idx = mm.find(b'number of k points')
   mm.seek(idx)
 
   # read first line
@@ -821,12 +821,12 @@ def read_kfracs(scf_out):
   from qharv.reel import ascii_out
   mm = ascii_out.read(scf_out)
   # get number of kpoints
-  idx = mm.find('number of k points')
+  idx = mm.find(b'number of k points')
   mm.seek(idx)
   line = mm.readline()
   nk = int(line.split('=')[1].split()[0])
   # find first line
-  idx = mm.find('cryst. coord.')
+  idx = mm.find(b'cryst. coord.')
   mm.seek(idx)
   mm.readline()
   # read kpoints and weights
@@ -923,7 +923,7 @@ def get_occ_df(kvecs, norbs):
 def read_cell(scf_in, ndim=3):
   with open(scf_in,'r+') as f:
     mm = mmap(f.fileno(), 0)
-  idx = mm.find('CELL_PARAMETERS')
+  idx = mm.find(b'CELL_PARAMETERS')
   mm.seek(idx)
   header = mm.readline()
   unit = header.split()[-1]
@@ -942,7 +942,7 @@ def read_out_cell(scf_out, ndim=3):
   axes = np.zeros([ndim, ndim])
   from qharv.reel import ascii_out
   mm = ascii_out.read(scf_out)
-  idx = mm.find('crystal axes')
+  idx = mm.find(b'crystal axes')
   mm.seek(idx)
   mm.readline()
   for idim in range(ndim):
@@ -986,14 +986,14 @@ def read_sym_ops(scf_out, ndim=3):
   mm = ascii_out.read(scf_out)
 
   # find starting location of symmetry operator output
-  idx = mm.find('Sym. Ops.')
+  idx = mm.find(b'Sym. Ops.')
   if idx == -1:
     msg = 'no symmetry operations printed in %s. Is verbosity high?' % scf_out
     raise RuntimeError(msg)
   # rewind to beginning of line
-  idx0 = mm.rfind('\n', 0, idx)
+  idx0 = mm.rfind(b'\n', 0, idx)
   mm.seek(idx0+1)
-  header = mm.readline()
+  header = mm.readline().decode()
   nsym = int(header.split()[0])
 
   # check the number of symmetry outputs
@@ -1007,7 +1007,7 @@ def read_sym_ops(scf_out, ndim=3):
     mm.seek(idx)
 
     # read symmetry index and name: isym, name
-    line0 = mm.readline()
+    line0 = mm.readline().decode()
     text0 = line0.split('=')[1]
     tokens0 = text0.split()
     isym = int(tokens0[0])
@@ -1017,18 +1017,18 @@ def read_sym_ops(scf_out, ndim=3):
     vec = [0]*ndim
     if 'cart. axis' in name:
       vect = ascii_out.lr_mark(line0, '[', ']')
-      vec[:] = map(float, vect.split(','))
+      vec[:] = list(map(float, vect.split(',')))
 
     # read rotation matrix: mat
     mat = []
-    idx = mm.find('cryst.')
+    idx = mm.find(b'cryst.')
     mm.readline()  # skip empty line
     for idim in range(ndim):
-      line = mm.readline()
+      line = mm.readline().decode()
       if 'cryst.' in line:
         line = line.split('=')[1]
       text = ascii_out.lr_mark(line, '(', ')')
-      mat.append(map(float, text.split()))
+      mat.append(list(map(float, text.split())))
     entry = {
       'isym': isym,
       'name': name,
@@ -1071,7 +1071,7 @@ def get_gc_occ(bands, efermi):
 def get_tgrid_tshift(nscf_in):
   from qharv.reel import ascii_out
   mm = ascii_out.read(nscf_in)
-  idx = mm.find('K_POINTS automatic')
+  idx = mm.find(b'K_POINTS automatic')
   mm.seek(idx)
   mm.readline()
   kline = mm.readline()
