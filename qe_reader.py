@@ -1077,7 +1077,7 @@ def get_tgrid_tshift(nscf_in):
   kline = mm.readline()
   mm.close()
 
-  nums = map(int, kline.split())
+  nums = list(map(int, kline.split()))
   tgrid = np.array(nums[:3])
   tshift = np.array(nums[3:])
   return tgrid, tshift
