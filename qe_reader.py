@@ -758,13 +758,13 @@ def parse_nscf_bands(nscf_out, span=7, trailer='occupation numbers'):
     # parse band output
     #  first read header
     mm.seek(idx0)
-    header = mm.readline()
+    header = mm.readline().decode()
     if not 'bands (ev)' in header: continue
     kxkykz = ascii_out.lr_mark(header, '=', '(')
     kvec = scanf_7f(kxkykz, ndim)
     kvecs.append(kvec)
     #  then read body
-    body = mm[mm.tell():idx1].strip('\n')
+    body = mm[mm.tell():idx1].decode().strip('\n')
     if trailer in body:
       idx2 = mm.find(trailer.encode())
       body = mm[mm.tell():idx2].strip('\n')
