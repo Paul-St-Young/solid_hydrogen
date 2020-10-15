@@ -175,7 +175,7 @@ def drum_eos(vb):
   eha = np.poly1d(popt)(1./vb)
   return eha
 
-def drum_peos(rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
+def drum_peos(rsmin=1.31, rsmax=1.8, drs=0.005, norder=5, return_popt=False):
   rss = np.arange(rsmax, rsmin, -drs)
   vol = 4*np.pi/3*rss**3  # Bohr^3
   eha = drum_eos(vol)
@@ -186,7 +186,11 @@ def drum_peos(rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
 
   def peos(v):
     return -np.poly1d(p1)(v)
-  return peos
+
+  ret = peos
+  if return_popt:
+    ret = (peos, popt)
+  return ret
 
 def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   """Compressibility of solid hydrogen
@@ -200,7 +204,8 @@ def drum_bgpa(pgpa, rsmin=1.31, rsmax=1.8, drs=0.005, norder=5):
   Return:
     float: bgpa, compressibility in GPa
   """
-  peos = drum_peos(rsmin=rsmin, rsmax=rsmax, drs=drs, norder=norder)
+  peos, popt = drum_peos(rsmin=rsmin, rsmax=rsmax, drs=drs, norder=norder,
+    return_popt=True)
   gpa = 29421  # ha/B^3 -> GPa
   from scipy.optimize import minimize_scalar
   sol = minimize_scalar(lambda v: (peos(v)*gpa-pgpa)**2)
