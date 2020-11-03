@@ -189,10 +189,38 @@ def gr2compressibility(grx,gry,rho):
     return 1.+val
 # end def
 
+def dsk_from_csk(fp, csk_name, nequil, kappa=None):
+  """ extract fluctuating structure factor dS(k) from charged structure factor
+
+  Args:
+    fp (h5py.File): stat.h5 handle
+    csk_name (str): name the charged S(k) estimator, likely 'csk'
+    nequil (int): equilibration length
+    kappa (float, optional): auto-correlation, default recalculate
+
+  Return:
+    (np.array, np.array, np.array): (kvecs, dskm, dske),
+     kvectors and S(k) mean and error
+  """
+  from qharv.reel.stat_h5 import me2d
+  # get data
+  kpt_path = '%s/kpoints/value' % csk_name
+  csk_path = '%s/csk/value' % csk_name
+  crho_path = '%s/crhok/value' % csk_name
+  kvecs = fp[kpt_path][()]
+  cska = fp[csk_path][()]
+  crhoa = fp[crho_path][()]
+  nblock, nspin, nk = cska.shape
+
+  # get dsk using equilibrated data
+  dska = cska[nequil:] - crhoa[nequil:]**2
+  dskm, dske = me2d(dska)
+  return kvecs, dskm, dske
+
 def csk1d(fh5, nequil):
   from qharv.reel import stat_h5
   fp = stat_h5.read(fh5)
-  kvecs, dskm, dske = stat_h5.dsk_from_csk(fp, 'csk', nequil)
+  kvecs, dskm, dske = dsk_from_csk(fp, 'csk', nequil)
   fp.close()
   dskm1 = dskm.sum(axis=0)
   dske1 = (dske**2).sum(axis=0)**0.5
