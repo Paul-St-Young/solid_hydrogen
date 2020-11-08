@@ -108,14 +108,15 @@ def classical_qe(temp, pgpa=None, **kwargs):
     'stride': str(nconf),
     'flush': '1',
     'cell_units': 'angstrom',
-  })
+  }, text='positions')
   ftraj = xml.make_node('trajectory', {
     'filename': 'frc',
     'stride': str(nconf),
     'flush': '1',
     'cell_units': 'angstrom',
-  })
-  xml.append(output, [props, ptraj, ftraj])
+  }, text='forces')
+  check = xml.make_node('checkpoint', {'stride': str(nconf)})
+  xml.append(output, [props, ptraj, ftraj, check])
   # assemble
   xml.append(sim, [system, output])
   doc = xml.etree.ElementTree(sim)
