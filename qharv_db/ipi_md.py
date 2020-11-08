@@ -1,6 +1,7 @@
+import numpy as np
 from qharv.seed import xml
 
-# ========================== level 0: input =========================
+# ======================= level 0: basic input ======================
 def barostat(taup, taut):
   baro = xml.make_node('barostat', {'mode': 'isotropic'})
   cell_thermo = xml.make_node('thermostat', {'mode': 'langevin'})
@@ -29,11 +30,99 @@ def ensemble(temp, pgpa=None):
     ens.append(pnode)
   return ens
 
+def properties(props=None, **kwargs):
+  if props is None:
+    quantum = kwargs.pop('quantum', False)
+    props = default_properties(quantum=quantum)
+  text = text_arr(np.array(props))
+  # defaults
+  attrib = {
+    'stride': str(kwargs.pop('stride', '1')),
+    'flush': str(kwargs.pop('flush', '1')),
+    'filename': str(kwargs.pop('filename', 'out')),
+  }
+  prop = xml.make_node('properties', attrib, text)
+  return prop
+
 def parse_arr_text(text):
-  import numpy as np
   nums = text.split('[')[1].split(']')[0].split(',')
   arr = np.array(nums, dtype=float)
   return arr
+
+def text_arr(arr, **kwargs):
+  return np.array2string(arr, separator=',', **kwargs)
+
+# ====================== level 1: custom input ======================
+def default_properties(quantum=False):
+  e = '{electronvolt}'
+  p = '{megapascal}'
+  # stability
+  props = ['step', 'time{picosecond}', 'conserved'+e, 'potential'+e]
+  # ensemble control
+  props += ['temperature{kelvin}', 'pressure_md'+p]
+  # other
+  props += ['virial_cv'+p]
+  if quantum:
+    props += ['kinetic_tdsc'+e, 'kstress_tdsc'+p]
+  return props
+
+def classical_qe(temp, pgpa=None, **kwargs):
+  ens_name = 'nvt'
+  if pgpa is not None:
+    ens_name = 'npt'
+  # defaults
+  prefix = kwargs.pop('prefix', 'qemd')
+  ntherm = kwargs.pop('ntherm', 2)  # property output
+  nconf = kwargs.pop('nconf', 20)  # conf. output
+  dtfs = kwargs.pop('dtfs', 0.5)  # timestep in fs
+  taut = kwargs.pop('taut', 100)  # fs
+  taup = kwargs.pop('taup', 100)  # fs
+  # make input pieces
+  sim = xml.make_node('simulation', {'verbosity': 'high'})
+  # <system>: init, forces, ensemble, dynamics
+  system = xml.make_node('system')
+  init = xml.make_node('initialize', {'nbeads': '1'})
+  fnode = xml.make_node('file', {'mode': 'xyz'}, 'init.xyz')
+  vnode = xml.make_node('velocities',
+    {'mode': 'thermal', 'units': 'kelvin'}, str(temp))
+  xml.append(init, [fnode, vnode])
+  forces = xml.make_node('forces')
+  forces.append(xml.make_node('force', {'forcefield': 'qe'}))
+  mot = xml.make_node('motion', {'mode': 'dynamics'})
+  dyn = xml.make_node('dynamics', {'mode': ens_name})
+  ts = xml.make_node('timestep', {'units': 'femtosecond'}, str(dtfs))
+  tnode = pileg(taut)
+  dnodes = [ts, tnode]
+  if pgpa is not None:
+    baro = barostat(taup, taut)
+    dnodes.append(baro)
+  xml.append(dyn, dnodes)
+  mot.append(dyn)
+  ens = ensemble(temp, pgpa=pgpa)
+  xml.append(system, [init, forces, mot, ens])
+  # <output>: properties, trajectory, checkpoint
+  output = xml.make_node('output', {'prefix': prefix})
+  props = properties(quantum=False, stride=ntherm)
+  ptraj = xml.make_node('trajectory', {
+    'filename': 'pos',
+    'stride': str(nconf),
+    'flush': '1',
+    'cell_units': 'angstrom',
+  })
+  ftraj = xml.make_node('trajectory', {
+    'filename': 'frc',
+    'stride': str(nconf),
+    'flush': '1',
+    'cell_units': 'angstrom',
+  })
+  xml.append(output, [props, ptraj, ftraj])
+  # assemble
+  xml.append(sim, [system, output])
+  doc = xml.etree.ElementTree(sim)
+  # ??? <ffsocket>
+  # ??? <prng>
+  # ??? <total_steps>
+  return doc
 
 # ======================== level 1: structure =======================
 def text_ipi_xyz(atoms, fxyz='/var/tmp/ipi.xyz'):
