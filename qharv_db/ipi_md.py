@@ -83,8 +83,8 @@ def classical_qe(temp, pgpa=None, **kwargs):
   system = xml.make_node('system')
   init = xml.make_node('initialize', {'nbeads': '1'})
   fnode = xml.make_node('file', {'mode': 'xyz'}, 'init.xyz')
-  vnode = xml.make_node('velocities',
-    {'mode': 'thermal', 'units': 'kelvin'}, str(temp))
+  vnode = xml.make_node('velocities', {
+    'mode': 'thermal', 'units': 'kelvin'}, str(temp))
   xml.append(init, [fnode, vnode])
   forces = xml.make_node('forces')
   forces.append(xml.make_node('force', {'forcefield': 'qe'}))
@@ -153,3 +153,33 @@ def text_ipi_xyz(atoms, fxyz='/var/tmp/ipi.xyz'):
     for line in f:
       text1 += line
   return text1
+
+# ======================= level 0: basic output ======================
+def read_ipi_log(flog):
+  # interpret header lines
+  header = '# '
+  text = ''
+  with open(flog, 'r') as f:
+    for line in f:
+      if line.startswith('#'):  # header
+        if 'col' not in line:
+          msg = 'cannot parse: ' + line
+          raise RuntimeError(msg)
+        col_index, col_label = line.split('-->')
+        name = col_label.split()[0]
+        if 'cols' in line:  # multi-column
+          ij = col_index.split()[2].split('-')
+          i, j = list(map(int, ij))
+          ncol = j-i+1
+          for icol in range(ncol):
+            header += '%s_%d ' % (name, icol)
+        else:
+          header += name + ' '
+      else:  # data
+        text += line
+  # make Scalar TABle format
+  header += '\n'
+  text1 = header + text
+  # parse known format
+  df = scalar_dat.parse(text1)
+  return df
