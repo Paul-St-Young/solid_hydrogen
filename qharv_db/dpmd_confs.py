@@ -1,5 +1,38 @@
 import numpy as np
 
+def write_set(set_dir, traj, virial=True):
+  import os
+  from qharv.field.sugar import mkdir
+  mkdir(set_dir)
+  boxl = [a.get_cell().ravel() for a in traj]
+  posl = [a.get_positions().ravel() for a in traj]
+  el = [a.get_potential_energy() for a in traj]
+  forl = [a.get_forces().ravel() for a in traj]
+  names = ['box', 'coord', 'energy', 'force']
+  vals = [boxl, posl, el, forl]
+  if virial:
+    virl = [-a.get_volume()*a.get_stress(voigt=False).ravel()
+            for a in traj]
+    names.append('virial')
+    vals.append(virl)
+  for name, val in zip(names, vals):
+    np.save(os.path.join(set_dir, '%s.npy' % name), val)
+
+def read_set(set_dir, virial=True):
+  import os
+  names = ['box', 'coord', 'energy', 'force']
+  if virial:
+    names.append('virial')
+  vals = []
+  for name in names:
+    fname = os.path.join(set_dir, '%s.npy' % name)
+    arr = np.load(fname)
+    vals.append(arr)
+  return names, vals
+
+def cache_traj_to_set(*args, **kwargs):
+  return write_set(*args, **kwargs)
+
 def get_path(ref_dir, temp=1500, rs=1.51, natom=96):
   path = '%s/T%d/RS%3.2fN%d' % (ref_dir, temp, rs, natom)
   return path
@@ -223,36 +256,6 @@ def get_extxyz_confs(fxyz, confl=None):
     confl = range(nframe)
   traj = [traj0[iconf] for iconf in confl]
   return traj
-
-def cache_traj_to_set(set_dir, traj, virial=True):
-  import os
-  from qharv.field.sugar import mkdir
-  mkdir(set_dir)
-  boxl = [a.get_cell().ravel() for a in traj]
-  posl = [a.get_positions().ravel() for a in traj]
-  el = [a.get_potential_energy() for a in traj]
-  forl = [a.get_forces().ravel() for a in traj]
-  names = ['box', 'coord', 'energy', 'force']
-  vals = [boxl, posl, el, forl]
-  if virial:
-    virl = [-a.get_volume()*a.get_stress(voigt=False).ravel()
-            for a in traj]
-    names.append('virial')
-    vals.append(virl)
-  for name, val in zip(names, vals):
-    np.save(os.path.join(set_dir, '%s.npy' % name), val)
-
-def read_set(set_dir, virial=True):
-  import os
-  names = ['box', 'coord', 'energy', 'force']
-  if virial:
-    names.append('virial')
-  vals = []
-  for name in names:
-    fname = os.path.join(set_dir, '%s.npy' % name)
-    arr = np.load(fname)
-    vals.append(arr)
-  return names, vals
 
 def write_lammps_dump(fout, fxyz, charge=False, columns=None):
   import os
