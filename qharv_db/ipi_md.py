@@ -226,6 +226,7 @@ def read_ipi_xyz(fxyz):
   return traj
 
 def read_ipi_bead(fpos, ffrc):
+  from ase import units
   traj0 = read_ipi_xyz(fpos)
   traj1 = read_ipi_xyz(ffrc)
   for atoms0, atoms1 in zip(traj0, traj1):
@@ -238,4 +239,23 @@ def read_ipi_bead(fpos, ffrc):
     assert 'forces_unit' in info1
     info0['forces_unit'] = info1['forces_unit']
     atoms0.arrays['forces'] = atoms1.get_positions()
+    # change units to angstrom, ev/ang
+    pu = info0['positions_unit']
+    if pu == 'angstrom':
+      pass  # no conversion
+    elif pu == 'atomic_unit':
+      pos = atoms0.get_positions()
+      atoms0.set_positions(pos*units.Bohr)
+    else:
+      msg = 'unknown position unit %s' % pu
+      raise RuntimeError(msg)
+    fu = info0['forces_unit']
+    if fu == 'ev/ang':
+      pass  # no conversion
+    elif fu == 'atomic_unit':
+      forces = atoms0.arrays['forces']
+      atoms0.arrays['forces'] = forces*units.eV/units.Bohr
+    else:
+      msg = 'unknown force unit %s' % fu
+      raise RuntimeError(msg)
   return traj0
