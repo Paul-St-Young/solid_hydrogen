@@ -114,7 +114,7 @@ def classical_qe(temp, pgpa=None, **kwargs):
     'stride': str(nconf),
     'flush': '1',
     'cell_units': 'angstrom',
-  }, text='forces{angstrom}')
+  }, text='forces{ev/ang}')
   check = xml.make_node('checkpoint', {'stride': str(nconf)})
   xml.append(output, [props, ptraj, ftraj, check])
   # assemble
