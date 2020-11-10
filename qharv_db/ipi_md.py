@@ -156,6 +156,7 @@ def text_ipi_xyz(atoms, fxyz='/var/tmp/ipi.xyz'):
 
 # ======================= level 0: basic output ======================
 def read_ipi_log(flog):
+  from qharv.reel import scalar_dat
   # interpret header lines
   header = '# '
   text = ''
