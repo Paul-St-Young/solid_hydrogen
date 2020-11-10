@@ -108,13 +108,13 @@ def classical_qe(temp, pgpa=None, **kwargs):
     'stride': str(nconf),
     'flush': '1',
     'cell_units': 'angstrom',
-  }, text='positions')
+  }, text='positions{angstrom}')
   ftraj = xml.make_node('trajectory', {
     'filename': 'frc',
     'stride': str(nconf),
     'flush': '1',
     'cell_units': 'angstrom',
-  }, text='forces')
+  }, text='forces{angstrom}')
   check = xml.make_node('checkpoint', {'stride': str(nconf)})
   xml.append(output, [props, ptraj, ftraj, check])
   # assemble
@@ -184,3 +184,58 @@ def read_ipi_log(flog):
   # parse known format
   df = scalar_dat.parse(text1)
   return df
+
+def read_ipi_xyz(fxyz):
+  from ase import io
+  from ase.cell import Cell
+  from qharv.reel import ascii_out
+  mm = ascii_out.read(fxyz)
+  idxl = ascii_out.all_lines_with_tag(mm, '# ')
+  traj = io.read(fxyz, ':')
+  nhead = len(idxl)
+  nbody = len(traj)
+  if nhead != nbody:
+    msg = 'found %d headers for %d bodies' % (nhead, nbody)
+    raise RuntimeError(msg)
+  headers = []
+  for idx in idxl:
+    mm.seek(idx)
+    header = mm.readline().decode()
+    headers.append(header)
+  mm.close()
+
+  for header, atoms in zip(headers, traj):
+    tokens = header.strip('#').split()
+    # read cell
+    i0 = tokens.index('CELL(abcABC):')
+    cellpart = tokens[i0+1:i0+7]
+    cellpar = np.array(cellpart, dtype=float)
+    cell = Cell.fromcellpar(cellpar)
+    atoms.set_cell(cell)
+    atoms.set_pbc(True)
+    # read info
+    atoms.info = {}
+    for i, tok in enumerate(tokens):
+      if (i >= i0) and (i < i0+7):
+        continue
+      if tok.endswith(':'):  # key-val pair
+        atoms.info[tok[:-1]] = tokens[i+1]
+      if ('{' in tok) and ('}' in tok):  # unit
+        key, val = tok.split('{')
+        atoms.info[key+'_unit'] = val[:-1]
+  return traj
+
+def read_ipi_bead(fpos, ffrc):
+  traj0 = read_ipi_xyz(fpos)
+  traj1 = read_ipi_xyz(ffrc)
+  for atoms0, atoms1 in zip(traj0, traj1):
+    info0 = atoms0.info
+    info1 = atoms1.info
+    assert info0['Step'] == info1['Step']
+    assert info0['Bead'] == info1['Bead']
+    assert np.allclose(atoms0.get_cell(), atoms1.get_cell())
+    assert 'positions_unit' in info0
+    assert 'forces_unit' in info1
+    info0['forces_unit'] = info1['forces_unit']
+    atoms0.arrays['forces'] = atoms1.get_positions()
+  return traj0
