@@ -36,3 +36,24 @@ def find_folder(gc, path, root, verbose=False):
     msg += ' expected %s' % path
     raise RuntimeError(msg)
   return target
+
+def ls(gc, folder_id):
+  from itertools import chain
+  gen = chain(gc.listItem(folder_id), gc.listFolder(folder_id))
+  return gen
+
+def same_atoms(atoms0, atoms1, verbose=False):
+  import numpy as np
+  same_natom = len(atoms0) == len(atoms1)
+  same_cell = np.allclose(atoms0.get_cell(), atoms1.get_cell())
+  same_pbc = np.allclose(atoms0.get_pbc(), atoms1.get_pbc())
+  same_pos = np.allclose(atoms0.get_positions(), atoms1.get_positions())
+  same = same_natom and same_cell and same_pbc and same_pos
+  if (not same) and verbose:
+    names = ['natom', 'cell', 'pbc', 'pos']
+    sames = [same_natom, same_cell, same_pbc, same_pos]
+    msg = ''
+    for name, s1 in zip(names, sames):
+      msg += '%s=%d; ' % (name, s1)
+    print(msg)
+  return same
