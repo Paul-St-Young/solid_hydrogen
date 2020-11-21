@@ -251,6 +251,56 @@ def legal_kvecs(axes, nsh, eps=1e-8):
   sel = (kmags>eps) & (kvecs[:, 2]>=0)
   return kvecs[sel]
 
+def kshell_sels(kmags, zoom):
+  kints = np.round(kmags*zoom).astype(int)
+  unique_kints = np.unique(kints)
+  nsh = len(unique_kints)
+  sels = []
+  for ish in range(nsh):
+    kint = unique_kints[ish]  # shell integer label
+    sel = kints == kint       # select this shell
+    sels.append(sel)
+  return sels
+
+def shavg(kmags, dskm, zoom=100.):
+  # determine kshells by rounding kmags
+  sels = kshell_sels(kmags, zoom)
+  nsh = len(sels)
+  # loop over each shell and average
+  uk = np.zeros(nsh)
+  uskm = np.zeros(nsh)
+  for ish, sel in enumerate(sels):
+    uk[ish] = np.mean(kmags[sel])
+    uskm[ish] = np.mean(dskm[sel])
+  return uk, uskm
+
+def calc_sofk_npt(bin_edges, axesl, posl, nsh=8):
+  kmin = bin_edges.min()
+  kmax = bin_edges.max()
+  dk = bin_edges[1]-bin_edges[0]
+  dk1 = bin_edges[2]-bin_edges[1]
+  if not np.isclose(dk, dk1):
+    msg = 'not a linear grid'
+    raise RuntimeError(msg)
+  nk = len(bin_edges) - 1
+  skl = []
+  for axes, pos in zip(axesl, posl):
+    kvecs = legal_kvecs(axes, nsh)
+    kmags = np.linalg.norm(kvecs, axis=-1)
+    if kmags.max() < kmax:
+      msg = 'increase nsh=%d for kmax=%f' % (nsh, kmax)
+      raise RuntimeError(msg)
+    sk1 = Sk(kvecs, pos)
+    uk1, usk1 = shavg(kmags, sk1)
+    # histogram for NPT
+    msk1 = np.zeros(nk)
+    idx = ((uk1-kmin)//dk).astype(int)
+    sel = idx < nk
+    msk1[idx[sel]] = usk1[sel]
+    skl.append(msk1)
+  uskm, uske = yl_ysql(skl)
+  return uskm, uske
+
 def calc_gofr(bin_edges, axesl, posl):
   from ase.geometry import get_distances
   grl = []
