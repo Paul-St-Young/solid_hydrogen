@@ -316,6 +316,14 @@ def read_lammps_dump(fdump, nequil=None, iframes=None):
       atoms.set_calculator(calc)
   return traj
 
+def strip_warnings(text, warn_str='WARNING'):
+  lines = text.split('\n')
+  text1 = ''
+  for line in lines:
+    if not warn_str in line:
+      text1 += line+'\n'
+  return text1
+
 def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
   import pandas as pd
   from qharv.reel import ascii_out, scalar_dat
@@ -327,14 +335,17 @@ def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
     pre = '# '  # !!!! assume first line is header
     try:  # clean run from start to finish
       text1 = ascii_out.block_text(mm, header, trailer)
+      text1 = strip_warnings(text1)
       df1 = scalar_dat.parse(pre+text1).astype(float)
     except Exception as err:
       mm.seek(idx)  # !!!! decorator "stay" does not finish if Exception
       if type(err) is ValueError:  # unfinished restart run
         text1 = ascii_out.block_text(mm, header, trailer='restart')
+        text1 = strip_warnings(text1)
         df1 = scalar_dat.parse(pre+text1).astype(float)
       elif type(err) is RuntimeError:  # unfinished final run
         text1 = ascii_out.block_text(mm, header, trailer, force_tail=True)
+        text1 = strip_warnings(text1)
         df1 = scalar_dat.parse(pre+text1).astype(float)
       else:  # give up
         raise err
