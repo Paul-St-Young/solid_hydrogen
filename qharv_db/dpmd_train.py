@@ -1,7 +1,7 @@
 def descriptor(rcut=4, desc_type='se_ar'):
+  smth_frac = 0.85
+  mneiba = 150
   if desc_type == 'se_ar':
-    smth_frac = 0.85
-    mneiba = 150
     rmult = 1.5
     mneibr = 500
     ar_smth = rcut*smth_frac
@@ -11,7 +11,7 @@ def descriptor(rcut=4, desc_type='se_ar'):
         'sel': [mneiba],
         'rcut_smth': ar_smth,
         'rcut': rcut,
-        'neutron': [10, 20, 40],
+        'neuron': [10, 20, 40],
         'resnet_dt': False,
         'axis_neuron': 4,
         'seed': 1,
@@ -24,6 +24,19 @@ def descriptor(rcut=4, desc_type='se_ar'):
         'resnet_dt': False,
         'seed': 1
       }
+    }
+  elif desc_type == 'se_a':
+    desc = {
+      'type': 'se_a',
+      'a': {
+        'sel': [mneiba],
+        'rcut_smth': rcut*smth_frac,
+        'rcut': rcut,
+        'neuron': [16, 32, 64],
+        'resnet_dt': False,
+        'axis_neuron': 4,
+        'seed': 1,
+      },
     }
   else:
     msg = 'please add inputs for descriptor type %s' % desc_type
@@ -57,7 +70,8 @@ def calc_decay_steps(stop_batch, start_lr, stop_lr, decay_rate):
 
 def learning_rate(stop_batch, start_lr=5e-3, stop_lr=5e-8,
   decay_rate=0.95):
-  decay_steps = calc_decay_steps(stop_batch)
+  decay_steps = calc_decay_steps(stop_batch, start_lr, stop_lr,
+    decay_rate)
   lr = {
     'type': 'exp',
     'start_lr': start_lr,
@@ -93,11 +107,13 @@ def training(stop_batch, batch_size):
   tr.update(checkpoint)
   return tr
 
-def default_input(stop_batch=100000, batch_size=32):
+def default_input(stop_batch=100000, batch_size=32, desc_kws=None):
+  if desc_kws is None:
+    desc_kws = dict()
   dpmd_input = {
     'model': {
       'type_map': ['H'],
-      'descriptor': descriptor(),
+      'descriptor': descriptor(**desc_kws),
       'fitting_net': fitting_net(),
     },
     'loss': loss_function(),
