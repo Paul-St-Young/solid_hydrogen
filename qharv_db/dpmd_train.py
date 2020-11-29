@@ -28,15 +28,13 @@ def descriptor(rcut=4, desc_type='se_ar'):
   elif desc_type == 'se_a':
     desc = {
       'type': 'se_a',
-      'a': {
-        'sel': [mneiba],
-        'rcut_smth': rcut*smth_frac,
-        'rcut': rcut,
-        'neuron': [16, 32, 64],
-        'resnet_dt': False,
-        'axis_neuron': 4,
-        'seed': 1,
-      },
+      'sel': [mneiba],
+      'rcut_smth': rcut*smth_frac,
+      'rcut': rcut,
+      'neuron': [16, 32, 64],
+      'resnet_dt': False,
+      'axis_neuron': 4,
+      'seed': 1,
     }
   else:
     msg = 'please add inputs for descriptor type %s' % desc_type
