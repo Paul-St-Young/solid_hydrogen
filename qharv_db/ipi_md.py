@@ -44,9 +44,9 @@ def properties(props=None, **kwargs):
   prop = xml.make_node('properties', attrib, text)
   return prop
 
-def parse_arr_text(text):
+def parse_arr_text(text, dtype=float):
   nums = text.split('[')[1].split(']')[0].split(',')
-  arr = np.array(nums, dtype=float)
+  arr = np.array(nums, dtype=dtype)
   return arr
 
 def text_arr(arr, **kwargs):
@@ -259,3 +259,41 @@ def read_ipi_bead(fpos, ffrc):
       msg = 'unknown force unit %s' % fu
       raise RuntimeError(msg)
   return traj0
+
+# ========================= level 1: restart ========================
+def read_restart_atoms(frs):
+  from ase import Atoms
+  bohr = 0.529177210903  # CODATA 2018
+  from qharv_db import ipi_md
+  axes = read_restart_cell(frs)
+  elem, posl = read_restart_beads(frs)
+  traj = [Atoms(elem, cell=axes*bohr, pbc=1, positions=pos*bohr) for
+    pos in posl]
+  return traj
+
+def read_restart_cell(fres):
+  doc = xml.read(fres)
+  cnode = doc.find('.//cell')
+  text = cnode.text
+  cvec = parse_arr_text(text)
+  ndim = int(round(len(cvec)**0.5))
+  assert ndim**2 == len(cvec)
+  cell = cvec.reshape(ndim, ndim)
+  return cell
+
+def read_restart_beads(fres):
+  doc = xml.read(fres)
+  bnode = doc.find('.//beads')
+  natom = int(bnode.get('natoms'))
+  nbead = int(bnode.get('nbeads'))
+  ql = bnode.findall('.//q')
+  assert len(ql) == nbead
+  elem = parse_arr_text(bnode.find('.//names').text, dtype=str)
+  elem = [e.replace('\n', '').strip() for e in elem]
+  assert len(elem) == natom
+  posl = []
+  for qnode in ql:
+    pvec = parse_arr_text(qnode.text)
+    pos = pvec.reshape(natom, -1)
+    posl.append(pos)
+  return elem, posl
