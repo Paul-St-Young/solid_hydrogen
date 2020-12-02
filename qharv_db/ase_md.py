@@ -262,3 +262,31 @@ def parse_ase_log(flog):
   df.columns = cols1
   df[[c+unit for c in pcols]] *= -1
   return df
+
+def read_qe_cell(mm, ndim=3):
+  alat = ascii_out.name_sep_val(mm, 'lattice parameter (alat)')
+  rowl = []
+  for idim in range(ndim):
+    idx = mm.find(b'a(%d)' % (idim+1))
+    mm.seek(idx)
+    line = mm.readline().decode()
+    rowt = line.split('=')[1]
+    row = list(map(float, rowt.split('(')[1].split(')')[0].split()))
+    rowl.append(row)
+  axes = alat*np.array(rowl)
+  return axes
+
+def read_qe_pos(mm):
+  alat = ascii_out.name_sep_val(mm, 'lattice parameter (alat)')
+  natom = ascii_out.name_sep_val(mm, 'number of atoms/cell', dtype=int)
+  idx = mm.find(b'positions (alat units)')
+  mm.seek(idx)
+  mm.readline()
+  rowl = []
+  for iatom in range(natom):
+    line = mm.readline().decode()
+    rowt = line.split('=')[1]
+    row = list(map(float, rowt.split('(')[1].split(')')[0].split()))
+    rowl.append(row)
+  pos = alat*np.array(rowl)
+  return pos
