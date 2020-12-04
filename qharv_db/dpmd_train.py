@@ -105,9 +105,14 @@ def training(stop_batch, batch_size):
   tr.update(checkpoint)
   return tr
 
-def default_input(stop_batch=100000, batch_size=32, desc_kws=None):
+def default_input(stop_batch=100000, batch_size=32,
+  desc_kws=None,
+  lr_kws=None,
+  ):
   if desc_kws is None:
     desc_kws = dict()
+  if lr_kws is None:
+    lr_kws = dict()
   dpmd_input = {
     'model': {
       'type_map': ['H'],
@@ -115,7 +120,7 @@ def default_input(stop_batch=100000, batch_size=32, desc_kws=None):
       'fitting_net': fitting_net(),
     },
     'loss': loss_function(),
-    'learning_rate': learning_rate(stop_batch),
+    'learning_rate': learning_rate(stop_batch, **lr_kws),
     'training': training(stop_batch, batch_size)
   }
   return dpmd_input
