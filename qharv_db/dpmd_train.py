@@ -1,6 +1,5 @@
-def descriptor(rcut=4, desc_type='se_ar'):
+def descriptor(rcut=4, desc_type='se_ar', mneiba=150):
   smth_frac = 0.85
-  mneiba = 150
   if desc_type == 'se_ar':
     rmult = 1.5
     mneibr = 500
