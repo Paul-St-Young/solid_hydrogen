@@ -286,19 +286,20 @@ def read_restart_cell(fres):
   cell = cvec.reshape(ndim, ndim)
   return cell
 
-def read_restart_beads(fres):
+def read_restart_beads(fres, ndim=3):
+  # !!!! not tested !!!!
   doc = xml.read(fres)
   bnode = doc.find('.//beads')
   natom = int(bnode.get('natoms'))
-  nbead = int(bnode.get('nbeads'))
-  ql = bnode.findall('.//q')
-  assert len(ql) == nbead
   elem = parse_arr_text(bnode.find('.//names').text, dtype=str)
   elem = [e.replace('\n', '').strip() for e in elem]
   assert len(elem) == natom
-  posl = []
-  for qnode in ql:
-    pvec = parse_arr_text(qnode.text)
-    pos = pvec.reshape(natom, -1)
-    posl.append(pos)
+  nbead = int(bnode.get('nbeads'))
+  qnode = bnode.find('.//q')
+  qst = qnode.get('shape')
+  qshape = np.array(qst[1:-1].split(','), dtype=int)
+  assert qshape[0] == nbead
+  assert qshape[1] == natom*ndim
+  pvec = parse_arr_text(qnode.text)
+  posl = pvec.reshape(nbead, natom, ndim)
   return elem, posl
