@@ -225,20 +225,24 @@ def read_ipi_xyz(fxyz):
         atoms.info[key+'_unit'] = val[:-1]
   return traj
 
-def read_ipi_bead(fpos, ffrc):
+def read_ipi_bead(fpos, ffrc=None):
   from ase import units
   traj0 = read_ipi_xyz(fpos)
-  traj1 = read_ipi_xyz(ffrc)
+  if ffrc is not None:
+    traj1 = read_ipi_xyz(ffrc)
+  else:
+    traj1 = traj0
   for atoms0, atoms1 in zip(traj0, traj1):
     info0 = atoms0.info
-    info1 = atoms1.info
-    assert info0['Step'] == info1['Step']
-    assert info0['Bead'] == info1['Bead']
-    assert np.allclose(atoms0.get_cell(), atoms1.get_cell())
-    assert 'positions_unit' in info0
-    assert 'forces_unit' in info1
-    info0['forces_unit'] = info1['forces_unit']
-    atoms0.arrays['forces'] = atoms1.get_positions()
+    if ffrc is not None:
+      info1 = atoms1.info
+      assert info0['Step'] == info1['Step']
+      assert info0['Bead'] == info1['Bead']
+      assert np.allclose(atoms0.get_cell(), atoms1.get_cell())
+      assert 'positions_unit' in info0
+      assert 'forces_unit' in info1
+      info0['forces_unit'] = info1['forces_unit']
+      atoms0.arrays['forces'] = atoms1.get_positions()
     # change units to angstrom, ev/ang
     pu = info0['positions_unit']
     if pu == 'angstrom':
@@ -249,15 +253,16 @@ def read_ipi_bead(fpos, ffrc):
     else:
       msg = 'unknown position unit %s' % pu
       raise RuntimeError(msg)
-    fu = info0['forces_unit']
-    if fu == 'ev/ang':
-      pass  # no conversion
-    elif fu == 'atomic_unit':
-      forces = atoms0.arrays['forces']
-      atoms0.arrays['forces'] = forces*units.eV/units.Bohr
-    else:
-      msg = 'unknown force unit %s' % fu
-      raise RuntimeError(msg)
+    if ffrc is not None:
+      fu = info0['forces_unit']
+      if fu == 'ev/ang':
+        pass  # no conversion
+      elif fu == 'atomic_unit':
+        forces = atoms0.arrays['forces']
+        atoms0.arrays['forces'] = forces*units.eV/units.Bohr
+      else:
+        msg = 'unknown force unit %s' % fu
+        raise RuntimeError(msg)
   return traj0
 
 # ========================= level 1: restart ========================
