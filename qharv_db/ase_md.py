@@ -13,6 +13,23 @@ def parse_npt_prefix(prefix):
   meta = {'dt': dt, 'pgpa': pgpa, 'temp': temp}
   return meta
 
+def read_eos(ftraj):
+  from ase import io
+  import pandas as pd
+  traj = io.read(ftraj, ':')
+  entryl = []
+  for atoms in traj:
+    v0 = atoms.get_volume()
+    e0 = atoms.get_potential_energy()
+    seva = atoms.get_stress()
+    assert len(seva) == 6
+    p0 = -np.mean(seva[:3])
+    natom = len(atoms)
+    entry = {'volume': v0/natom, 'energy': e0/natom, 'pressure': p0}
+    entryl.append(entry)
+  df = pd.DataFrame(entryl)
+  return df
+
 # ====================== level 1: structure =======================
 
 def hcp_prim_cell(a, ca=None):
@@ -155,9 +172,9 @@ def hcp_supercell(pgpa, natom, force=False):
   atoms1 = make_supercell(atoms0, tmat)
   return atoms1
 
-def mhcpc_supercell(pgpa, natom, force=False):
+def mhcpc_supercell(pgpa, natom, force=False, **kwargs):
   atoms1 = hcp_supercell(pgpa, natom, force=force)
-  atoms2 = make_mhcpc(atoms1)
+  atoms2 = make_mhcpc(atoms1, **kwargs)
   return atoms2
 
 def drum_eos(vb):
