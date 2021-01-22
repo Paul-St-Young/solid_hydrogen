@@ -63,7 +63,7 @@ def default_properties(quantum=False):
   # other
   props += ['virial_cv'+p]
   if quantum:
-    props += ['kinetic_tdsc'+e, 'kstress_tdsc'+p]
+    props += ['kinetic_tdsc'+e, 'kstress_tdsc'+p, 'pressure_cv'+p]
   return props
 
 def classical_qe(temp, pgpa=None, **kwargs):
