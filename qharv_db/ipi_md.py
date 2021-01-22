@@ -26,7 +26,7 @@ def ensemble(temp, pgpa=None):
   ens.append(tnode)
   if pgpa is not None:
     p = pgpa*1e3
-    pnode = xml.make_node('pressure', {'units': 'megapascal'}, str(p))
+    pnode = xml.make_node('pressure', {'units': 'gigapascal'}, str(p))
     ens.append(pnode)
   return ens
 
@@ -55,7 +55,7 @@ def text_arr(arr, **kwargs):
 # ====================== level 1: custom input ======================
 def default_properties(quantum=False):
   e = '{electronvolt}'
-  p = '{megapascal}'
+  p = '{gigapascal}'
   # stability
   props = ['step', 'time{picosecond}', 'conserved'+e, 'potential'+e]
   # ensemble control
