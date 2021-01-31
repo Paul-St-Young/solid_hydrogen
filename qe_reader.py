@@ -801,17 +801,17 @@ def read_kpoints(scf_out):
 
   # read first line
   #  e.g. number of k points=    32  Fermi-Dirac smearing ...
-  line = mm.readline()
+  line = mm.readline().decode()
   nk = int(line.split('=')[1].split()[0])
 
   # confirm units in second line
-  line = mm.readline()
+  line = mm.readline().decode()
   assert '2pi/alat' in line
 
   # start parsing kvectors
   data = np.zeros([nk, 4])  # ik, kx, ky, kz, wk
   for ik in range(nk):
-    line = mm.readline()
+    line = mm.readline().decode()
     kvec, wk = parse_kline(line, ik=ik)
     data[ik, :3] = kvec*blat
     data[ik, 3] = wk
@@ -823,7 +823,7 @@ def read_kfracs(scf_out):
   # get number of kpoints
   idx = mm.find(b'number of k points')
   mm.seek(idx)
-  line = mm.readline()
+  line = mm.readline().decode()
   nk = int(line.split('=')[1].split()[0])
   # find first line
   idx = mm.find(b'cryst. coord.')
@@ -832,7 +832,7 @@ def read_kfracs(scf_out):
   # read kpoints and weights
   data = np.zeros([nk, 4])
   for ik in range(nk):
-    line = mm.readline()
+    line = mm.readline().decode()
     kvec, wk = parse_kline(line)
     data[ik, :3] = kvec
     data[ik, 3] = wk
