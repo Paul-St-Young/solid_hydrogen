@@ -42,12 +42,12 @@ def ls(gc, folder_id):
   gen = chain(gc.listItem(folder_id), gc.listFolder(folder_id))
   return gen
 
-def same_atoms(atoms0, atoms1, verbose=False):
+def same_atoms(atoms0, atoms1, atol=1e-8, verbose=False):
   import numpy as np
   same_natom = len(atoms0) == len(atoms1)
-  same_cell = np.allclose(atoms0.get_cell(), atoms1.get_cell())
-  same_pbc = np.allclose(atoms0.get_pbc(), atoms1.get_pbc())
-  same_pos = np.allclose(atoms0.get_positions(), atoms1.get_positions())
+  same_cell = np.allclose(atoms0.get_cell(), atoms1.get_cell(), atol=atol)
+  same_pbc = np.allclose(atoms0.get_pbc(), atoms1.get_pbc(), atol=atol)
+  same_pos = np.allclose(atoms0.get_positions(), atoms1.get_positions(), atol=atol)
   same = same_natom and same_cell and same_pbc and same_pos
   if (not same) and verbose:
     names = ['natom', 'cell', 'pbc', 'pos']
