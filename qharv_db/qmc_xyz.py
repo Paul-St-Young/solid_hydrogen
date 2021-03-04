@@ -28,7 +28,7 @@ def mix_extrap_forces(
   pdf.drop(columns=['level_1'], inplace=True)  # series
   return pdf
 
-def read_fsc_out(fout, chi2_tol=1e-12):
+def read_fsc_out(fout, chi2_tol=1e-12, rtol=0.01):
   from qharv.reel import ascii_out
   mm = ascii_out.read(fout)
   # check chi^2
@@ -47,6 +47,14 @@ def read_fsc_out(fout, chi2_tol=1e-12):
   idx = mm.find(b'using optimized potential')
   mm.seek(idx)
   dv = ascii_out.name_sep_val(mm, 'dV/N', '=')
+  # check potential
+  idx = mm.find(b'interpolating optimized potential')
+  mm.seek(idx)
+  dv0 = ascii_out.name_sep_val(mm, 'dV/N', '=')
+  assert dv > 0
+  assert dv0 > 0
+  rdv = abs(dv-dv0)/dv0
+  assert rdv < rtol
   # read kinetic
   mm = ascii_out.read(fout)
   idx = mm.find(b'Kinetic energy correction')
@@ -54,5 +62,13 @@ def read_fsc_out(fout, chi2_tol=1e-12):
   idx = mm.find(b'using optimized potential')
   mm.seek(idx)
   dt = ascii_out.name_sep_val(mm, 'dT/N', '=')
+  # check kinetic
+  idx = mm.find(b'interpolating optimized potential')
+  mm.seek(idx)
+  dt0 = ascii_out.name_sep_val(mm, 'dT/N', '=')
+  assert dt > 0
+  assert dt0 > 0
+  rdt = abs(dt-dt0)/dt0
+  assert rdt < rtol
   mm.close()
   return dv*nelec, dt*nelec
