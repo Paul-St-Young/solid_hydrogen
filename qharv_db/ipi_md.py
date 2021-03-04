@@ -20,13 +20,12 @@ def pileg(taut, plam=0.5):
   therm.append(tnode)
   return therm
 
-def ensemble(temp, pgpa=None):
+def ensemble(tkel, pgpa=None):
   ens = xml.make_node('ensemble')
-  tnode = xml.make_node('temperature', {'units': 'kelvin'}, str(temp))
+  tnode = xml.make_node('temperature', {'units': 'kelvin'}, str(tkel))
   ens.append(tnode)
   if pgpa is not None:
-    p = pgpa*1e3
-    pnode = xml.make_node('pressure', {'units': 'gigapascal'}, str(p))
+    pnode = xml.make_node('pressure', {'units': 'gigapascal'}, str(pgpa))
     ens.append(pnode)
   return ens
 
