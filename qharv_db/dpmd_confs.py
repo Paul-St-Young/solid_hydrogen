@@ -1,5 +1,28 @@
 import numpy as np
 
+def error_array(traj0, traj1, name='energy'):
+  assert len(traj0) == len(traj1)
+  n0l = [len(atoms) for atoms in traj0]
+  n1l = [len(atoms) for atoms in traj1]
+  assert np.allclose(n0l, n1l)
+  dyl = [(
+    atoms0.get_calculator().results[name]-
+    atoms1.get_calculator().results[name]
+    ) for atoms0, atoms1 in zip(traj0, traj1)
+  ]
+  if name == 'energy':
+    dyl = np.array([dy/n0 for dy, n0 in zip(dyl, n0l)])
+  dya = np.array(dyl)
+  return dya
+
+def rmse(traj0, traj1, name='energy'):
+  dya = error_array(traj0, traj1, name=name)
+  return np.sqrt(np.mean(dya**2))
+
+def mae(traj0, traj1, name='energy'):
+  dya = error_array(traj0, traj1, name=name)
+  return np.mean(np.abs(dya))
+
 def write_set(set_dir, traj, virial=True):
   import os
   from qharv.field.sugar import mkdir
