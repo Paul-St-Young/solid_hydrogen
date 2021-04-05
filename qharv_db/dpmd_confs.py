@@ -367,6 +367,15 @@ def pbar_to_seva(pbar):
   stress = stress_au*ha/bohr**3
   return stress
 
+def seva_to_pbar(seva):
+  bohr = 0.529177210903   # A
+  ha = 27.211386245988    # ev
+  joule = 6.241509126e18  # ev
+  au = ha/bohr**3
+  gpa = ha/joule/(bohr*1e-10)**3./1e9
+  pbar = -seva/au*gpa*1e4
+  return pbar
+
 def write_lammps_data(ftxt, atoms, **kwargs):
   # FAIL: use ase.io.write(ftxt, atoms, format='lammps-data', atom_style='charge')
   from ovito.io import export_file
