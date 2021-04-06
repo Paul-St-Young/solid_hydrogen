@@ -159,6 +159,24 @@ def get_tilematrix(natom):
       [-2, 4, 0],
       [ 0, 0, 2]
     ])
+  elif natom == 192:
+    tmat = np.array([
+      [ 4, 0, 0],
+      [-2, 4, 0],
+      [ 0, 0, 3]
+    ])
+  elif natom == 360:
+    tmat = np.array([
+      [ 5, 0, 0],
+      [-3, 6, 0],
+      [ 0, 0, 3]
+    ])
+  elif natom == 576:
+    tmat = np.array([
+      [ 6, 0, 0],
+      [-3, 6, 0],
+      [ 0, 0, 4]
+    ])
   else:
     msg = 'no tilematrix for N=%d' % natom
     raise RuntimeError(msg)
