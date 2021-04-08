@@ -492,3 +492,22 @@ def create_folds(ftraj, nfold, fxyz_fmt='f%d.xyz', seed=1836):
     nc = iend-istart
     mytraj = traj[istart:iend]
     sugar.cache(io.write)(fxyz, mytraj)
+
+def fold_to_set(myfold, nfold, fxyz_fmt, set_prefix, virial=True):
+  train_traj = []
+  test_traj = []
+  for ifold in range(nfold):
+    fxyz = fxyz_fmt % ifold
+    traj = io.read(fxyz, ':')
+    if ifold == myfold:
+      test_traj += traj
+    else:
+      train_traj += traj
+    ftrain = '%s.000' % set_prefix
+    cache_traj_to_set(ftrain, train_traj, virial=virial)
+    ftest = '%s.001' % set_prefix
+    cache_traj_to_set(ftest, test_traj, virial=virial)
+    path = os.path.dirname(set_prefix)
+    ftype = os.path.join(path, 'type.raw')
+    natom = max([len(atoms) for atoms in traj])
+    np.savetxt(ftype, np.zeros(natom), fmt='%d')
