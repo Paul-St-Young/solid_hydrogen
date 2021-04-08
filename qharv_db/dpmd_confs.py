@@ -470,3 +470,25 @@ def calc_sofk_npt(traj, sk_params):
     skl.append(msk1)
   uskm, uske = yl_ysql(skl, [sk**2 for sk in skl])
   return myk, uskm, uske
+
+def create_folds(ftraj, nfold, fxyz_fmt='f%d.xyz', seed=1836):
+  from qharv.field import sugar
+  # load trajectory and shuffle
+  traj = io.read(ftraj, ':')
+  for atoms in traj:
+    atoms.wrap()
+  np.random.seed(seed)
+  np.random.shuffle(traj)
+  # save to nfold subsets
+  nconf = len(traj)
+  neach = int(round(nconf//nfold))
+  for ifold in range(nfold):
+    fxyz = fxyz_fmt % ifold
+    if os.path.isfile(fxyz): continue
+    istart = ifold*neach
+    iend = (ifold+1)*neach
+    if ifold == nfold-1:
+      iend = nconf
+    nc = iend-istart
+    mytraj = traj[istart:iend]
+    sugar.cache(io.write)(fxyz, mytraj)
