@@ -241,7 +241,7 @@ def read_ipi_bead(fpos, ffrc=None):
       assert 'positions_unit' in info0
       assert 'forces_unit' in info1
       info0['forces_unit'] = info1['forces_unit']
-      atoms0.arrays['forces'] = atoms1.get_positions()
+      forces = atoms1.get_positions()
     # change units to angstrom, ev/ang
     pu = info0['positions_unit']
     if pu == 'angstrom':
@@ -257,11 +257,16 @@ def read_ipi_bead(fpos, ffrc=None):
       if fu == 'ev/ang':
         pass  # no conversion
       elif fu == 'atomic_unit':
-        forces = atoms0.arrays['forces']
-        atoms0.arrays['forces'] = forces*units.eV/units.Bohr
+        forces *= units.eV/units.Bohr,
       else:
         msg = 'unknown force unit %s' % fu
         raise RuntimeError(msg)
+      from ase.calculators.singlepoint import SinglePointCalculator
+      results = {
+        'forces': forces,
+      }
+      calc = SinglePointCalculator(atoms0, **results)
+      atoms0.set_calculator(calc)
   return traj0
 
 # ========================= level 1: restart ========================
