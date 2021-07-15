@@ -317,3 +317,10 @@ def calc_gofr(bin_edges, axesl, posl):
     grl.append(gr1)
   grm, gre = yl_ysql(grl)
   return grm, gre
+
+def cart2sph(kvecs):
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  theta = np.arccos(kvecs[:, 2]/kmags)
+  kx, ky, kz = kvecs.T
+  phi = np.arctan2(ky, kx)
+  return kmags, theta, phi
