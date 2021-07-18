@@ -323,4 +323,6 @@ def cart2sph(kvecs):
   theta = np.arccos(kvecs[:, 2]/kmags)
   kx, ky, kz = kvecs.T
   phi = np.arctan2(ky, kx)
+  sel = phi < 0
+  phi[sel] += 2*np.pi
   return kmags, theta, phi
