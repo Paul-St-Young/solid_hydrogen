@@ -41,7 +41,8 @@ def extract_layers(layers, traj, wrap=True):
       zmin, zmax = layer
       zsel = (zmin < z) & (z < zmax)
       grouped_pos[igrp].append(pos[zsel])
-  groups = np.array([np.concatenate(group, axis=0) for group in grouped_pos])
+  #groups = np.array([np.concatenate(group, axis=0) for group in grouped_pos])
+  groups = [np.array(group) for group in grouped_pos]
   return groups
 
 def find_clusters(group, **kwargs):
