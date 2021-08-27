@@ -54,7 +54,6 @@ def hcp_prim_cell(a, ca=None):
 def make_mhcpc(s1, rb=0.74, iax=2, check=False):
   # copied from f16b1/prim.py
   from ase import Atoms
-  from qharv.inspect import box_pos
   axes = s1.get_cell()
   pos = s1.get_positions()
 
@@ -69,9 +68,11 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
     posl.append(p1.copy())
     p1[iax] -= rb
     posl.append(p1)
-  pos1 = box_pos.pos_in_box(np.array(posl), box)
+  pos1 = np.array(posl)
   if check:  # check pos1
+    from qharv.inspect import box_pos
     from qharv.inspect import crystal, volumetric
+    pos1 = box_pos.pos_in_box(pos1, box)
     fig, ax = volumetric.figax3d()
     crystal.draw_cell(ax, axes)
     crystal.draw_atoms(ax, pos, c='k', ms=2)
@@ -79,6 +80,7 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
     plt.show()
 
   s2 = Atoms('H%d' % len(pos1), cell=axes, positions=pos1, pbc=1)
+  s2.wrap()
   return s2
 
 def load_traj(ftraj, traj_fmt=None, istart=0, iend=-1, nevery=1, check=True):
