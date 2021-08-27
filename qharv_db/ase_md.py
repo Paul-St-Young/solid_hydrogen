@@ -83,6 +83,25 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
   s2.wrap()
   return s2
 
+def make_mhcpo(atoms, rb=0.74, theta=np.pi/3):
+  from ase import Atoms
+  posl = []
+  a = rb/2  # half bond length
+  pos = atoms.get_positions()
+  zl = np.unique(pos[:, 2])
+  for iz, z1 in enumerate(zl):
+    pm = 2*(iz%2)-1
+    zsel = pos[:, 2] == z1
+    avec = np.array([0, pm*a*np.sin(theta), a*np.cos(theta)])
+    for r1 in pos[zsel]:
+      posl.append(r1+avec)
+      posl.append(r1-avec)
+  pos1 = np.array(posl)
+  atoms1 = Atoms('H%d' % len(pos1), cell=atoms.get_cell(), pbc=atoms.get_pbc(),
+    positions = pos1)
+  atoms1.wrap()
+  return atoms1
+
 def load_traj(ftraj, traj_fmt=None, istart=0, iend=-1, nevery=1, check=True):
   from ase import io
   if traj_fmt is None:
