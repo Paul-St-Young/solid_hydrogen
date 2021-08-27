@@ -24,7 +24,9 @@ def find_layers(atoms, bins=128):
   return layers
 
 def extract_layers(layers, traj, wrap=True):
-  grouped_pos = [[]]*len(layers)
+  grouped_pos = []
+  for layer in layers:
+    grouped_pos.append([])
   for atoms in traj:
     if wrap:
       atoms.wrap()
