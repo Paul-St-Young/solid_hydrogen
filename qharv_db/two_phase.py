@@ -53,3 +53,20 @@ def find_clusters(group, **kwargs):
     sel = cluster.labels_ == label
     centers.append(group[sel].mean(axis=0))
   return np.array(centers)
+
+def ml_mhcp(a1, a2, c, fracx=0.5):
+  from ase import Atoms
+  a2x = a1/2
+  a2y = (a2**2-a2x**2)**0.5
+  axes = np.array([
+    [a1, 0, 0],
+    [a2x, a2y, 0],
+    [0, 0, c]
+  ])
+  fracs = np.array([
+    [0, 0, 0],
+    [fracx, fracx, 0.5],
+  ])
+  pos = np.dot(fracs, axes)
+  atoms = Atoms('H%d' % len(pos), cell=axes, positions=pos, pbc=1)
+  return atoms
