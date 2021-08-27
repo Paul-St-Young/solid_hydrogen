@@ -1,5 +1,10 @@
 import numpy as np
 
+def average_cell(traj):
+  axesl = [atoms.get_cell() for atoms in traj]
+  axes = np.mean(axesl, axis=0)
+  return axes
+
 def find_layers(atoms, bins=128):
   from scipy.signal import find_peaks
   axes = atoms.get_cell()
