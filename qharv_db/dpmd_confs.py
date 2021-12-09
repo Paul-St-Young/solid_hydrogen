@@ -353,6 +353,8 @@ def read_lammps_log(flog, header='Per MPI rank memory', trailer='Loop time'):
   mm = ascii_out.read(flog)
   blocks = ascii_out.all_lines_with_tag(mm, header)
   dfl = []
+  if len(blocks) < 1:
+    return pd.DataFrame(dfl)
   for iblock, idx in enumerate(blocks):
     mm.seek(idx)
     pre = '# '  # !!!! assume first line is header
