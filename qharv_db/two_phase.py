@@ -5,6 +5,49 @@ def average_cell(traj):
   axes = np.mean(axesl, axis=0)
   return axes
 
+def average_frames(traj):
+  """Average atomic positions from a segment of MD trajectory.
+  Assume atomic displacement between frames < L/2.
+
+  Args:
+    list: list of ASE Atoms
+  Return:
+    Atoms: ASE Atoms of averaged frame
+  """
+  from ase import Atoms
+  axes0 = traj[0].get_cell()
+  box0 = np.diag(axes0)
+  if not np.allclose(axes0, np.diag(box0)):
+    msg = 'assuming orthorhombic box'
+    raise RuntimeError(msg)
+  pos0 = traj[0].get_positions()
+  nframe = len(traj)
+  ndim = len(box0)
+  adr = np.zeros([len(pos0), ndim])
+  boxl = [box0]
+  for atoms in traj[1:]:
+    axes = atoms.get_cell()
+    box = np.diag(axes)
+    if not np.allclose(axes, np.diag(box)):
+      msg = 'assuming orthorhombic box'
+      raise RuntimeError(msg)
+    boxl.append(box)
+    pos = atoms.get_positions()
+    dr = pos-pos0
+    for idim in range(3):
+      lbox = box[idim]
+      xsel = dr[:, idim] > lbox/2
+      pos[xsel, idim] -= lbox
+      xsel = dr[:, idim] < -lbox/2
+      pos[xsel, idim] += lbox
+    adr += pos-pos0
+  adr /= nframe
+  abox = np.mean(boxl, axis=0)
+  apos = pos0+adr
+  atoms = Atoms('H%d' % len(apos), cell=np.diag(abox), positions=apos, pbc=1)
+  atoms.wrap()
+  return atoms
+
 def find_layers(atoms, bins=128):
   from scipy.signal import find_peaks
   axes = atoms.get_cell()
