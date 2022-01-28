@@ -114,3 +114,34 @@ def ml_mhcp(a1, a2, c, fracx=0.5):
   pos = np.dot(fracs, axes)
   atoms = Atoms('H%d' % len(pos), cell=axes, positions=pos, pbc=1)
   return atoms
+
+def detect_p21c_layers(mols, kfracs=None):
+  from qharv.inspect import axes_pos
+  # setup S(k) calculation
+  from qharv_db import grsk
+  if kfracs is None:
+    kfracs = np.array([
+      [0, -8, 16],
+      [0,  8, 16],
+    ])
+  axes = mols.get_cell()
+  raxes = axes_pos.raxes(axes)
+  kvecs = np.dot(kfracs, raxes)
+
+  # detect layers
+  layers = find_layers(mols)
+  groups = extract_layers(layers, [mols])
+  grps = [g[0] for g in groups]
+
+  # loop through 3 layers at a time
+  nlayer = len(grps)
+  layer_desc = []
+  for ilayer in range(1, nlayer-1):
+    pos0 = grps[ilayer-1]
+    pos1 = grps[ilayer]
+    pos2 = grps[ilayer+1]
+    pos = np.concatenate([pos0, pos1, pos2], axis=0)
+    sk1 = grsk.Sk(kvecs, pos)
+    layer_desc.append(sk1.sum())
+  return layer_desc
+
