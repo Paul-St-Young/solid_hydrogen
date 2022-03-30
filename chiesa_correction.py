@@ -227,6 +227,18 @@ def load_dsk(fjson, obs='dsk'):
 
 # ================ routines for jastrow potential U(k)  ================
 
+def plasmon_dispersion(k):
+  ek = k**2/2  # ha atomic units
+  return ek
+
+def coulomb_interaction(k, ndim=3):
+  vk = 2*(ndim-1)*np.pi/k**(ndim-1)
+  return vk
+
+def charge_density(rs, ndim=3):
+  vol = 2*(ndim-1)*np.pi/ndim*rs**ndim
+  rho = 1./vol
+  return rho
 
 def gaskell_rpa_uk(k, rs, kf):
 
@@ -241,11 +253,10 @@ def gaskell_rpa_uk(k, rs, kf):
 
 
 def gaskell_rpa_sk(k, rs, kf, ndim=3):
-  vol = 2*(ndim-1)*np.pi/ndim*rs**ndim
-  rho = 1./vol
-  sk0  = hfsk(k, kf, ndim=ndim)
-  vk = 2*(ndim-1)*np.pi/k**(ndim-1)
-  ek = k**2/2.  # ha atomic units
+  rho = charge_density(rs, ndim=ndim)
+  sk0 = hfsk(k, kf, ndim=ndim)
+  vk = coulomb_interaction(k, ndim=ndim)
+  ek = plasmon_dispersion(k)
   sk = 1./np.sqrt(1/sk0**2+2*vk*rho/ek)
   return sk
 
