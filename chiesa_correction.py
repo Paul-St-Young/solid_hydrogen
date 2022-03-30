@@ -180,7 +180,7 @@ def heg_kfermi(rs):
   return kf
 
 
-def hfsk(karr, kf):
+def hfsk(karr, kf, ndim=3):
   """ static structure factor of non-interacting Fermions
   Args:
     karr (np.array): k vector magnitudes
@@ -189,9 +189,16 @@ def hfsk(karr, kf):
     float: S0(k, kf)
   """
   kmags = abs(karr)
-  skm = 3*kmags/(4*kf)-kmags**3/(16*kf**3)
-  sel = np.where(kmags>=2*kf)
-  skm[sel] = 1.0
+  skm = np.ones(len(karr))
+  sel = np.where(kmags<2*kf)
+  if ndim == 3:
+    skm[sel] = 3*kmags[sel]/(4*kf)-kmags[sel]**3/(16*kf**3)
+  elif ndim == 2:
+    y = kmags[sel]/(2*kf)
+    skm[sel] = 2./np.pi*(np.arcsin(y)+y*(1-y**2)**(1./2))
+  else:
+    msg = 'ndim = %d' % ndim
+    raise RuntimeError(msg)
   return skm
 
 
