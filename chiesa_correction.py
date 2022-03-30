@@ -240,11 +240,13 @@ def gaskell_rpa_uk(k, rs, kf):
   return uk
 
 
-def gaskell_rpa_sk(k, rs, kf):
-
-  rho = 3./(4*np.pi*rs**3)
-  hfsk_val  = hfsk(k, kf)      # determinant contribution S0(k)
-  sk = hfsk_val*(1+16.*np.pi*rho*hfsk_val**2/k**4)**(-0.5)
+def gaskell_rpa_sk(k, rs, kf, ndim=3):
+  vol = 2*(ndim-1)*np.pi/ndim*rs**ndim
+  rho = 1./vol
+  sk0  = hfsk(k, kf, ndim=ndim)
+  vk = 2*(ndim-1)*np.pi/k**(ndim-1)
+  ek = k**2/2.  # ha atomic units
+  sk = 1./np.sqrt(1/sk0**2+2*vk*rho/ek)
   return sk
 
 def slater_jrpa_sk(kvecs, detsk, rho):
