@@ -224,6 +224,22 @@ def load_dsk(fjson, obs='dsk'):
   ske   = np.array(df.loc[0,'%s_error'%obs])
   return kvecs, skm, ske
 
+def ideal_kinetic(raxes, nup, twist=None):
+  ndim = len(raxes)
+  if twist is None:
+    twist = np.zeros(ndim)
+  # estimate grid size needed
+  nx = int(round(nup**(1./ndim)))
+  # create reciprocal grid around twist
+  gvecs = cubic_pos(2*nx+1, ndim=ndim)-nx
+  kvecs = np.dot(gvecs+twist, raxes)
+  # gksort
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  idx = np.argsort(kmags)
+  # occupy lowest
+  myk = kmags[idx[:nup]]
+  tkin = 0.5*np.dot(myk, myk)
+  return tkin
 
 # ================ routines for jastrow potential U(k)  ================
 
