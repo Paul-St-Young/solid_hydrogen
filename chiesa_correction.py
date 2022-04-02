@@ -254,7 +254,7 @@ def ideal_coulomb_sum(kvecs, qtol=1e-8):
     float: sum of coulomb interaction between all unique pairs of PWs
   Example:
     >>> csum = ideal_coulomb_sum(kvecs)
-    >>> ex = -csum/volume
+    >>> ex = vmad-csum/volume
   """
   csum = 0.0
   nterm = 0
