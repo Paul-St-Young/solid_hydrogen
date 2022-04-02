@@ -245,7 +245,39 @@ def ideal_kinetic(raxes, nup, twist=None):
   tkin = 0.5*np.dot(myk, myk)
   return tkin
 
+def ideal_coulomb_sum(kvecs, qtol=1e-8):
+  """1/2*Sum_{k!=k'} v_{k-k'}
+
+  Args:
+    kvecs (np.array): (npw, ndim)
+  Return:
+    float: sum of coulomb interaction between all unique pairs of PWs
+  Example:
+    >>> csum = ideal_coulomb_sum(kvecs)
+    >>> ex = -csum/volume
+  """
+  csum = 0.0
+  nterm = 0
+  npw, ndim = kvecs.shape
+  for k1 in kvecs:
+    for k2 in kvecs:
+      q = np.linalg.norm(k1-k2)
+      if q < qtol:
+        continue
+      nterm += 1
+      vq = coulomb_interaction(q, ndim=ndim)
+      csum += vq
+  assert nterm == (npw-1)*npw
+  return csum/2
+
 # ================ routines for jastrow potential U(k)  ================
+
+def polarization_factor(p, ndim=3):
+  expo = (ndim+2.)/ndim
+  plus = (1+p)**expo
+  minus = (1-p)**expo
+  fac = (plus+minus)/2
+  return fac
 
 def plasmon_dispersion(k):
   ek = k**2/2  # ha atomic units
