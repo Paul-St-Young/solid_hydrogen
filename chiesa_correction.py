@@ -477,7 +477,7 @@ def mp_grid(raxes, nx):
   return qgrid
 
 
-def rpa_dv(axes, rs, nx=32):
+def rpa_dv(axes, rs, kf=None, fsk=None, nx=32):
   """ calculate potential finite size error assuming RPA S(k)
 
   Args:
@@ -486,29 +486,24 @@ def rpa_dv(axes, rs, nx=32):
   Return:
     float: potential finite size correction
   """
-  from qharv.inspect import axes_pos
-
-  # get RPA S(k)
-  kf = heg_kfermi(rs)
-
-  fuk = lambda k:gaskell_rpa_uk(k, rs, kf)
-  fsk = effective_fsk_from_fuk(fuk, rs)
-
-  # Coulomb v(k)
-  fvk = lambda k:4*np.pi/k**2
-
-  # setup integration grid
-  raxes = axes_pos.raxes(axes)
+  ndim = len(axes)
+  if kf is None:
+    kf = heg_kfermi(rs)
+  if fsk is None:
+    def fsk(k):
+      return gaskell_rpa_sk(k, rs, kf, ndim=ndim)
+  def fvk(k):
+    nm1 = ndim-1
+    return 2*nm1*np.pi/k**nm1
+  # reciprocel cell
+  volume = abs(np.linalg.det(axes))
+  intnorm = 1./volume
+  # sum
+  raxes = 2*np.pi*np.linalg.inv(axes).T
   qgrid = mp_grid(raxes, nx)
-
-  # perform quadrature
-  #  weights
-  rvol = axes_pos.volume(raxes)
-  intnorm = 1./(2*np.pi)**3* rvol/nx**3
-  #  sum
   qmags = np.linalg.norm(qgrid, axis=1)
-  integrand = lambda k:0.5*fvk(k)*fsk(k)
-  dvlr = intnorm* integrand(qmags).sum()
+  val = 0.5*np.dot(fvk(qmags), fsk(qmags))/nx**ndim
+  dvlr = intnorm*val
   return dvlr
 
 
