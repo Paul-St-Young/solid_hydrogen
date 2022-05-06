@@ -32,6 +32,40 @@ def read_eos(ftraj):
 
 # ====================== level 1: structure =======================
 
+def prim_cell_in_plane(a1, a2=None):
+  if a2 is None:
+    a2 = a1
+  axes = np.array([
+    [3**0.5/2, -1./2],
+    [3**0.5/2,  1./2],
+  ])
+  axes[0] *= a1
+  axes[1] *= a2
+  fracs = np.array([
+    [0, 0],
+    [1./3, 1./3],
+    [2./3, 2./3],
+  ])
+  com = np.dot(fracs, axes)
+  return axes, com
+
+def add_orientations_in_plane(com, thetas_in_degree, rb=0.74):
+  thetas = np.array(thetas_in_degree)/180*np.pi
+  norient = len(thetas)
+  nmol = len(com)
+  if nmol != norient:
+    msg = 'got %d orientations for %d molecules' % (norder, nmol)
+    raise RuntimeError(msg)
+  x = np.cos(thetas)
+  y = np.sin(thetas)
+  xy = rb*np.c_[x, y]
+  p1 = com - xy/2
+  p2 = com + xy/2
+  posl = [(r1, r2) for (r1, r2) in zip(p1, p2)]
+  pos = np.concatenate(posl, axis=0)
+  return pos
+
+
 def hcp_prim_cell(a, ca=None):
   if ca is None:  # use ideal ratio
     ca = (8./3)**0.5
