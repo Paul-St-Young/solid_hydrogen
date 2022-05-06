@@ -190,7 +190,7 @@ def read_ipi_xyz(fxyz):
   from qharv.reel import ascii_out
   mm = ascii_out.read(fxyz)
   idxl = ascii_out.all_lines_with_tag(mm, '# ')
-  traj = io.read(fxyz, ':')
+  traj = io.read(fxyz, ':', format='extxyz')
   nhead = len(idxl)
   nbody = len(traj)
   if nhead != nbody:
