@@ -229,7 +229,7 @@ def rhok(kvecs, pos):
   if kvecs.ndim == 1:
     kvecs = kvecs[np.newaxis, :]
   # dot the last axis of kvecs and pos
-  exponentials = np.exp(-1j*np.inner(kvecs, pos))
+  exponentials = np.exp(1j*np.inner(kvecs, pos))
   # sum over position index
   rhok = np.sum(exponentials, axis=-1)
   return rhok
@@ -241,6 +241,21 @@ def Sk(kvecs, pos):
   if sk.ndim >= 2:
     sk = sk.mean(axis=-1)
   return sk.real
+
+def ksphere(raxes, kcut):
+  from qharv.inspect import axes_pos
+  from qharv.seed import hamwf_h5
+  ndim = len(raxes)
+  blats = axes_pos.abc(raxes)
+  mkx = int(round(kcut/blats.min()))
+  mesh = [3*mkx]*ndim
+  kvecs = hamwf_h5.get_kvecs(raxes, mesh)
+  kmags = np.linalg.norm(kvecs, axis=-1)
+  if kmags.max() < kcut*np.sqrt(ndim):
+    msg = 'mkx guess is too small'
+    raise RuntimeError(msg)
+  sel = (0 < kmags) & (kmags < kcut)
+  return kvecs[sel], kmags[sel]
 
 def legal_kvecs(axes, nsh, eps=1e-8):
   from qharv.inspect import axes_pos
