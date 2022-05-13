@@ -32,6 +32,13 @@ def read_eos(ftraj):
 
 # ====================== level 1: structure =======================
 
+def tri_prim():
+  axes0 = np.array([
+    [1, 0],
+    [-1./2, 3**0.5/2],
+  ])
+  return axes0
+
 def prim_cell_in_plane(a1, a2=None):
   if a2 is None:
     a2 = a1
@@ -95,6 +102,43 @@ def make_atoms(axes, pos, elem=None):
   if elem is None:
     elem = 'H%d' % natom
   atoms = Atoms(elem, cell=axes, positions=pos, pbc=True)
+  return atoms
+
+def make_c2c(a, c, rb=0.74):
+  """Create C2/c-24 structure
+
+  Args:
+    a (float): lattice a parameter, in angstrom
+    c (float): lattice c parameter, layer separation z=c/2
+    rb (float, optional): H2 bond length, default 0.74
+  Return:
+    ase.Atoms: C2/c-24 unit cell
+  Example:
+    >>> atoms = make_c2c(1.79, 2.7)
+    >>> io.write('c2c-p200.cif', atoms)
+  """
+  axes0 = a*tri_prim()
+  z = c/2
+  nlayer = 4
+  posl = []
+  for ilayer in range(nlayer):
+    s1, t1 = c2c_layer_shift_and_thetas(ilayer)
+    axes1, pos1, com1 = c2c_layer(a, t1, rb)
+    shift1 = np.dot(s1, axes0)
+    posl.append(pos1+shift1)
+  n_per_layer = len(pos1)
+
+  axes = np.zeros([3, 3])
+  axes[:2, :2] = axes1
+  axes[2, 2] = nlayer*z
+  pos = np.zeros([nlayer*n_per_layer, 3])
+  for ilayer, pos1 in enumerate(posl):
+    istart = ilayer*n_per_layer
+    iend = istart + n_per_layer
+    pos[istart:iend, :2] = posl[ilayer]
+    pos[istart:iend, 2] = ilayer*z
+
+  atoms = make_atoms(axes, pos)
   return atoms
 
 def hcp_prim_cell(a, ca=None):
