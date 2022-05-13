@@ -141,6 +141,37 @@ def make_c2c(a, c, rb=0.74):
   atoms = make_atoms(axes, pos)
   return atoms
 
+def make_fmmm(a, c, rb=0.74):
+  z = c/2
+  axes0 = a*tri_prim()
+  # first layer
+  thetas = [-30]
+  com = np.array([
+    [0, 0],
+  ])
+  p0 = add_orientations_in_plane(com, thetas)
+  # second layer
+  sfrac = [0.5, 0.5]
+  shift = np.dot(sfrac, axes0)
+  p1 = p0 + shift
+  # combine
+  posl = [p0, p1]
+  nlayer = len(posl)
+  n_per_layer = len(p0)
+  pos = np.zeros([nlayer*n_per_layer, 3])
+  for ilayer in range(nlayer):
+    istart = ilayer*n_per_layer
+    iend = istart + n_per_layer
+    pos[istart:iend, :2] = posl[ilayer]
+    pos[istart:iend, 2] = ilayer*z
+  # expand cell
+  axes = np.zeros([3, 3])
+  axes[:2, :2] = axes0
+  axes[2, 2] = nlayer*z
+
+  atoms = make_atoms(axes, pos)
+  return atoms
+
 def hcp_prim_cell(a, ca=None):
   if ca is None:  # use ideal ratio
     ca = (8./3)**0.5
