@@ -89,10 +89,17 @@ def c2c_layer_shift_and_thetas(ilayer):
     raise RuntimeError(msg)
   return sfrac, thetas
 
+def make_atoms(axes, pos, elem=None):
+  from ase import Atoms
+  natom = len(pos)
+  if elem is None:
+    elem = 'H%d' % natom
+  atoms = Atoms(elem, cell=axes, positions=pos, pbc=True)
+  return atoms
+
 def hcp_prim_cell(a, ca=None):
   if ca is None:  # use ideal ratio
     ca = (8./3)**0.5
-  from ase import Atoms
   c = a*ca
   axes = np.array([
     [a, 0, 0],
@@ -105,12 +112,11 @@ def hcp_prim_cell(a, ca=None):
       [1./3, 1./3, 1./2]
     ]), axes)
 
-  atoms = Atoms('H%d' % len(pos), cell=axes, positions=pos, pbc=1)
+  atoms = make_atoms(axes, pos)
   return atoms
 
 def make_mhcpc(s1, rb=0.74, iax=2, check=False):
   # copied from f16b1/prim.py
-  from ase import Atoms
   axes = s1.get_cell()
   pos = s1.get_positions()
 
@@ -136,12 +142,11 @@ def make_mhcpc(s1, rb=0.74, iax=2, check=False):
     crystal.draw_atoms(ax, pos1)
     plt.show()
 
-  s2 = Atoms('H%d' % len(pos1), cell=axes, positions=pos1, pbc=1)
+  s2 = make_atoms(axes, pos1)
   s2.wrap()
   return s2
 
 def make_mhcpo(atoms, rb=0.74, theta=np.pi/3):
-  from ase import Atoms
   posl = []
   a = rb/2  # half bond length
   pos = atoms.get_positions()
@@ -154,8 +159,7 @@ def make_mhcpo(atoms, rb=0.74, theta=np.pi/3):
       posl.append(r1+avec)
       posl.append(r1-avec)
   pos1 = np.array(posl)
-  atoms1 = Atoms('H%d' % len(pos1), cell=atoms.get_cell(), pbc=atoms.get_pbc(),
-    positions = pos1)
+  atoms1 = make_atoms(atoms.get_cell(), pos1)
   atoms1.wrap()
   return atoms1
 
