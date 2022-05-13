@@ -65,6 +65,29 @@ def add_orientations_in_plane(com, thetas_in_degree, rb=0.74):
   pos = np.concatenate(posl, axis=0)
   return pos
 
+def c2c_layer(a, thetas, rb):
+  a1 = a*3**0.5
+  axes, com = prim_cell_in_plane(a1)
+  pos = add_orientations_in_plane(com, thetas, rb=rb)
+  return axes, pos, com
+
+def c2c_layer_shift_and_thetas(ilayer):
+  if ilayer == 0:
+    sfrac = [0, 0]
+    thetas = [90, -30, 30]
+  elif ilayer == 1:
+    sfrac = [1./3, 2./3]
+    thetas = [90, 30, -30]
+  elif ilayer == 2:
+    sfrac = [1, 1]
+    thetas = [90, -30, 30]
+  elif ilayer == 3:
+    sfrac = [1./3, -1./3]
+    thetas = [90, 30, -30]
+  else:
+    msg = 'no layer %d' % ilayer
+    raise RuntimeError(msg)
+  return sfrac, thetas
 
 def hcp_prim_cell(a, ca=None):
   if ca is None:  # use ideal ratio
