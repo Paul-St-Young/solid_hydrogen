@@ -96,6 +96,19 @@ def c2c_layer_shift_and_thetas(ilayer):
     raise RuntimeError(msg)
   return sfrac, thetas
 
+def c2c_com(a, c):
+  nlayer = 4
+  a1 = a*3**0.5
+  axes0 = a*tri_prim()
+  coml = []
+  for ilayer in range(nlayer):
+    s1, t1 = c2c_layer_shift_and_thetas(ilayer)
+    axes, com1 = prim_cell_in_plane(a1)
+    shift1 = np.dot(s1, axes0)
+    coml.append(com1+shift1)
+  com = stack_layers(coml, c/2)
+  return com
+
 def make_atoms(axes, pos, elem=None):
   from ase import Atoms
   natom = len(pos)
