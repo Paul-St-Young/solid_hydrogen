@@ -126,20 +126,26 @@ def make_c2c(a, c, rb=0.74):
     axes1, pos1, com1 = c2c_layer(a, t1, rb)
     shift1 = np.dot(s1, axes0)
     posl.append(pos1+shift1)
-  n_per_layer = len(pos1)
 
   axes = np.zeros([3, 3])
   axes[:2, :2] = axes1
   axes[2, 2] = nlayer*z
+
+  pos = stack_layers(posl, z)
+
+  atoms = make_atoms(axes, pos)
+  return atoms
+
+def stack_layers(posl, z):
+  nlayer = len(posl)
+  n_per_layer = len(posl[0])
   pos = np.zeros([nlayer*n_per_layer, 3])
-  for ilayer, pos1 in enumerate(posl):
+  for ilayer in range(nlayer):
     istart = ilayer*n_per_layer
     iend = istart + n_per_layer
     pos[istart:iend, :2] = posl[ilayer]
     pos[istart:iend, 2] = ilayer*z
-
-  atoms = make_atoms(axes, pos)
-  return atoms
+  return pos
 
 def make_fmmm(a, c, rb=0.74):
   z = c/2
@@ -156,18 +162,11 @@ def make_fmmm(a, c, rb=0.74):
   p1 = p0 + shift
   # combine
   posl = [p0, p1]
-  nlayer = len(posl)
-  n_per_layer = len(p0)
-  pos = np.zeros([nlayer*n_per_layer, 3])
-  for ilayer in range(nlayer):
-    istart = ilayer*n_per_layer
-    iend = istart + n_per_layer
-    pos[istart:iend, :2] = posl[ilayer]
-    pos[istart:iend, 2] = ilayer*z
+  pos = stack_layers(posl, z)
   # expand cell
   axes = np.zeros([3, 3])
   axes[:2, :2] = axes0
-  axes[2, 2] = nlayer*z
+  axes[2, 2] = len(posl)*z
 
   atoms = make_atoms(axes, pos)
   return atoms
