@@ -61,7 +61,7 @@ def add_orientations_in_plane(com, thetas_in_degree, rb=0.74):
   norient = len(thetas)
   nmol = len(com)
   if nmol != norient:
-    msg = 'got %d orientations for %d molecules' % (norder, nmol)
+    msg = 'got %d orientations for %d molecules' % (norient, nmol)
     raise RuntimeError(msg)
   x = np.cos(thetas)
   y = np.sin(thetas)
