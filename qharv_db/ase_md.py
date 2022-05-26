@@ -109,6 +109,21 @@ def c2c_com(a, c):
   com = stack_layers(coml, c/2)
   return com
 
+def fmmm_com(a, c):
+  nlayer = 2
+  axes0 = a*tri_prim()
+  shifts = np.array([
+    [0, 0],
+    [0.5, 0.5],
+  ])
+  coml = []
+  for s1 in shifts:
+    shift1 = np.dot(s1, axes0)
+    com = np.array([0, 0])+shift1
+    coml.append(com)
+  com = stack_layers(coml, c/2)
+  return com
+
 def make_atoms(axes, pos, elem=None):
   from ase import Atoms
   natom = len(pos)
