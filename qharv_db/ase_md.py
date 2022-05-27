@@ -175,11 +175,11 @@ def stack_layers(posl, z):
     pos[istart:iend, 2] = ilayer*z
   return pos
 
-def make_fmmm(a, c, rb=0.74):
+def make_fmmm(a, c, rb=0.74, t0=-30):
   z = c/2
   axes0 = a*tri_prim()
   # first layer
-  thetas = [-30]
+  thetas = [t0]
   com = np.array([
     [0, 0],
   ])
