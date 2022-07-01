@@ -175,14 +175,17 @@ def stack_layers(posl, z):
     pos[istart:iend, 2] = ilayer*z
   return pos
 
-def make_fmmm(a, c, rb=0.74, t0=-30):
+def make_fmmm(a, c, rb=0.74, t0=30, shift=None):
   z = c/2
   axes0 = a*tri_prim()
   # first layer
   thetas = [t0]
   com = np.array([
-    [0, 0],
+    [0.0, 0.0],
   ])
+  if shift is None:
+    shift = [1./3, 0]
+  com += np.dot(shift, axes0)
   p0 = add_orientations_in_plane(com, thetas)
   # second layer
   sfrac = [0.5, 0.5]
