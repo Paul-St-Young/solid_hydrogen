@@ -175,7 +175,7 @@ def stack_layers(posl, z):
     pos[istart:iend, 2] = ilayer*z
   return pos
 
-def make_fmmm(a, c, rb=0.74, t0=30, shift=None):
+def make_fmmm(a, c, rb=0.74, t0=30, shift0=None):
   z = c/2
   axes0 = a*tri_prim()
   # first layer
@@ -183,12 +183,18 @@ def make_fmmm(a, c, rb=0.74, t0=30, shift=None):
   com = np.array([
     [0.0, 0.0],
   ])
-  if shift is None:
-    shift = [1./3, 0]
-  com += np.dot(shift, axes0)
+  if shift0 is None:  # this shift is arbitrary, default to match MD
+    shift0 = [-1./6, 0]
+  com += np.dot(shift0, axes0)
   p0 = add_orientations_in_plane(com, thetas)
   # second layer
-  sfrac = [0.5, 0.5]
+  if t0 == 30:
+    sfrac = [0., 0.5]
+  elif t0 == -30:
+    sfrac = [0.5, 0.5]
+  else:
+    msg = 'code second layer shift for theta=%d degrees' % t0
+    raise RuntimeError(msg)
   shift = np.dot(sfrac, axes0)
   p1 = p0 + shift
   # combine
