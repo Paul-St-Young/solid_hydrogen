@@ -54,6 +54,30 @@ def layers_from_z(z, bins=128):
   idx, props = find_peaks(-counts)
   return bin_edges[idx]
 
+def detect_layers(z, nlayer, nmol_per_layer, bins=None):
+  # bin z for layer edges
+  if bins is None:
+    bins = nlayer*8
+  zl = layers_from_z(z, bins=bins)
+  if len(zl) != nlayer:
+    msg = 'found %s layers, expected %d' % (len(zl), nlayer)
+    raise RuntimeError(msg)
+  # assign layers
+  layers = -np.ones(len(z), dtype=int)
+  for ilayer, (z1, z2) in enumerate(zip(zl[:-1], zl[1:])):
+    sel = (z1 <= z) & (z < z2)
+    nmol = len(z[sel])
+    if nmol == nmol_per_layer:
+      layers[sel] = ilayer
+    else:
+      msg = 'layer %d has %d instead of %d molecules' % (ilayer, nmol, nmol_per_layer)
+      print(msg)
+  nleft = layers[layers<0]
+  if len(nleft) != nmol_per_layer:
+    msg = 'boundary layer has %d instead of %d molecules' % (nleft, nmo_per)
+    raise RuntimeError(msg)
+  return layers
+
 def find_layers(atoms, bins=128):
   from scipy.signal import find_peaks
   axes = atoms.get_cell()
