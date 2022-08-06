@@ -48,6 +48,12 @@ def average_frames(traj):
   atoms.wrap()
   return atoms
 
+def layers_from_z(z, bins=128):
+  from scipy.signal import find_peaks
+  counts, bin_edges = np.histogram(z, bins=bins)
+  idx, props = find_peaks(-counts)
+  return bin_edges[idx]
+
 def find_layers(atoms, bins=128):
   from scipy.signal import find_peaks
   axes = atoms.get_cell()
