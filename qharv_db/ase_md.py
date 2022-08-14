@@ -32,10 +32,12 @@ def read_eos(ftraj):
 
 # ====================== level 1: structure =======================
 
-def tri_prim():
+def tri_prim(gamma_deg=60):
+  gamma = gamma_deg*np.pi/180
+  a2 = [np.cos(gamma)-1, np.sin(gamma)]
   axes0 = np.array([
     [1, 0],
-    [-1./2, 3**0.5/2],
+    a2,
   ])
   return axes0
 
@@ -174,6 +176,29 @@ def stack_layers(posl, z):
     pos[istart:iend, :2] = posl[ilayer]
     pos[istart:iend, 2] = ilayer*z
   return pos
+
+def gamma_fmmm(a, c, gamma_deg, rb=0.74, t0=None):
+  axes0 = a*tri_prim(gamma_deg=gamma_deg)
+  if t0 is None:
+    t0 = gamma_deg/2
+  # first layer
+  com = np.array([
+    [0.0, 0.0],
+  ])
+  p0 = add_orientations_in_plane(com, [t0])
+  # second layer
+  sfrac = [0, 0.5]
+  shift = np.dot(sfrac, axes0)
+  p1 = p0 + shift
+  # combine
+  posl = [p0, p1]
+  pos = stack_layers(posl, c/2)
+  # expand cell
+  axes = np.zeros([3, 3])
+  axes[:2, :2] = axes0
+  axes[2, 2] = c
+  atoms = make_atoms(axes, pos)
+  return atoms
 
 def make_fmmm(a, c, rb=0.74, t0=30, shift0=None):
   z = c/2
