@@ -269,6 +269,24 @@ def read_ipi_bead(fpos, ffrc=None):
       atoms0.set_calculator(calc)
   return traj0
 
+def read_beads(path, prefix='*', istart='', iend='', nevery=''):
+  import os
+  from glob import iglob
+  from ase import io
+  segment = '%s:%s:%s' % (str(istart), str(iend), str(nevery))
+  #flist = mole.findall('%s*.xyz' % prefix, path)
+  regex = os.path.join(path, '%s*.xyz' % prefix)
+  flist = iglob(regex)
+  # read trajectories of each bead
+  beads = dict()
+  for i, floc in enumerate(flist):
+    traj = io.read(floc, segment)
+    beads[i] = traj
+  # check that trajectories for each bead has the same length
+  nframes = [len(bead) for bead in beads.values()]
+  assert len(np.unique(nframes)) == 1
+  return beads
+
 # ========================= level 1: restart ========================
 def read_restart_atoms(frs):
   from ase import Atoms
