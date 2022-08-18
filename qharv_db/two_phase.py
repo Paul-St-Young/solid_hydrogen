@@ -175,3 +175,35 @@ def detect_p21c_layers(mols, kfracs=None):
     layer_desc.append(sk1.sum())
   return layer_desc
 
+def calc_bonds(atoms, pairs):
+  """ Example:
+  >>> from qharv.inspect.axes_pos import dimer_rep
+  >>> com, avecs, pairs = dimer_rep(atoms, return_pairs=True)
+  >>> drij, rij = calc_bonds(atoms, pairs)
+  """
+  from ase.geometry import conditional_find_mic
+  # calculate bond vectors
+  iat, jat = pairs.T
+  ri = atoms[iat].get_positions()
+  rj = atoms[jat].get_positions()
+  drij, rij = conditional_find_mic(ri-rj, atoms.get_cell(), atoms.get_pbc())  # drij = ri - rj
+  return drij, rij
+
+def calc_angles(atoms, pairs):
+  drij, rij = calc_bonds(atoms, pairs)
+  # drij = ri - rj
+  x, y, z = np.array(drij).T
+  # angles
+  # phi \in [-pi, pi)
+  # symmetrize ri-rj with rj-ri
+  phi1 = np.arctan2(y, x)
+  phi2 = phi1+np.pi
+  phi2 = (phi2+np.pi) % (2*np.pi) - np.pi
+  #phi3 = np.arctan2(-y, -x)
+  #print(np.allclose(phi2, phi3))
+  phi = np.array(phi1.tolist()+phi2.tolist())
+  # cos(theta) \in [-1, 1]
+  cos_theta1 = z/rij
+  cos_theta2 = -z/rij
+  cos_theta = np.array([cos_theta1.tolist()+cos_theta2.tolist()])
+  return cos_theta, phi
