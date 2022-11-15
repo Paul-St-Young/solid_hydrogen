@@ -270,6 +270,22 @@ def ideal_coulomb_sum(kvecs, qtol=1e-8):
   assert nterm == (npw-1)*npw
   return csum/2
 
+def pwdet_energy(kvecs, axes):
+  from qharv.inspect import axes_pos
+  nup, ndim = kvecs.shape
+  if ndim > 2:
+    kz = kvecs[:, 2]
+    if np.allclose(kz, 0):
+      msg = '2D calculation?'
+      raise RuntimeError(msg)
+  assert len(axes) == ndim
+  tkin = 0.5*sum([np.dot(k, k) for k in kvecs])
+  esum = ideal_coulomb_sum(kvecs)
+  vmad = axes_pos.madelung(axes)
+  volume = axes_pos.volume(axes)
+  ex = vmad*nup-esum/volume
+  return tkin, ex
+
 # ================ routines for jastrow potential U(k)  ================
 
 def polarization_factor(p, ndim=3):
