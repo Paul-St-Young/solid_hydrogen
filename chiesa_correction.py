@@ -978,6 +978,20 @@ def calc_detsk(qvecs, raxes, gvecs, cmat, frac, verbose):
   # end for
   return skm
 
+def trial_uk(uk, doc):
+  usrk = calc_usrk(uk, doc)
+  ulrk = calc_ulrk(doc)
+  # total usr + ulr
+  usrk[:len(ulrk)] += ulrk
+  return usrk
+
+def calc_ulrk(doc):
+  kcoef = doc.find('.//coefficients[@id="jk2"]')
+  kcorr = kcoef.getparent()
+  jktext = kcoef.text.replace('\n', ' ')
+  ulrk = -xml.text2arr(jktext)
+  return ulrk
+
 def calc_usrk(uk, doc):
   from qharv.seed import xml
   from qharv.inspect import axes_pos
