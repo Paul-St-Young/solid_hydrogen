@@ -167,7 +167,7 @@ def get_jk_kvecs(fout,
 # ================ routines for structure factor S(k)  ================
 
 
-def heg_kfermi(rs):
+def heg_kfermi(rs, ndim=3):
   """ magnitude of the fermi k vector for the homogeneous electron gas (HEG)
 
   Args:
@@ -175,8 +175,8 @@ def heg_kfermi(rs):
   Return:
     float: kf
   """
-  density = (4*np.pi*rs**3/3)**(-1)
-  kf = (3*np.pi**2*density)**(1./3)
+  rho = charge_density(rs, ndim=ndim)
+  kf = ((2*np.pi)**ndim*rho/solid_angle(ndim)/2)**(1./ndim)
   return kf
 
 
@@ -303,22 +303,22 @@ def coulomb_interaction(k, ndim=3):
   vk = 2*(ndim-1)*np.pi/k**(ndim-1)
   return vk
 
+def solid_angle(ndim):
+  return 2*(ndim-1)*np.pi/ndim
+
 def charge_density(rs, ndim=3):
-  vol = 2*(ndim-1)*np.pi/ndim*rs**ndim
+  vol = solid_angle(ndim)*rs**ndim
   rho = 1./vol
   return rho
 
-def gaskell_rpa_uk(k, rs, kf):
-
-  # build pieces
-  hfsk_val  = hfsk(k, kf)      # determinant contribution S0(k)
-  prefactor = 2*np.pi/3*rs**3  # 1/(2*density)
-  arg2sqrt  = hfsk_val**(-2) + 12./(rs**3*k**4)
-
-  # put pieces together
-  uk = prefactor * ( -hfsk_val**(-1) + arg2sqrt**0.5 )
+def gaskell_rpa_uk(k, rs, kf, ndim=3):
+  sk0 = hfsk(k, kf, ndim=ndim)  # determinant contribution S0(k)
+  rho = charge_density(rs, ndim=ndim)
+  vk = coulomb_interaction(k, ndim=ndim)
+  ek = plasmon_dispersion(k)
+  arg2sqrt  = sk0**(-2) + 2*rho*vk/ek
+  uk = ( -sk0**(-1) + arg2sqrt**0.5 )/(2*rho)
   return uk
-
 
 def gaskell_rpa_sk(k, rs, kf, ndim=3):
   rho = charge_density(rs, ndim=ndim)
@@ -327,6 +327,12 @@ def gaskell_rpa_sk(k, rs, kf, ndim=3):
   ek = plasmon_dispersion(k)
   sk = 1./np.sqrt(1/sk0**2+2*vk*rho/ek)
   return sk
+
+def sk2uk(myk, mysk, rs, ndim=3):
+  rho = charge_density(rs, ndim=ndim)
+  kf = heg_kfermi(rs, ndim=ndim)
+  sk0 = hfsk(myk, kf, ndim=ndim)
+  return (mysk**(-1)-sk0**(-1))/(2*rho)
 
 def slater_jrpa_sk(kvecs, detsk, rho):
   kmags = np.linalg.norm(kvecs, axis=1)
@@ -364,12 +370,6 @@ def mass_rpa_sk(finek, rs, kf, mass):
   ek = 0.5*mass*finek**2
   sk = (sk0**(-2)+2*rho*vk/ek)**(-0.5)
   return sk
-
-def sk2uk(myk, mysk, rs):
-  kf = heg_kfermi(rs)
-  sk0 = hfsk(myk, kf)
-  rho = 3./(4*np.pi*rs**3)
-  return (mysk**(-1)-sk0**(-1))/(2*rho)
 
 
 def ceperley_rpa_uk(k, rs):
