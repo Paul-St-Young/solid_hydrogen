@@ -57,3 +57,13 @@ def same_atoms(atoms0, atoms1, atol=1e-8, verbose=False):
       msg += '%s=%d; ' % (name, s1)
     print(msg)
   return same
+
+def hash_atoms(atoms, ndig, ndig_pos=None):
+  from hashlib import sha512
+  h = sha512()
+  axes = atoms.get_cell()
+  h.update(axes.round(ndig).tobytes())
+  if ndig_pos is not None:
+    pos = atoms.get_positions()
+    h.update(pos.round(ndig_pos).tobytes())
+  return h.hexdigest()
