@@ -299,8 +299,10 @@ def plasmon_dispersion(k):
   ek = k**2/2  # ha atomic units
   return ek
 
-def coulomb_interaction(k, ndim=3):
+def coulomb_interaction(k, ndim=3, dgate=None):
   vk = 2*(ndim-1)*np.pi/k**(ndim-1)
+  if dgate is not None:
+    vk *= np.tanh(k*dgate)
   return vk
 
 def solid_angle(ndim):
@@ -320,10 +322,10 @@ def gaskell_rpa_uk(k, rs, kf, ndim=3):
   uk = ( -sk0**(-1) + arg2sqrt**0.5 )/(2*rho)
   return uk
 
-def gaskell_rpa_sk(k, rs, kf, ndim=3):
+def gaskell_rpa_sk(k, rs, kf, ndim=3, dgate=None):
   rho = charge_density(rs, ndim=ndim)
   sk0 = hfsk(k, kf, ndim=ndim)
-  vk = coulomb_interaction(k, ndim=ndim)
+  vk = coulomb_interaction(k, ndim=ndim, dgate=dgate)
   ek = plasmon_dispersion(k)
   sk = 1./np.sqrt(1/sk0**2+2*vk*rho/ek)
   return sk
@@ -427,6 +429,8 @@ def fusr(rcut, uu_coeff, ud_coeff, uu_cusp=-0.25, ud_cusp=-0.50):
     callable: short-range Jastrow potential
   """
   juu = bspline(uu_coeff, uu_cusp, rcut)
+  if ud_coeff is None:
+    return juu
   jud = bspline(ud_coeff, ud_cusp, rcut)
   def func(r):  # QMCPACK formula: simple average
     return 0.5*(juu(r)+jud(r))
@@ -441,7 +445,10 @@ def get_fusr(node, rcut):
 
   cud_name = 'ud'
   ud_node = node.find('.//coefficients[@id="%s"]'%cud_name)
-  ud_coeff = np.array(ud_node.text.split(), dtype=float)
+  if ud_node is None:
+    ud_coeff = None
+  else:
+    ud_coeff = np.array(ud_node.text.split(), dtype=float)
 
   # construct e-e Usr(r)
   j2sr = fusr(rcut, uu_coeff, ud_coeff)
@@ -523,7 +530,7 @@ def rpa_dv(axes, rs, kf=None, fsk=None, nx=32):
   return dvlr
 
 
-def rpa_dt(axes, rs, nx=32):
+def rpa_dt(axes, rs, kf=None, nx=32):
   """ calculate kinetic finite size error assuming RPA U(k) and S(k)
 
   Args:
@@ -537,7 +544,8 @@ def rpa_dt(axes, rs, nx=32):
   density = (4*np.pi/3*rs**3.)**(-1)
 
   # get RPA U(k) and S(k)
-  kf = heg_kfermi(rs)
+  if kf is None:
+    kf = heg_kfermi(rs)
 
   fuk = lambda k:gaskell_rpa_uk(k, rs, kf)
   fsk = effective_fsk_from_fuk(fuk, rs)
@@ -889,6 +897,12 @@ def get_ridx(gvecs):
   ridx = -np.ones(np.prod(ng), dtype=int)
   ridx[idx1d] = igvecs
   return ridx
+
+def argsort_gvectors(gvecs):
+  gmin, gmax, ng = get_regular_grid_dimensions(gvecs)
+  idx1d = get_idx1d(gvecs, gmin, ng)
+  idx = np.argsort(idx1d)
+  return idx
 
 def align_gvectors(gvecs0, gvecs1):
   # obtain a regular grid, which is large enough to hold both sets
