@@ -1106,10 +1106,11 @@ def get_norb(twist, raxes, kf, nsh0=10):
   return nup
 
 class IsotropicMomentumDistributionFSC:
-  def __init__(self, rs, fsk=None):
+  def __init__(self, rs, fsk=None, ndim=3):
+    self._ndim = ndim
     self._rs = rs
-    self._kf = heg_kfermi(rs)
-    self._rho = 3./(4*np.pi*rs**3)
+    self._kf = heg_kfermi(rs, ndim=ndim)
+    self._rho = charge_density(rs, ndim=ndim)
     self._init_fsc = False
     if fsk is None:  # use Gaskell RPA S(k) if no model S(k) is given
       self._fsk = self.gaskell_fsk
@@ -1117,36 +1118,31 @@ class IsotropicMomentumDistributionFSC:
       print('using user-defined S(k)')
       self._fsk = fsk
   def gaskell_fsk(self, k):
-    return gaskell_rpa_sk(k, self._rs, self._kf)
+    return gaskell_rpa_sk(k, self._rs, self._kf, ndim=self._ndim)
   def delta(self, k):
     sk = self._fsk(k)
-    uk = sk2uk(k, sk, self._rs)
+    uk = sk2uk(k, sk, self._rs, ndim=self._ndim)
     return uk*(1-sk)-self._rho*uk**2*sk
   def rpa_delta(self, k):
+    assert self._ndim == 3
     wp = (3./self._rs**3)**0.5
     alpha = 4*np.pi/wp
     beta = alpha/wp
     return 0.5*(alpha/k**2-beta)
-  def get_kf(self):
-    return self._kf
   def init_missing_qvecs(self, raxes, mx):
     """Assume cubic cell, get integration grid within missing volume"""
-    ## cubic box
-    #dqx = blat/mx
-    #qvecs = dqx*cubic_pos(mx)
-    #self._intnorm = dqx**3/(2*np.pi)**3
-    # non-cubic box
-    from qharv.inspect.axes_pos import volume
-    fvecs = 1./mx*cubic_pos(mx)
+    from qharv.inspect.axes_pos import volume, cubic_pos
+    fvecs = 1./mx*cubic_pos(mx, ndim=self._ndim)
     qvecs = np.dot(fvecs, raxes)
     qvecs -= qvecs.mean(axis=0)
-    self._intnorm = volume(raxes)/mx**3/(2*np.pi)**3
+    self._intnorm = volume(raxes)/mx**self._ndim/(2*np.pi)**self._ndim
     self._qvecs = qvecs
     self._init_fsc = True
     return qvecs
   def choose_kvecs(self, nx, zoom=100.):
     """Choose grid to evaluate n(k) on """
-    kvecs = 2*self._kf/nx*cubic_pos(nx)
+    from qharv.inspect.axes_pos import cubic_pos
+    kvecs = 2*self._kf/nx*cubic_pos(nx, ndim=self._ndim)
     # choose one point from each kshell
     kmags = np.linalg.norm(kvecs, axis=-1)
     import static_correlation as sc
@@ -1176,6 +1172,7 @@ class IsotropicMomentumDistributionFSC:
   def evaluate_fsc_sum(self, fnk, kvecs, raxes, kmax,
     nsh=4, nbig=4, show_progress=True, extrap=True, alpha=None):
     nk, ndim = kvecs.shape
+    assert ndim == self._ndim
     def fnk1(kvecs):
       kmags = np.linalg.norm(kvecs, axis=-1)
       return fnk(kmags)
